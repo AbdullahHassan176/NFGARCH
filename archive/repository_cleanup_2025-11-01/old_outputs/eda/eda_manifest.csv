@@ -1,7 +1,0 @@
-"File_Type","File_Path","Description","Generated_At"
-"Summary_Stats","outputs/eda/tables/comprehensive_summary_stats.csv","Basic statistical summary with dual splits",2025-10-29 19:30:29.975525
-"Stationarity_Tests","outputs/eda/tables/stationarity_tests.csv","ADF and KPSS stationarity test results",2025-10-29 19:30:29.975525
-"Distributional_Tests","outputs/eda/tables/distributional_tests.csv","Normality and distributional test results",2025-10-29 19:30:29.975525
-"Autocorrelation_Tests","outputs/eda/tables/autocorrelation_tests.csv","Autocorrelation and heteroskedasticity tests",2025-10-29 19:30:29.975525
-"Leverage_Tests","outputs/eda/tables/leverage_tests.csv","Leverage effect and asymmetric volatility tests",2025-10-29 19:30:29.975525
-"Stylized_Facts_Summary","outputs/eda/tables/stylized_facts_summary.csv","Comprehensive stylized facts summary table",2025-10-29 19:30:29.975525
