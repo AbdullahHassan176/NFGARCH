@@ -84,10 +84,10 @@
 
 **The fix was successful!** After properly standardizing NF residuals:
 
-1. ✅ NF-GARCH now produces **normal, reasonable forecast errors** (not extreme)
-2. ✅ NF-GARCH **outperforms Standard GARCH** on overall MSE and MAE
-3. ✅ The approach is **validated** - NF-injected models can improve performance
-4. ⚠️ eGARCH still has convergence issues (separate problem)
+1. NF-GARCH now produces normal, reasonable forecast errors (not extreme)
+2. NF-GARCH outperforms Standard GARCH on overall MSE and MAE
+3. The approach is validated - NF-injected models can improve performance
+4. Note: eGARCH still has convergence issues (separate problem)
 
 ## Recommendations
 

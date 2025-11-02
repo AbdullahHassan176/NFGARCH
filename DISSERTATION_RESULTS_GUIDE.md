@@ -1021,7 +1021,7 @@ Full process with emphasis on standardization requirement.
 
 ---
 
-## 9. INTERPRETATION GUIDELINES FOR CHATGPT
+## 9. INTERPRETATION GUIDELINES
 
 ### 9.1 How to Interpret Results
 
@@ -1111,7 +1111,7 @@ Full process with emphasis on standardization requirement.
 
 ---
 
-## 12. SUMMARY FOR CHATGPT
+## 12. SUMMARY
 
 **What We Did:**
 1. Implemented NF-GARCH models (Normalizing Flows + GARCH)

@@ -50,7 +50,7 @@ if (max_diff < 1e-6) {
   cat("   [OK] sGARCH variance recursion: PASSED (max diff =", max_diff, ")\n")
   verification_results$sgarch_variance <- TRUE
 } else {
-  cat("   ✗ sGARCH variance recursion: FAILED (max diff =", max_diff, ")\n")
+  cat("   [FAILED] sGARCH variance recursion: FAILED (max diff =", max_diff, ")\n")
   verification_results$sgarch_variance <- FALSE
 }
 
@@ -95,7 +95,7 @@ if (max_diff_e < 1e-5) {
   cat("   [OK] eGARCH log-variance recursion: PASSED (max diff =", max_diff_e, ")\n")
   verification_results$egarch_variance <- TRUE
 } else {
-  cat("   ✗ eGARCH log-variance recursion: FAILED (max diff =", max_diff_e, ")\n")
+  cat("   [FAILED] eGARCH log-variance recursion: FAILED (max diff =", max_diff_e, ")\n")
   verification_results$egarch_variance <- FALSE
 }
 
@@ -134,7 +134,7 @@ if (max_diff_gjr < 1e-6) {
   cat("   [OK] gjrGARCH variance recursion: PASSED (max diff =", max_diff_gjr, ")\n")
   verification_results$gjr_variance <- TRUE
 } else {
-  cat("   ✗ gjrGARCH variance recursion: FAILED (max diff =", max_diff_gjr, ")\n")
+  cat("   [FAILED] gjrGARCH variance recursion: FAILED (max diff =", max_diff_gjr, ")\n")
   verification_results$gjr_variance <- FALSE
 }
 
@@ -172,7 +172,7 @@ if (max_diff_tgarch < 1e-6) {
   cat("   [OK] TGARCH variance recursion: PASSED (max diff =", max_diff_tgarch, ")\n")
   verification_results$tgarch_variance <- TRUE
 } else {
-  cat("   ✗ TGARCH variance recursion: FAILED (max diff =", max_diff_tgarch, ")\n")
+  cat("   [FAILED] TGARCH variance recursion: FAILED (max diff =", max_diff_tgarch, ")\n")
   verification_results$tgarch_variance <- FALSE
 }
 
@@ -198,7 +198,7 @@ if (ll_diff < 1e-6) {
   cat("   [OK] Log-likelihood calculation: PASSED (diff =", ll_diff, ")\n")
   verification_results$loglikelihood <- TRUE
 } else {
-  cat("   ✗ Log-likelihood calculation: FAILED (diff =", ll_diff, ")\n")
+  cat("   [FAILED] Log-likelihood calculation: FAILED (diff =", ll_diff, ")\n")
   cat("      Manual LL:", ll_manual, "\n")
   cat("      Fitted LL:", ll_fitted, "\n")
   verification_results$loglikelihood <- FALSE
@@ -213,35 +213,35 @@ constraints_ok <- TRUE
 
 # sGARCH constraints
 if (fit_sgarch$coef["omega"] <= 0) {
-  cat("   ✗ sGARCH: omega must be > 0\n")
+  cat("   [FAILED] sGARCH: omega must be > 0\n")
   constraints_ok <- FALSE
 }
 if (fit_sgarch$coef["alpha"] < 0) {
-  cat("   ✗ sGARCH: alpha must be >= 0\n")
+  cat("   [FAILED] sGARCH: alpha must be >= 0\n")
   constraints_ok <- FALSE
 }
 if (fit_sgarch$coef["beta"] < 0) {
-  cat("   ✗ sGARCH: beta must be >= 0\n")
+  cat("   [FAILED] sGARCH: beta must be >= 0\n")
   constraints_ok <- FALSE
 }
 if (fit_sgarch$coef["alpha"] + fit_sgarch$coef["beta"] >= 1) {
-  cat("   ✗ sGARCH: alpha + beta must be < 1 (stationarity)\n")
+  cat("   [FAILED] sGARCH: alpha + beta must be < 1 (stationarity)\n")
   constraints_ok <- FALSE
 }
 
 # eGARCH constraints
 if (fit_egarch$coef["beta"] >= 1) {
-  cat("   ✗ eGARCH: beta must be < 1 (stationarity)\n")
+  cat("   [FAILED] eGARCH: beta must be < 1 (stationarity)\n")
   constraints_ok <- FALSE
 }
 
 # gjrGARCH constraints
 if (fit_gjr$coef["omega"] <= 0) {
-  cat("   ✗ gjrGARCH: omega must be > 0\n")
+  cat("   [FAILED] gjrGARCH: omega must be > 0\n")
   constraints_ok <- FALSE
 }
 if (fit_gjr$coef["alpha"] < 0 || fit_gjr$coef["beta"] < 0 || fit_gjr$coef["gamma"] < 0) {
-  cat("   ✗ gjrGARCH: alpha, beta, gamma must be >= 0\n")
+  cat("   [FAILED] gjrGARCH: alpha, beta, gamma must be >= 0\n")
   constraints_ok <- FALSE
 }
 
@@ -262,7 +262,7 @@ stationarity_ok <- TRUE
 # sGARCH: α + β < 1
 sgarch_stationary <- (fit_sgarch$coef["alpha"] + fit_sgarch$coef["beta"]) < 1
 if (!sgarch_stationary) {
-  cat("   ✗ sGARCH: α + β =", fit_sgarch$coef["alpha"] + fit_sgarch$coef["beta"], 
+  cat("   [FAILED] sGARCH: α + β =", fit_sgarch$coef["alpha"] + fit_sgarch$coef["beta"], 
       ">= 1 (non-stationary)\n")
   stationarity_ok <- FALSE
 }
@@ -270,14 +270,14 @@ if (!sgarch_stationary) {
 # eGARCH: |β| < 1
 egarch_stationary <- abs(fit_egarch$coef["beta"]) < 1
 if (!egarch_stationary) {
-  cat("   ✗ eGARCH: |β| =", abs(fit_egarch$coef["beta"]), ">= 1 (non-stationary)\n")
+  cat("   [FAILED] eGARCH: |β| =", abs(fit_egarch$coef["beta"]), ">= 1 (non-stationary)\n")
   stationarity_ok <- FALSE
 }
 
 # gjrGARCH: α + γ/2 + β < 1
 gjr_stationary <- (fit_gjr$coef["alpha"] + fit_gjr$coef["gamma"]/2 + fit_gjr$coef["beta"]) < 1
 if (!gjr_stationary) {
-  cat("   ✗ gjrGARCH: α + γ/2 + β =", 
+  cat("   [FAILED] gjrGARCH: α + γ/2 + β =", 
       fit_gjr$coef["alpha"] + fit_gjr$coef["gamma"]/2 + fit_gjr$coef["beta"],
       ">= 1 (non-stationary)\n")
   stationarity_ok <- FALSE
@@ -309,7 +309,7 @@ if (all_passed) {
   cat("  - Stationarity conditions\n")
   cat("\nYou can proceed with confidence!\n")
 } else {
-  cat("✗ Some verifications FAILED\n")
+  cat("[FAILED] Some verifications FAILED\n")
   cat("Please review the errors above.\n")
   failed_tests <- names(verification_results)[!unlist(verification_results)]
   cat("Failed tests:", paste(failed_tests, collapse = ", "), "\n")

@@ -40,7 +40,7 @@ if (file.exists("results/consolidated/NF_GARCH_Results_manual.xlsx")) {
   cat("   Max MSE:", max(nf_chrono$MSE, na.rm = TRUE), "\n")
   cat("\n")
 } else {
-  cat("   ✗ File MISSING!\n\n")
+  cat("   [FAILED] File MISSING!\n\n")
   all_ok <- FALSE
 }
 
@@ -74,7 +74,7 @@ if (file.exists("results/consolidated/NF_vs_Standard_GARCH_Comparison.xlsx")) {
   
   cat("\n")
 } else {
-  cat("   ✗ File MISSING!\n\n")
+  cat("   [FAILED] File MISSING!\n\n")
   all_ok <- FALSE
 }
 
@@ -117,7 +117,7 @@ if (file.exists("scripts/simulation_forecasting/simulate_nf_garch_engine.R")) {
   if (has_standardization) {
     cat("   [OK] Standardization fix applied\n")
   } else {
-    cat("   ✗ Standardization fix NOT found!\n")
+    cat("   [FAILED] Standardization fix NOT found!\n")
     all_ok <- FALSE
   }
   
@@ -128,7 +128,7 @@ if (file.exists("scripts/simulation_forecasting/simulate_nf_garch_engine.R")) {
   }
   cat("\n")
 } else {
-  cat("   ✗ Simulation script NOT found!\n\n")
+  cat("   [FAILED] Simulation script NOT found!\n\n")
   all_ok <- FALSE
 }
 
