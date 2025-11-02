@@ -1,0 +1,39 @@
+# R session and history
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+
+# RStudio project files
+.Rproj.user/
+*.Rproj
+
+# Package build and check artifacts
+.Rbuildignore
+/*.Rcheck/
+/*.tar.gz
+
+# Python cache (if any Python usage in future)
+__pycache__/
+*.pyc
+
+# Editor-specific files
+.DS_Store
+Thumbs.db
+
+# LaTeX build files (for reports or papers)
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.pdf
+*.tex
+
+
+data/raw/*
+!data/raw/.gitkeep
+
+results/tables/*
+!results/tables/garch_comparison.csv

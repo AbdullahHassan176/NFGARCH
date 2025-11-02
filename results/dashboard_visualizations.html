@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NF-GARCH Research Dashboard - Visual Results Walkthrough</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .nav-menu {
+            background-color: #333;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-bottom: 30px;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-menu a:hover {
+            background-color: #555;
+        }
+        
+        section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background-color: #fafafa;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+        }
+        
+        section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        section h3 {
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .plot-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        
+        .plot-caption {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .info-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            color: #1976D2;
+        }
+        
+        .reference-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .reference-box h4 {
+            color: #f57c00;
+            margin-bottom: 10px;
+        }
+        
+        .file-link {
+            display: inline-block;
+            background-color: #667eea;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .file-link:hover {
+            background-color: #764ba2;
+        }
+        
+        .citation {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #999;
+            font-size: 0.9em;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background-color: #333;
+            color: white;
+            margin-top: 50px;
+        }
+        
+        .footer a {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Evaluating the Impact of Normalising Flows on GARCH Models</h1>
+        <p>Comprehensive Visual Results Dashboard and Research Walkthrough</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">MSc Mathematical Statistics Research Project</p>
+    </header>
+    
+    <nav class="nav-menu">
+        <a href="#overview">Overview</a>
+        <a href="#performance">Model Performance</a>
+        <a href="#distributional">Distributional Metrics</a>
+        <a href="#stylized">Stylized Facts</a>
+        <a href="#var">VaR Backtesting</a>
+        <a href="#stress">Stress Testing</a>
+        <a href="#comparison">NF vs Standard</a>
+        <a href="#references">References</a>
+    </nav>
+    
+    <div class="container">
+        <!-- Overview Section -->
+        <section id="overview">
+            <h2>Research Overview</h2>
+            
+            <div class="info-box">
+                <strong>Research Question:</strong> Does replacing fixed innovation assumptions in GARCH models with 
+                data-driven residual distributions learned by Normalising Flows (NFs) improve forecasting accuracy, 
+                distributional realism, and risk calibration for exchange rate and equity returns?
+            </div>
+            
+            <h3>Methodology</h3>
+            <p>This research employs a <strong>two-stage NF-GARCH design</strong>:</p>
+            <ol>
+                <li><strong>Stage 1:</strong> Fit classical GARCH models (sGARCH, eGARCH, TGARCH, gjrGARCH) to financial returns</li>
+                <li><strong>Stage 2:</strong> Extract standardized residuals, train Normalising Flows (RealNVP/MAF) on these residuals, 
+                and reinject flow samples as innovations into the unchanged volatility recursion</li>
+            </ol>
+            
+            <div class="info-box">
+                <strong>Design Choice:</strong> We use a <em>two-stage NF-innovations</em> approach rather than end-to-end 
+                "flow-after-scaling" models. This preserves the classic volatility recursion while gaining distributional 
+                flexibility in innovations, making estimation modular and robust. Trade-off: the flow's shape is 
+                state-invariant (scales with σ_t but doesn't depend on it), whereas end-to-end models can allow 
+                conditional shape to vary more richly with volatility.
+            </div>
+            
+            <h3>Dataset</h3>
+            <p>The analysis uses <strong>6 financial assets</strong> (optimized from 12 for computational efficiency):</p>
+            <ul>
+                <li><strong>Equity Assets (3):</strong> NVDA, MSFT, AMZN</li>
+                <li><strong>FX Pairs (3):</strong> EURUSD, GBPUSD, USDZAR</li>
+            </ul>
+            <p>Data spans daily returns from <strong>August 2005 to August 2024</strong>, with a 65:35 chronological train/test split 
+            and optimized time-series cross-validation using reduced window sizes.</p>
+            
+            <h3>Evaluation Framework</h3>
+            <p>Models are evaluated using multiple metrics:</p>
+            <ul>
+                <li><strong>Forecasting Metrics:</strong> MSE, MAE, AIC, BIC, Log-Likelihood</li>
+                <li><strong>Distributional Metrics:</strong> KS distance, Wasserstein distance, Tail index, Skewness, Kurtosis</li>
+                <li><strong>Stylized Facts:</strong> Volatility clustering, Leverage effects, Autocorrelation decay, Heavy tails</li>
+                <li><strong>Risk Metrics:</strong> VaR exceedance rates, Kupiec test, Christoffersen test, Expected Shortfall</li>
+                <li><strong>Stress Testing:</strong> Historical crises (2008 GFC, 2020 COVID), hypothetical shocks</li>
+            </ul>
+            
+            <div class="reference-box">
+                <h4>Key References</h4>
+                <p><strong>GARCH Models:</strong> Bollerslev (1986) <em>Generalized Autoregressive Conditional Heteroskedasticity</em>, 
+                Journal of Econometrics</p>
+                <p><strong>eGARCH:</strong> Nelson (1991) <em>Conditional Heteroskedasticity in Asset Returns: A New Approach</em>, 
+                Econometrica</p>
+                <p><strong>TGARCH:</strong> Zakoian (1994) <em>Threshold heteroskedastic models</em>, Journal of Economic Dynamics and Control</p>
+                <p><strong>gjrGARCH:</strong> Glosten, Jagannathan & Runkle (1993) <em>On the relation between the expected value 
+                and the volatility of the nominal excess return on stocks</em>, Journal of Finance</p>
+                <p><strong>Normalising Flows:</strong> Rezende & Mohamed (2015) <em>Variational Inference with Normalizing Flows</em>, 
+                ICML; Papamakarios et al. (2021) <em>Normalizing flows for probabilistic modeling and inference</em>, JMLR</p>
+            </div>
+            
+            <p><strong>Detailed Results Files:</strong></p>
+            <a href="consolidated/Final_Dashboard.xlsx" class="file-link">Final Dashboard (Excel)</a>
+            <a href="consolidated/NF_GARCH_Results_manual.xlsx" class="file-link">NF-GARCH Results</a>
+            <a href="consolidated/Distributional_Metrics.xlsx" class="file-link">Distributional Metrics</a>
+        </section>
+        
+        <!-- Model Performance Section -->
+        <section id="performance">
+            <h2>1. Model Performance Comparison</h2>
+            
+            <h3>Forecasting Accuracy</h3>
+            <p>Model performance is evaluated using Mean Squared Error (MSE) and Akaike Information Criterion (AIC) 
+            on out-of-sample test data.</p>
+            
+            <div class="plot-container">
+                <img src="dashboard_plots/mse_by_model_chrono.png" alt="MSE by Model">
+                <p class="plot-caption">Figure 1: Mean Squared Error by Model (Chronological Split). Lower values indicate better forecasting performance.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Interpretation:</strong> Models with lower MSE provide more accurate volatility forecasts. 
+                The plot shows relative performance across all GARCH variants, helping identify which models 
+                best capture volatility dynamics for different asset classes.
+            </div>
+            
+            <div class="plot-container">
+                <img src="dashboard_plots/aic_by_model.png" alt="AIC by Model">
+                <p class="plot-caption">Figure 2: Akaike Information Criterion by Model. Lower values indicate better model fit while penalizing complexity.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>AIC Explanation:</strong> AIC = 2k - 2ln(L), where k is the number of parameters and L is the likelihood. 
+                AIC balances model fit with complexity, favoring models that achieve good fit with fewer parameters. 
+                The model with the lowest AIC is preferred <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank">(Akaike, 1974)</a>.
+            </div>
+            
+            <div class="citation">
+                <strong>Reference:</strong> Akaike, H. (1974). A new look at the statistical model identification. 
+                <em>IEEE Transactions on Automatic Control</em>, 19(6), 716-723.
+            </div>
+            
+            <p><strong>Detailed Performance Data:</strong></p>
+            <a href="consolidated/NF_GARCH_Results_manual.xlsx" class="file-link">View Full Results</a>
+            <a href="consolidated/Final_Dashboard.xlsx" class="file-link">Executive Summary</a>
+        </section>
+        
+        <!-- Distributional Metrics Section -->
+        <section id="distributional">
+            <h2>2. Distributional Metrics</h2>
+            
+            <p>Distributional metrics assess how well synthetic residuals from Normalising Flows match the 
+            empirical distribution of actual GARCH residuals.</p>
+            
+            <h3>Kolmogorov-Smirnov Distance</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/ks_distance_by_model.png" alt="KS Distance by Model">
+                <p class="plot-caption">Figure 3: Kolmogorov-Smirnov Distance by Model. Lower values indicate better distributional match.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>KS Distance:</strong> The KS statistic measures the maximum vertical distance between two 
+                cumulative distribution functions. KS distance ranges from 0 to 1, where 0 indicates identical 
+                distributions. Lower KS distance means the NF-generated residuals better replicate the empirical 
+                residual distribution <a href="https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test" target="_blank">(Kolmogorov, 1933; Smirnov, 1939)</a>.
+            </div>
+            
+            <h3>Wasserstein Distance</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/wasserstein_distance_by_model.png" alt="Wasserstein Distance by Model">
+                <p class="plot-caption">Figure 4: Wasserstein Distance by Model (log scale). Lower values indicate better distributional match.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Wasserstein Distance:</strong> Also known as Earth Mover's Distance, Wasserstein distance measures 
+                the minimum cost to transform one distribution into another. It captures both location and shape 
+                differences and is more sensitive to tail behavior than KS distance 
+                <a href="https://en.wikipedia.org/wiki/Wasserstein_metric" target="_blank">(Villani, 2009)</a>.
+            </div>
+            
+            <h3>Tail Index</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/tail_index_by_model.png" alt="Tail Index by Model">
+                <p class="plot-caption">Figure 5: Tail Index (Hill Estimator) by Model. Higher values indicate heavier tails.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Tail Index:</strong> The Hill estimator quantifies tail heaviness in financial returns. 
+                Higher tail index values indicate heavier tails (more extreme events). Financial returns typically 
+                exhibit heavy tails (tail index > 2), requiring distributions beyond Gaussian 
+                <a href="https://en.wikipedia.org/wiki/Hill_estimator" target="_blank">(Hill, 1975)</a>.
+            </div>
+            
+            <div class="citation">
+                <strong>References:</strong><br>
+                • Kolmogorov, A. (1933). Sulla determinazione empirica di una legge di distribuzione. 
+                <em>Giornale dell'Istituto Italiano degli Attuari</em>, 4, 83-91.<br>
+                • Smirnov, N. (1939). Estimate of deviation between empirical distribution functions in two independent samples. 
+                <em>Bulletin Moscow University</em>, 2(2), 3-16.<br>
+                • Villani, C. (2009). <em>Optimal Transport: Old and New</em>. Springer.<br>
+                • Hill, B. M. (1975). A simple general approach to inference about the tail of a distribution. 
+                <em>Annals of Statistics</em>, 3(5), 1163-1174.
+            </div>
+            
+            <p><strong>Detailed Distributional Data:</strong></p>
+            <a href="consolidated/Distributional_Metrics.xlsx" class="file-link">View Full Metrics</a>
+        </section>
+        
+        <!-- Stylized Facts Section -->
+        <section id="stylized">
+            <h2>3. Stylized Facts of Financial Returns</h2>
+            
+            <p>Stylized facts are statistical properties consistently observed in financial time series. 
+            Good models should replicate these empirical regularities.</p>
+            
+            <h3>Volatility Clustering</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/volatility_clustering_by_class.png" alt="Volatility Clustering by Asset Class">
+                <p class="plot-caption">Figure 6: Volatility Clustering Persistence by Asset Class. Higher values indicate stronger clustering.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Volatility Clustering:</strong> Large price changes tend to be followed by large changes 
+                (of either sign), while small changes tend to be followed by small changes. This is measured via 
+                autocorrelation of squared returns. Persistent volatility clustering is a key feature of financial markets 
+                that GARCH models were designed to capture <a href="https://www.jstor.org/stable/1912773" target="_blank">(Engle, 1982)</a>.
+            </div>
+            
+            <h3>Leverage Effect</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/leverage_effect_by_class.png" alt="Leverage Effect by Asset Class">
+                <p class="plot-caption">Figure 7: Leverage Effect by Asset Class. Positive values indicate negative returns increase future volatility more than positive returns.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Leverage Effect:</strong> Negative returns have a larger impact on future volatility than 
+                positive returns of the same magnitude. This asymmetry is captured by eGARCH, TGARCH, and gjrGARCH 
+                models. The leverage effect is economically motivated: falling asset prices increase leverage ratios, 
+                making firms riskier <a href="https://www.jstor.org/stable/2328848" target="_blank">(Black, 1976)</a>.
+            </div>
+            
+            <div class="citation">
+                <strong>References:</strong><br>
+                • Engle, R. F. (1982). Autoregressive conditional heteroscedasticity with estimates of the variance of United Kingdom inflation. 
+                <em>Econometrica</em>, 50(4), 987-1007.<br>
+                • Black, F. (1976). Studies of stock price volatility changes. <em>Proceedings of the 1976 Meeting of the 
+                Business and Economic Statistics Section, American Statistical Association</em>, 177-181.
+            </div>
+            
+            <p><strong>Detailed Stylized Facts Data:</strong></p>
+            <a href="consolidated/Stylized_Facts.xlsx" class="file-link">View Full Analysis</a>
+        </section>
+        
+        <!-- VaR Backtesting Section -->
+        <section id="var">
+            <h2>4. Value at Risk (VaR) Backtesting</h2>
+            
+            <p>VaR backtesting evaluates whether predicted risk measures match realized losses, ensuring models 
+            are properly calibrated for risk management applications.</p>
+            
+            <h3>Exceedance Rates</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/var_exceedance_rates.png" alt="VaR Exceedance Rates">
+                <p class="plot-caption">Figure 8: VaR Exceedance Rates at 95% Confidence Level. Expected rate is 5% (red dashed line).</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Exceedance Rate:</strong> The proportion of observations where actual losses exceed predicted VaR. 
+                For a correctly calibrated 95% VaR model, the exceedance rate should be approximately 5%. 
+                Rates significantly above 5% indicate underestimation of risk, while rates below 5% indicate 
+                overestimation <a href="https://www.bis.org/publ/bcbs158.pdf" target="_blank">(Basel Committee, 2011)</a>.
+            </div>
+            
+            <h3>Kupiec Test</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/kupiec_pvalues.png" alt="Kupiec Test P-values">
+                <p class="plot-caption">Figure 9: Kupiec Test P-values. P-values > 0.05 indicate models pass the test (not significantly different from expected rate).</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Kupiec Test:</strong> A likelihood ratio test for unconditional coverage. H₀: The exceedance rate 
+                equals the expected rate. If p-value > 0.05, we fail to reject H₀, indicating proper calibration. 
+                This test checks whether the model produces the correct number of exceedances on average 
+                <a href="https://www.jstor.org/stable/2330743" target="_blank">(Kupiec, 1995)</a>.
+            </div>
+            
+            <div class="citation">
+                <strong>References:</strong><br>
+                • Basel Committee on Banking Supervision. (2011). <em>Basel III: A global regulatory framework for 
+                more resilient banks and banking systems</em>. Bank for International Settlements.<br>
+                • Kupiec, P. H. (1995). Techniques for verifying the accuracy of risk measurement models. 
+                <em>Journal of Derivatives</em>, 3(2), 73-84.
+            </div>
+            
+            <p><strong>Detailed VaR Backtesting Data:</strong></p>
+            <a href="consolidated/VaR_Backtesting.xlsx" class="file-link">View Full Results</a>
+        </section>
+        
+        <!-- Stress Testing Section -->
+        <section id="stress">
+            <h2>5. Stress Testing</h2>
+            
+            <p>Stress testing evaluates model robustness under extreme market conditions, both historical and hypothetical.</p>
+            
+            <h3>Historical Crisis Analysis</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/historical_crisis_volatility.png" alt="Historical Crisis Volatility">
+                <p class="plot-caption">Figure 10: Volatility During Historical Crises. GFC = Global Financial Crisis 2008, COVID = COVID-19 Market Crash 2020.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Historical Stress Tests:</strong> Analyze model performance during actual crisis periods:
+                <ul>
+                    <li><strong>2008 Global Financial Crisis (GFC):</strong> September 2008 - March 2009</li>
+                    <li><strong>2020 COVID-19 Market Crash:</strong> February 2020 - April 2020</li>
+                </ul>
+                These periods provide real-world validation of model behavior under extreme stress.
+            </div>
+            
+            <h3>Hypothetical Shocks</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/hypothetical_shock_impact.png" alt="Hypothetical Shock Impact">
+                <p class="plot-caption">Figure 11: Percentage Increase in Volatility from Hypothetical Shock Scenarios.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Hypothetical Scenarios:</strong> Test model response to extreme but plausible shocks:
+                <ul>
+                    <li><strong>Price Drops:</strong> Sudden 30% or 50% price declines</li>
+                    <li><strong>Volatility Spikes:</strong> 2x or 3x volatility increases</li>
+                    <li><strong>Mean Shifts:</strong> Prolonged negative return periods</li>
+                </ul>
+                These scenarios help assess tail risk and extreme event modeling capabilities.
+            </div>
+            
+            <div class="citation">
+                <strong>Reference:</strong><br>
+                • Basel Committee on Banking Supervision. (2012). <em>Principles for effective stress testing practices 
+                and supervision</em>. Bank for International Settlements.
+            </div>
+            
+            <p><strong>Detailed Stress Testing Data:</strong></p>
+            <a href="consolidated/Stress_Testing.xlsx" class="file-link">View Full Analysis</a>
+        </section>
+        
+        <!-- NF vs Standard Comparison Section -->
+        <section id="comparison">
+            <h2>6. NF-GARCH vs Standard GARCH Comparison</h2>
+            
+            <p>This section compares the performance of NF-augmented GARCH models against their classical counterparts.</p>
+            
+            <h3>MSE Comparison</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/nf_vs_standard_mse.png" alt="NF vs Standard MSE">
+                <p class="plot-caption">Figure 12: Mean Squared Error Comparison: NF-GARCH vs Standard GARCH. Lower is better.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Key Finding:</strong> NF-GARCH models typically show lower MSE than standard GARCH models, 
+                indicating improved forecasting accuracy. The flexible residual distributions learned by Normalising Flows 
+                better capture empirical innovation characteristics, leading to more accurate volatility forecasts.
+            </div>
+            
+            <h3>Asset Class Analysis</h3>
+            <div class="plot-container">
+                <img src="dashboard_plots/nf_vs_standard_by_class.png" alt="NF vs Standard by Asset Class">
+                <p class="plot-caption">Figure 13: Performance Comparison by Asset Class (FX vs Equity).</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Asset-Class Findings:</strong>
+                <ul>
+                    <li><strong>Equities:</strong> NF-sGARCH typically performs best (parsimonious variance recursion + flexible innovations)</li>
+                    <li><strong>FX Pairs:</strong> NF-eGARCH typically performs best (log-variance dynamics + flexible innovations)</li>
+                </ul>
+                This suggests that (i) correcting innovation misspecification yields large gains, and (ii) the preferred 
+                volatility recursion differs by market microstructure and leverage intensity.
+            </div>
+            
+            <div class="citation">
+                <strong>Research Contribution:</strong> This analysis demonstrates that distributional flexibility in innovations 
+                can significantly improve forecasting performance without altering volatility dynamics. The asset-class 
+                dependent preferences suggest market microstructure considerations in model selection.
+            </div>
+            
+            <p><strong>Detailed Comparison Data:</strong></p>
+            <a href="consolidated/NF_vs_Standard_GARCH_Comparison.xlsx" class="file-link">View Full Comparison</a>
+            <a href="consolidated/Final_Dashboard.xlsx" class="file-link">Statistical Significance Tests</a>
+        </section>
+        
+        <!-- References Section -->
+        <section id="references">
+            <h2>References and Further Reading</h2>
+            
+            <h3>Core GARCH Literature</h3>
+            <ul>
+                <li>Bollerslev, T. (1986). Generalized autoregressive conditional heteroskedasticity. 
+                <em>Journal of Econometrics</em>, 31(3), 307-327. 
+                <a href="https://doi.org/10.1016/0304-4076(86)90063-1" target="_blank">DOI</a></li>
+                
+                <li>Engle, R. F. (1982). Autoregressive conditional heteroscedasticity with estimates of the variance of United Kingdom inflation. 
+                <em>Econometrica</em>, 50(4), 987-1007. 
+                <a href="https://www.jstor.org/stable/1912773" target="_blank">JSTOR</a></li>
+                
+                <li>Nelson, D. B. (1991). Conditional heteroskedasticity in asset returns: A new approach. 
+                <em>Econometrica</em>, 59(2), 347-370. 
+                <a href="https://www.jstor.org/stable/2938260" target="_blank">JSTOR</a></li>
+                
+                <li>Glosten, L. R., Jagannathan, R., & Runkle, D. E. (1993). On the relation between the expected value and the volatility of the nominal excess return on stocks. 
+                <em>Journal of Finance</em>, 48(5), 1779-1801. 
+                <a href="https://doi.org/10.1111/j.1540-6261.1993.tb05128.x" target="_blank">DOI</a></li>
+                
+                <li>Zakoian, J. M. (1994). Threshold heteroskedastic models. 
+                <em>Journal of Economic Dynamics and Control</em>, 18(5), 931-955. 
+                <a href="https://doi.org/10.1016/0165-1889(94)90039-6" target="_blank">DOI</a></li>
+            </ul>
+            
+            <h3>Normalising Flows Literature</h3>
+            <ul>
+                <li>Rezende, D., & Mohamed, S. (2015). Variational inference with normalizing flows. 
+                <em>Proceedings of the 32nd International Conference on Machine Learning</em> (ICML 2015). 
+                <a href="http://proceedings.mlr.press/v37/rezende15.html" target="_blank">Proceedings</a></li>
+                
+                <li>Papamakarios, G., Nalisnick, E., Rezende, D. J., Mohamed, S., & Lakshminarayanan, B. (2021). 
+                Normalizing flows for probabilistic modeling and inference. <em>Journal of Machine Learning Research</em>, 22, 1-64. 
+                <a href="https://jmlr.org/papers/v22/19-1028.html" target="_blank">JMLR</a></li>
+                
+                <li>Dinh, L., Krueger, D., & Bengio, Y. (2014). NICE: Non-linear independent components estimation. 
+                <em>arXiv preprint arXiv:1410.8516</em>. 
+                <a href="https://arxiv.org/abs/1410.8516" target="_blank">arXiv</a></li>
+                
+                <li>Dinh, L., Sohl-Dickstein, J., & Bengio, S. (2016). Density estimation using real NVP. 
+                <em>arXiv preprint arXiv:1605.08803</em>. 
+                <a href="https://arxiv.org/abs/1605.08803" target="_blank">arXiv</a></li>
+            </ul>
+            
+            <h3>Risk Management and Backtesting</h3>
+            <ul>
+                <li>Kupiec, P. H. (1995). Techniques for verifying the accuracy of risk measurement models. 
+                <em>Journal of Derivatives</em>, 3(2), 73-84. 
+                <a href="https://www.jstor.org/stable/2330743" target="_blank">JSTOR</a></li>
+                
+                <li>Christoffersen, P. F. (1998). Evaluating interval forecasts. 
+                <em>International Economic Review</em>, 39(4), 841-862. 
+                <a href="https://www.jstor.org/stable/2527343" target="_blank">JSTOR</a></li>
+                
+                <li>Basel Committee on Banking Supervision. (2011). <em>Basel III: A global regulatory framework for 
+                more resilient banks and banking systems</em>. Bank for International Settlements. 
+                <a href="https://www.bis.org/publ/bcbs158.pdf" target="_blank">PDF</a></li>
+            </ul>
+            
+            <h3>Financial Stylized Facts</h3>
+            <ul>
+                <li>Black, F. (1976). Studies of stock price volatility changes. 
+                <em>Proceedings of the 1976 Meeting of the Business and Economic Statistics Section, 
+                American Statistical Association</em>, 177-181.</li>
+                
+                <li>Cont, R. (2001). Empirical properties of asset returns: stylized facts and statistical issues. 
+                <em>Quantitative Finance</em>, 1(2), 223-236. 
+                <a href="https://doi.org/10.1080/713665670" target="_blank">DOI</a></li>
+            </ul>
+            
+            <h3>Statistical Methods</h3>
+            <ul>
+                <li>Akaike, H. (1974). A new look at the statistical model identification. 
+                <em>IEEE Transactions on Automatic Control</em>, 19(6), 716-723. 
+                <a href="https://doi.org/10.1109/TAC.1974.1100705" target="_blank">DOI</a></li>
+                
+                <li>Hill, B. M. (1975). A simple general approach to inference about the tail of a distribution. 
+                <em>Annals of Statistics</em>, 3(5), 1163-1174. 
+                <a href="https://www.jstor.org/stable/2958369" target="_blank">JSTOR</a></li>
+            </ul>
+        </section>
+        
+        <!-- File Locations Section -->
+        <section>
+            <h2>File Locations and Data Access</h2>
+            
+            <h3>Consolidated Results Files</h3>
+            <table>
+                <tr>
+                    <th>File Name</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Final_Dashboard.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>Comprehensive dashboard with all metrics and analyses</td>
+                </tr>
+                <tr>
+                    <td>NF_GARCH_Results_manual.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>NF-GARCH simulation results (chronological split & TS CV)</td>
+                </tr>
+                <tr>
+                    <td>Distributional_Metrics.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>KS distance, Wasserstein distance, Tail index, Skewness, Kurtosis</td>
+                </tr>
+                <tr>
+                    <td>Stylized_Facts.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>Volatility clustering, Leverage effects, Autocorrelation decay</td>
+                </tr>
+                <tr>
+                    <td>VaR_Backtesting.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>VaR exceedance rates, Kupiec test, Christoffersen test</td>
+                </tr>
+                <tr>
+                    <td>Stress_Testing.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>Historical crises and hypothetical shock scenarios</td>
+                </tr>
+                <tr>
+                    <td>NF_vs_Standard_GARCH_Comparison.xlsx</td>
+                    <td><code>consolidated/</code></td>
+                    <td>Side-by-side comparison with statistical significance tests</td>
+                </tr>
+            </table>
+            
+            <h3>Visualization Plots</h3>
+            <p>All visualization plots are saved in <code>dashboard_plots/</code>:</p>
+            <ul>
+                <li><code>mse_by_model_chrono.png</code> - MSE comparison by model</li>
+                <li><code>aic_by_model.png</code> - AIC comparison by model</li>
+                <li><code>ks_distance_by_model.png</code> - KS distance by model</li>
+                <li><code>wasserstein_distance_by_model.png</code> - Wasserstein distance by model</li>
+                <li><code>tail_index_by_model.png</code> - Tail index by model</li>
+                <li><code>volatility_clustering_by_class.png</code> - Volatility clustering by asset class</li>
+                <li><code>leverage_effect_by_class.png</code> - Leverage effect by asset class</li>
+                <li><code>var_exceedance_rates.png</code> - VaR exceedance rates</li>
+                <li><code>kupiec_pvalues.png</code> - Kupiec test p-values</li>
+                <li><code>historical_crisis_volatility.png</code> - Historical crisis volatility</li>
+                <li><code>hypothetical_shock_impact.png</code> - Hypothetical shock impact</li>
+                <li><code>nf_vs_standard_mse.png</code> - NF vs Standard MSE comparison</li>
+                <li><code>nf_vs_standard_by_class.png</code> - NF vs Standard by asset class</li>
+            </ul>
+            
+            <h3>Raw Data and Intermediate Results</h3>
+            <ul>
+                <li><strong>GARCH Fitting Results:</strong> <code>outputs/manual/garch_fitting/</code></li>
+                <li><strong>Residuals:</strong> <code>outputs/manual/residuals_by_model/</code></li>
+                <li><strong>NF Models:</strong> <code>outputs/manual/nf_models/</code></li>
+                <li><strong>Training Summaries:</strong> <code>outputs/manual/nf_models/training_summary.json</code></li>
+            </ul>
+        </section>
+        
+        <div class="footer">
+            <p><strong>Research Project:</strong> Evaluating the Impact of Normalising Flows on GARCH Models for Synthetic Financial Time Series Generation</p>
+            <p><strong>Author:</strong> Abdullah Hassan | <strong>Supervisors:</strong> Dr. Farai Mlambo, Dr. Wilson Tsakane Mongwe</p>
+            <p><strong>Institution:</strong> University of the Witwatersrand, Johannesburg | <strong>Degree:</strong> MSc Mathematical Statistics</p>
+            <p><strong>Repository:</strong> <a href="https://github.com/AIHawking187/Financial-SDG-GARCH" target="_blank">GitHub Repository</a></p>
+            <p style="margin-top: 20px; font-size: 0.9em;">Generated: <script>document.write(new Date().toLocaleDateString());</script></p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive NF-GARCH Research Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .tab:hover {
+            background: #e9ecef;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .chart-container {
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        .model-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .standard-garch {
+            background: #ff9800;
+            color: #000;
+        }
+        .nf-garch {
+            background: #4caf50;
+            color: white;
+        }
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Comprehensive NF-GARCH Research Dashboard</h1>
+            <p>Complete Analysis: Model Performance, Risk Assessment, Stress Testing, Stylized Facts & More</p>
+            <p><small>Generated: 2025-10-08 22:38:25</small></p>
+        </div>
+        
+        <div class="content">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('overview')">Overview</button>
+                <button class="tab" onclick="showTab('performance')">Model Performance</button>
+                <button class="tab" onclick="showTab('risk')">Risk Assessment</button>
+                <button class="tab" onclick="showTab('stress')">Stress Testing</button>
+                <button class="tab" onclick="showTab('stylized')">Stylized Facts</button>
+                <button class="tab" onclick="showTab('quantitative')">Quantitative Metrics</button>
+                <button class="tab" onclick="showTab('distributional')">Distributional Metrics</button>
+                <button class="tab" onclick="showTab('engine')">Engine Analysis</button>
+                <button class="tab" onclick="showTab('comparison')">Model Comparison</button>
+            </div>
+            
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="section">
+                    <h2>🔍 Executive Summary</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">8</div>
+                            <div class="metric-label">Total Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">NF-GARCH Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">Standard GARCH Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">Manual Engine</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">RUGARCH Engine</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">gjrGARCH</div>
+                            <div class="metric-label">Best Model</div>
+                        </div>
+                    </div>
+                    
+                    <div class="success-box">
+                        <h3>Complete Analysis Dashboard</h3>
+                        <p><strong>This dashboard includes ALL analysis components:</strong></p>
+                        <ul>
+                            <li>Model Performance Analysis</li>
+                            <li>Risk Assessment Results</li>
+                            <li>Stress Testing Analysis</li>
+                            <li>Stylized Facts Analysis</li>
+                            <li>Quantitative Metrics</li>
+                            <li>Distributional Metrics</li>
+                            <li>Engine Analysis</li>
+                            <li>Model Comparison</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Performance Tab -->
+            <div id="performance" class="tab-content">
+                <div class="section">
+                    <h2>Model Performance Analysis</h2>
+                    <div class="chart-container" id="performance-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>Engine</th><th>MSE</th><th>MAE</th><th>Rank</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000471</td><td>0.000000</td><td>1</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000313</td><td>0.000000</td><td>2</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>1.181375</td><td>0.000000</td><td>3</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000278</td><td>0.000000</td><td>4</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000265</td><td>0.000000</td><td>5</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000133</td><td>0.000000</td><td>6</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000132</td><td>0.000000</td><td>7</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000177</td><td>0.000000</td><td>8</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Risk Assessment Tab -->
+            <div id="risk" class="tab-content">
+                <div class="section">
+                    <h2>Risk Assessment Results</h2>
+                    <div class="chart-container" id="risk-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>VaR 95%</th><th>VaR 99%</th><th>Violation Rate 95%</th><th>Violation Rate 99%</th><th>Kupiec P-Value</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.0302</td><td>0.0106</td><td>0.0319</td><td>0.0116</td><td>0.8709</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.0387</td><td>0.0198</td><td>0.0380</td><td>0.0110</td><td>0.6367</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.0375</td><td>0.0227</td><td>0.0451</td><td>0.0195</td><td>0.3891</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.0405</td><td>0.0173</td><td>0.0349</td><td>0.0183</td><td>0.7860</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.0487</td><td>0.0273</td><td>0.0536</td><td>0.0171</td><td>0.0730</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.0337</td><td>0.0283</td><td>0.0701</td><td>0.0058</td><td>0.7935</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.0251</td><td>0.0214</td><td>0.0369</td><td>0.0125</td><td>0.8993</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.0264</td><td>0.0122</td><td>0.0662</td><td>0.0146</td><td>0.4912</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Stress Testing Tab -->
+            <div id="stress" class="tab-content">
+                <div class="section">
+                    <h2>Stress Testing Analysis</h2>
+                    <div class="chart-container" id="stress-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>Convergence Rate</th><th>Robustness Score</th><th>Max Drawdown</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.9116</td><td>0.7180</td><td>0.1566</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.9689</td><td>0.7363</td><td>0.1496</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.9199</td><td>0.9078</td><td>0.2048</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.9270</td><td>0.7720</td><td>0.1258</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.9676</td><td>0.9304</td><td>0.1927</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.8624</td><td>0.8612</td><td>0.2037</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.9557</td><td>0.8148</td><td>0.1614</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.9188</td><td>0.7615</td><td>0.2777</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Stylized Facts Tab -->
+            <div id="stylized" class="tab-content">
+                <div class="section">
+                    <h2>Stylized Facts Analysis</h2>
+                    <div class="chart-container" id="stylized-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>Tail Index</th><th>Autocorr Decay</th><th>Volatility Clustering</th><th>Asymmetry</th><th>Hurst Exponent</th><th>Kurtosis</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>3.0013</td><td>0.3086</td><td>0.6212</td><td>-0.2158</td><td>0.5807</td><td>3.9595</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>3.9856</td><td>0.2233</td><td>0.6138</td><td>-0.0919</td><td>0.4975</td><td>3.1827</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>3.3029</td><td>0.3781</td><td>0.7798</td><td>-0.2892</td><td>0.5726</td><td>6.5882</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>3.4458</td><td>0.1754</td><td>0.8133</td><td>0.0091</td><td>0.4290</td><td>4.1727</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>3.6143</td><td>0.2564</td><td>0.7663</td><td>-0.1066</td><td>0.4413</td><td>5.3933</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>3.4221</td><td>0.2585</td><td>0.7295</td><td>-0.0104</td><td>0.4613</td><td>5.9507</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>3.9557</td><td>0.3373</td><td>0.8116</td><td>-0.0274</td><td>0.5274</td><td>7.1307</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>3.7377</td><td>0.3097</td><td>0.8781</td><td>-0.1790</td><td>0.4582</td><td>7.2348</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Quantitative Metrics Tab -->
+            <div id="quantitative" class="tab-content">
+                <div class="section">
+                    <h2>Quantitative Metrics</h2>
+                    <div class="chart-container" id="quantitative-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>RMSE</th><th>MAE</th><th>AIC</th><th>BIC</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.021703</td><td>0.012914</td><td>-27993.33</td><td>-27964.46</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.017702</td><td>0.011222</td><td>-28244.76</td><td>-28206.27</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>1.086911</td><td>0.639552</td><td>27401.31</td><td>27439.80</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.016680</td><td>0.010099</td><td>-28273.75</td><td>-28235.26</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.016286</td><td>0.009980</td><td>-6.24</td><td>-6.18</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.011516</td><td>0.004990</td><td>13697.57</td><td>13716.85</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.011498</td><td>0.004983</td><td>-14125.50</td><td>-14106.22</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.013297</td><td>0.006652</td><td>-9335.23</td><td>-9325.58</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Distributional Metrics Tab -->
+            <div id="distributional" class="tab-content">
+                <div class="section">
+                    <h2>Distributional Metrics</h2>
+                    <div class="chart-container" id="distributional-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Model</th><th>Type</th><th>KS Distance</th><th>Wasserstein Distance</th><th>KL Divergence</th><th>JS Divergence</th></tr>
+                        <tr><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.030078</td><td>0.048876</td><td>0.170680</td><td>0.021345</td></tr><tr><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.086985</td><td>0.026066</td><td>0.226750</td><td>0.059529</td></tr><tr><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.078496</td><td>0.035462</td><td>0.170940</td><td>0.096601</td></tr><tr><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>0.116741</td><td>0.043497</td><td>0.189402</td><td>0.074906</td></tr><tr><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.017994</td><td>0.043640</td><td>0.043893</td><td>0.051867</td></tr><tr><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.061575</td><td>0.033485</td><td>0.114740</td><td>0.068642</td></tr><tr><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.091997</td><td>0.046608</td><td>0.109240</td><td>0.069999</td></tr><tr><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>0.081240</td><td>0.035271</td><td>0.199631</td><td>0.074661</td></tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Engine Analysis Tab -->
+            <div id="engine" class="tab-content">
+                <div class="section">
+                    <h2>Engine Analysis</h2>
+                    <div class="chart-container" id="engine-chart"></div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">114</div>
+                            <div class="metric-label">Manual Engine Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">16</div>
+                            <div class="metric-label">RUGARCH Engine Models</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">0.083258</div>
+                            <div class="metric-label">Manual Engine Avg MSE</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">0.000166</div>
+                            <div class="metric-label">RUGARCH Engine Avg MSE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Comparison Tab -->
+            <div id="comparison" class="tab-content">
+                <div class="section">
+                    <h2>Model Comparison</h2>
+                    <div class="chart-container" id="comparison-chart"></div>
+                    <table class="data-table">
+                        <tr><th>Rank</th><th>Model</th><th>Type</th><th>Engine</th><th>Avg MSE</th></tr>
+                        <tr><td>1</td><td>gjrGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000132</td></tr><tr><td>2</td><td>eGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000133</td></tr><tr><td>3</td><td>sGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000177</td></tr><tr><td>4</td><td>TGARCH</td><td><span class='model-type standard-garch'>Standard GARCH</span></td><td>rugarch</td><td>0.000265</td></tr><tr><td>5</td><td>NF_tGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000278</td></tr><tr><td>6</td><td>NF_gjrGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000313</td></tr><tr><td>7</td><td>NF_sGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>0.000471</td></tr><tr><td>8</td><td>NF_eGARCH</td><td><span class='model-type nf-garch'>NF-GARCH</span></td><td>manual</td><td>1.181375</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            var tabContents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // Remove active class from all tabs
+            var tabs = document.getElementsByClassName('tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+        // Performance Chart
+        var modelData = {"models": ["NF_sGARCH", "NF_gjrGARCH", "NF_eGARCH", "NF_tGARCH", "TGARCH", "eGARCH", "gjrGARCH", "sGARCH"], "mse_values": [0.0004710235760764478, 0.00031337600622295214, 1.1813746906243392, 0.00027821647988907305, 0.000265231788437, 0.000132627623623, 0.0001322138869509, 0.00017682049061406666], "model_types": ["NF-GARCH", "NF-GARCH", "NF-GARCH", "NF-GARCH", "Standard GARCH", "Standard GARCH", "Standard GARCH", "Standard GARCH"], "engines": ["manual", "manual", "manual", "manual", "rugarch", "rugarch", "rugarch", "rugarch"], "total_models": 8, "nf_garch_models": 4, "standard_garch_models": 4, "manual_engine_models": 4, "rugarch_engine_models": 4, "best_model": "gjrGARCH"};
+        if (modelData.models && modelData.models.length > 0) {
+            var performanceTrace = {
+                x: modelData.models,
+                y: modelData.mse_values,
+                type: 'bar',
+                marker: {
+                    color: modelData.model_types.map(type => 
+                        type === 'NF-GARCH' ? '#4caf50' : '#ff9800'
+                    )
+                },
+                text: modelData.mse_values.map(val => val.toFixed(6)),
+                textposition: 'auto'
+            };
+            
+            var performanceLayout = {
+                title: 'Model Performance - MSE (Green=NF-GARCH, Orange=Standard GARCH)',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'Mean Squared Error' },
+                height: 400
+            };
+            
+            Plotly.newPlot('performance-chart', [performanceTrace], performanceLayout);
+        }
+        
+        // Risk Assessment Chart
+        var riskData = [{"model": "NF_sGARCH", "model_type": "NF-GARCH", "var_95": 0.030173565493282973, "var_99": 0.01061032578117107, "violation_rate_95": 0.03187023031291196, "violation_rate_99": 0.011640206847703484, "kupiec_pvalue": 0.8709339284535154}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "var_95": 0.03870270645105568, "var_99": 0.01976954608055931, "violation_rate_95": 0.037992020820968544, "violation_rate_99": 0.011010463789997623, "kupiec_pvalue": 0.6367123036256785}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "var_95": 0.037460422484808464, "var_99": 0.022658465796768484, "violation_rate_95": 0.04514636819960166, "violation_rate_99": 0.019452583627515094, "kupiec_pvalue": 0.3890517253047775}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "var_95": 0.040497962975127644, "var_99": 0.017330300796852736, "violation_rate_95": 0.0348557583905266, "violation_rate_99": 0.01825204043508587, "kupiec_pvalue": 0.7859607993019768}, {"model": "TGARCH", "model_type": "Standard GARCH", "var_95": 0.04865275578091293, "var_99": 0.027261403607850607, "violation_rate_95": 0.05358288814524591, "violation_rate_99": 0.017110351105063887, "kupiec_pvalue": 0.07303034329036945}, {"model": "eGARCH", "model_type": "Standard GARCH", "var_95": 0.03373522542053996, "var_99": 0.02834885842858654, "violation_rate_95": 0.07009792606074326, "violation_rate_99": 0.005819900734719035, "kupiec_pvalue": 0.7935182548524996}, {"model": "gjrGARCH", "model_type": "Standard GARCH", "var_95": 0.02505332808439454, "var_99": 0.021357411374903587, "violation_rate_95": 0.03686952418358862, "violation_rate_99": 0.012492163582447278, "kupiec_pvalue": 0.8993198366060867}, {"model": "sGARCH", "model_type": "Standard GARCH", "var_95": 0.02639138531593025, "var_99": 0.012172884833261033, "violation_rate_95": 0.06617849769610867, "violation_rate_99": 0.014636554327527813, "kupiec_pvalue": 0.4911722307102444}];
+        if (riskData.length > 0) {
+            var riskTrace = {
+                x: riskData.map(d => d.model),
+                y: riskData.map(d => d.var_95),
+                type: 'bar',
+                marker: {
+                    color: riskData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'VaR 95%'
+            };
+            
+            var riskLayout = {
+                title: 'Risk Assessment - VaR 95%',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'VaR 95%' },
+                height: 400
+            };
+            
+            Plotly.newPlot('risk-chart', [riskTrace], riskLayout);
+        }
+        
+        // Stress Testing Chart
+        var stressData = [{"model": "NF_sGARCH", "model_type": "NF-GARCH", "convergence_rate": 0.9116028831427393, "robustness_score": 0.7180094254623748, "max_drawdown": 0.15656601479712817}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "convergence_rate": 0.9688624957041132, "robustness_score": 0.7362756708264241, "max_drawdown": 0.1495730875590982}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "convergence_rate": 0.9198853987605736, "robustness_score": 0.9078422345376613, "max_drawdown": 0.20482256962558065}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "convergence_rate": 0.9270489398779121, "robustness_score": 0.771990918524702, "max_drawdown": 0.1257973402546428}, {"model": "TGARCH", "model_type": "Standard GARCH", "convergence_rate": 0.9675597185833044, "robustness_score": 0.930406045767526, "max_drawdown": 0.1927393257191937}, {"model": "eGARCH", "model_type": "Standard GARCH", "convergence_rate": 0.8623675077133651, "robustness_score": 0.861236615128893, "max_drawdown": 0.20367150570748793}, {"model": "gjrGARCH", "model_type": "Standard GARCH", "convergence_rate": 0.9556986301843398, "robustness_score": 0.8148080460029392, "max_drawdown": 0.16143378266191807}, {"model": "sGARCH", "model_type": "Standard GARCH", "convergence_rate": 0.9188059879383709, "robustness_score": 0.7615359555759567, "max_drawdown": 0.277710908981753}];
+        if (stressData.length > 0) {
+            var stressTrace = {
+                x: stressData.map(d => d.model),
+                y: stressData.map(d => d.robustness_score),
+                type: 'bar',
+                marker: {
+                    color: stressData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'Robustness Score'
+            };
+            
+            var stressLayout = {
+                title: 'Stress Testing - Robustness Scores',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'Robustness Score' },
+                height: 400
+            };
+            
+            Plotly.newPlot('stress-chart', [stressTrace], stressLayout);
+        }
+        
+        // Stylized Facts Chart
+        var stylizedData = [{"model": "NF_sGARCH", "model_type": "NF-GARCH", "tail_index": 3.001275648143374, "autocorr_decay": 0.3085813996232648, "volatility_clustering": 0.621243969365387, "asymmetry": -0.21577601740828833, "hurst_exponent": 0.5806546473855451, "kurtosis": 3.9595038730753576}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "tail_index": 3.9856202816762236, "autocorr_decay": 0.22327516229106106, "volatility_clustering": 0.6138041154879776, "asymmetry": -0.09189007550908773, "hurst_exponent": 0.4975271575284223, "kurtosis": 3.1826732156194417}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "tail_index": 3.3029282798622868, "autocorr_decay": 0.37809955313075727, "volatility_clustering": 0.7798060008260834, "asymmetry": -0.2892480047841431, "hurst_exponent": 0.5726106058369016, "kurtosis": 6.58816054836919}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "tail_index": 3.4458203885794023, "autocorr_decay": 0.17537263409587295, "volatility_clustering": 0.8133140221588357, "asymmetry": 0.009092895334814333, "hurst_exponent": 0.4289524378839477, "kurtosis": 4.172722957483251}, {"model": "TGARCH", "model_type": "Standard GARCH", "tail_index": 3.6143464273221855, "autocorr_decay": 0.25635414355810116, "volatility_clustering": 0.766288318036411, "asymmetry": -0.10661638512812235, "hurst_exponent": 0.4413014730217447, "kurtosis": 5.393323986150091}, {"model": "eGARCH", "model_type": "Standard GARCH", "tail_index": 3.422136598859078, "autocorr_decay": 0.2585059180645047, "volatility_clustering": 0.7294748154055852, "asymmetry": -0.010435788921753342, "hurst_exponent": 0.46131227283286697, "kurtosis": 5.950721836146346}, {"model": "gjrGARCH", "model_type": "Standard GARCH", "tail_index": 3.9556938474496617, "autocorr_decay": 0.3372813434698289, "volatility_clustering": 0.8115501273505497, "asymmetry": -0.027434055286097048, "hurst_exponent": 0.527390808356929, "kurtosis": 7.130742061311414}, {"model": "sGARCH", "model_type": "Standard GARCH", "tail_index": 3.7377355719662813, "autocorr_decay": 0.3097453202627143, "volatility_clustering": 0.8780517778622657, "asymmetry": -0.17902881908024473, "hurst_exponent": 0.458211790974577, "kurtosis": 7.23483072734102}];
+        if (stylizedData.length > 0) {
+            var stylizedTrace = {
+                x: stylizedData.map(d => d.model),
+                y: stylizedData.map(d => d.volatility_clustering),
+                type: 'bar',
+                marker: {
+                    color: stylizedData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'Volatility Clustering'
+            };
+            
+            var stylizedLayout = {
+                title: 'Stylized Facts - Volatility Clustering',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'Volatility Clustering' },
+                height: 400
+            };
+            
+            Plotly.newPlot('stylized-chart', [stylizedTrace], stylizedLayout);
+        }
+        
+        // Quantitative Metrics Chart
+        var quantitativeData = [{"model": "NF_sGARCH", "model_type": "NF-GARCH", "rmse": 0.021703077571543807, "mae": 0.012914164776001309, "aic": -27993.3295905363, "bic": -27964.46136843996}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "rmse": 0.017702429387599663, "mae": 0.01122216556071127, "aic": -28244.756789512758, "bic": -28206.265826717652}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "rmse": 1.0869106175874532, "mae": 0.6395521004856297, "aic": 27401.31051074215, "bic": 27439.80147353725}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "rmse": 0.016679822537697248, "mae": 0.010099466537561871, "aic": -28273.751316333106, "bic": -28235.260353538}, {"model": "TGARCH", "model_type": "Standard GARCH", "rmse": 0.01628593836525854, "mae": 0.0099795931204911, "aic": -6.23674331462475, "bic": -6.17773880124684}, {"model": "eGARCH", "model_type": "Standard GARCH", "rmse": 0.011516406714900269, "mae": 0.004990286375666, "aic": 13697.57275742767, "bic": 13716.847741081907}, {"model": "gjrGARCH", "model_type": "Standard GARCH", "rmse": 0.011498429760228133, "mae": 0.0049825418452868, "aic": -14125.49604086492, "bic": -14106.22105721068}, {"model": "sGARCH", "model_type": "Standard GARCH", "rmse": 0.013297386608430495, "mae": 0.006651759914672967, "aic": -9335.23289820775, "bic": -9325.582060121662}];
+        if (quantitativeData.length > 0) {
+            var quantitativeTrace = {
+                x: quantitativeData.map(d => d.model),
+                y: quantitativeData.map(d => d.rmse),
+                type: 'bar',
+                marker: {
+                    color: quantitativeData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'RMSE'
+            };
+            
+            var quantitativeLayout = {
+                title: 'Quantitative Metrics - RMSE',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'RMSE' },
+                height: 400
+            };
+            
+            Plotly.newPlot('quantitative-chart', [quantitativeTrace], quantitativeLayout);
+        }
+        
+        // Distributional Metrics Chart
+        var distributionalData = [{"model": "NF_sGARCH", "model_type": "NF-GARCH", "ks_distance": 0.030077843832231894, "wasserstein_distance": 0.04887575671576046, "kl_divergence": 0.17068018055732684, "js_divergence": 0.02134516008797268}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "ks_distance": 0.08698503422839143, "wasserstein_distance": 0.026065977951913066, "kl_divergence": 0.22674972483721076, "js_divergence": 0.059528852942084}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "ks_distance": 0.07849635699047311, "wasserstein_distance": 0.03546181664447294, "kl_divergence": 0.17094019211751454, "js_divergence": 0.09660088653789252}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "ks_distance": 0.11674096414481483, "wasserstein_distance": 0.043496996296067805, "kl_divergence": 0.1894017128789168, "js_divergence": 0.07490601178612605}, {"model": "TGARCH", "model_type": "Standard GARCH", "ks_distance": 0.01799361193091807, "wasserstein_distance": 0.0436398534774851, "kl_divergence": 0.04389342169339992, "js_divergence": 0.051866920278367055}, {"model": "eGARCH", "model_type": "Standard GARCH", "ks_distance": 0.06157510466141703, "wasserstein_distance": 0.03348494439580029, "kl_divergence": 0.11474022594531594, "js_divergence": 0.06864242333608778}, {"model": "gjrGARCH", "model_type": "Standard GARCH", "ks_distance": 0.0919969547282087, "wasserstein_distance": 0.04660812667597507, "kl_divergence": 0.10924044574212609, "js_divergence": 0.06999862813175824}, {"model": "sGARCH", "model_type": "Standard GARCH", "ks_distance": 0.08124031287874742, "wasserstein_distance": 0.03527117532979919, "kl_divergence": 0.19963064024271532, "js_divergence": 0.07466057396811933}];
+        if (distributionalData.length > 0) {
+            var distributionalTrace = {
+                x: distributionalData.map(d => d.model),
+                y: distributionalData.map(d => d.ks_distance),
+                type: 'bar',
+                marker: {
+                    color: distributionalData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'KS Distance'
+            };
+            
+            var distributionalLayout = {
+                title: 'Distributional Metrics - KS Distance',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'KS Distance' },
+                height: 400
+            };
+            
+            Plotly.newPlot('distributional-chart', [distributionalTrace], distributionalLayout);
+        }
+        
+        // Engine Analysis Chart
+        var engineData = {"manual_models": 114, "rugarch_models": 16, "manual_avg_mse": 0.08325814551359105, "rugarch_avg_mse": 0.00016567203517837498};
+        var engineTrace = {
+            x: ['Manual Engine', 'RUGARCH Engine'],
+            y: [engineData.manual_avg_mse, engineData.rugarch_avg_mse],
+            type: 'bar',
+            marker: { color: ['#4caf50', '#ff9800'] },
+            name: 'Average MSE'
+        };
+        
+        var engineLayout = {
+            title: 'Engine Analysis - Average MSE',
+            xaxis: { title: 'Engine' },
+            yaxis: { title: 'Average MSE' },
+            height: 400
+        };
+        
+        Plotly.newPlot('engine-chart', [engineTrace], engineLayout);
+        
+        // Model Comparison Chart
+        var comparisonData = [{"model": "gjrGARCH", "model_type": "Standard GARCH", "engine": "rugarch", "avg_mse": 0.0001322138869509, "rank": 1}, {"model": "eGARCH", "model_type": "Standard GARCH", "engine": "rugarch", "avg_mse": 0.000132627623623, "rank": 2}, {"model": "sGARCH", "model_type": "Standard GARCH", "engine": "rugarch", "avg_mse": 0.00017682049061406666, "rank": 3}, {"model": "TGARCH", "model_type": "Standard GARCH", "engine": "rugarch", "avg_mse": 0.000265231788437, "rank": 4}, {"model": "NF_tGARCH", "model_type": "NF-GARCH", "engine": "manual", "avg_mse": 0.00027821647988907305, "rank": 5}, {"model": "NF_gjrGARCH", "model_type": "NF-GARCH", "engine": "manual", "avg_mse": 0.00031337600622295214, "rank": 6}, {"model": "NF_sGARCH", "model_type": "NF-GARCH", "engine": "manual", "avg_mse": 0.0004710235760764478, "rank": 7}, {"model": "NF_eGARCH", "model_type": "NF-GARCH", "engine": "manual", "avg_mse": 1.1813746906243392, "rank": 8}];
+        if (comparisonData.length > 0) {
+            var comparisonTrace = {
+                x: comparisonData.map(d => d.model),
+                y: comparisonData.map(d => d.avg_mse),
+                type: 'bar',
+                marker: {
+                    color: comparisonData.map(d => d.model_type === 'NF-GARCH' ? '#4caf50' : '#ff9800')
+                },
+                name: 'Average MSE'
+            };
+            
+            var comparisonLayout = {
+                title: 'Model Comparison - Average MSE',
+                xaxis: { title: 'Model' },
+                yaxis: { title: 'Average MSE' },
+                height: 400
+            };
+            
+            Plotly.newPlot('comparison-chart', [comparisonTrace], comparisonLayout);
+        }
+    </script>
+</body>
+</html>
