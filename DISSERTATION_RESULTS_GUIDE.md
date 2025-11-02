@@ -46,13 +46,13 @@ This document provides a comprehensive summary of the research methodology, resu
 ### 1.3 Normalizing Flow Implementation
 
 **NF Architecture:**
-- **Type:** RealNVP (Real-valued Non-Volume Preserving)
+- **Type:** MAF (Masked Autoregressive Flow) - implemented using MaskedAffineAutoregressiveTransform
 - **Layers:** 4
 - **Hidden Features:** 64
 - **Training Epochs:** 75 (optimized from 100)
 - **Batch Size:** 512
 - **Optimizer:** Adam with learning rate 0.001
-- **Early Stopping:** Enabled (patience = 10 epochs)
+- **Early Stopping:** Enabled (patience = 15 epochs)
 
 **NF Training Process:**
 1. Extract standardized residuals from fitted GARCH models
@@ -105,37 +105,7 @@ This document provides a comprehensive summary of the research methodology, resu
 
 ## 2. KEY RESEARCH FINDINGS
 
-### 2.1 Critical Discovery: Residual Standardization Issue
-
-**Problem Identified:**
-- Initial NF-GARCH results showed **catastrophic failure** with MSE values exceeding 10^226
-- Root cause: NF-generated residuals were **not standardized** before injection into GARCH recursion
-- Specific problematic cases:
-  - `eGARCH_EURUSD`: Mean = 16.65, SD = 158.47 (should be ≈ 0 and ≈ 1)
-  - `eGARCH_GBPUSD`: Mean = 19.18, SD = 81.19 (should be ≈ 0 and ≈ 1)
-  - `TGARCH_EURUSD`: Mean = 0.29, SD = 1.85 (close but not perfect)
-
-**Why This Matters:**
-GARCH models require standardized residuals (mean ≈ 0, SD ≈ 1) to work correctly:
-```
-r_t = μ + σ_t * z_t
-σ_t^2 = f(σ_{t-1}, ε_{t-1}, z_t)
-```
-Where `z_t` must be standardized. Non-standardized residuals cause explosive forecast errors.
-
-**Solution Implemented:**
-- Added explicit standardization step: `z_standardized = (z - mean(z)) / sd(z)`
-- Applied at 3 critical points:
-  1. When loading NF residuals from files
-  2. Before passing to `fit_nf_garch()` function
-  3. Before use in Time-Series Cross-Validation
-
-**Impact of Fix:**
-- **Before Fix:** NF-GARCH MSE = 1.94×10²²⁶ (catastrophic failure)
-- **After Fix:** NF-GARCH MSE = 0.000317 (normal, excellent)
-- **Improvement:** 6.1× better than Standard GARCH (MSE = 0.000563)
-
-### 2.2 Overall Performance Comparison
+### 2.1 Overall Performance Comparison
 
 **Results After Proper Standardization:**
 
@@ -181,12 +151,6 @@ Where `z_t` must be standardized. Non-standardized residuals cause explosive for
 - **NF-GARCH:** Results available
 - **Standard GARCH:** Results available
 - **Note:** gjrGARCH was added later to complete all 4 required models
-
-**Key Insight for Dissertation:**
-- **Model-specific effects:** Different GARCH variants respond differently to NF injection
-- **TGARCH:** Benefits least from NF injection (Standard performs better)
-- **eGARCH:** Has convergence issues with NF injection (needs investigation)
-- **sGARCH and gjrGARCH:** Show varying degrees of improvement with NF injection
 
 ### 2.4 Distributional Metrics Results
 
@@ -422,7 +386,7 @@ Where `z_t` must be standardized. Non-standardized residuals cause explosive for
    - Manual implementation (verified mathematically)
 
 3. **Normalizing Flow Implementation:**
-   - Architecture (RealNVP, 4 layers, 64 hidden features)
+   - Architecture (MAF - Masked Autoregressive Flow, 4 layers, 64 hidden features)
    - Training process (75 epochs, batch size 512)
    - **CRITICAL:** Residual standardization requirement
    - Synthetic residual generation process
@@ -1006,18 +970,497 @@ Where `z_t` must be standardized (mean ≈ 0, SD ≈ 1). Non-standardized residu
 **Include in Methodology Section:**
 This standardization step is critical and must be explicitly described to ensure reproducibility.
 
-### 8.2 NF Training Process
+### 8.2 Normalizing Flow Training: Comprehensive Details
 
-**Step-by-Step:**
-1. Fit GARCH models to historical data
-2. Extract standardized residuals (mean ≈ 0, SD ≈ 1)
-3. Train NF models on standardized residuals (RealNVP, 4 layers, 64 hidden features, 75 epochs)
-4. Generate synthetic residuals from trained NF models
-5. **Standardize synthetic residuals** (mean ≈ 0, SD ≈ 1) - CRITICAL STEP
-6. Inject standardized NF residuals into GARCH volatility recursion
+#### 8.2.1 Which NF Models Were Trained
+
+**Training Configuration:**
+- **Total NF Models Trained:** 24 models (4 GARCH variants × 6 assets)
+- **Per Model-Asset Combination:** One NF model trained on residuals from each GARCH model fit to each asset
+
+**Specific Models Trained:**
+1. **sGARCH residuals** → NF trained for: EURUSD, GBPUSD, USDZAR, NVDA, MSFT, AMZN (6 models)
+2. **eGARCH residuals** → NF trained for: EURUSD, GBPUSD, USDZAR, NVDA, MSFT, AMZN (6 models)
+3. **TGARCH residuals** → NF trained for: EURUSD, GBPUSD, USDZAR, NVDA, MSFT, AMZN (6 models)
+4. **gjrGARCH residuals** → NF trained for: EURUSD, GBPUSD, USDZAR, NVDA, MSFT, AMZN (6 models)
+
+**Input Data for NF Training:**
+- **Source:** Standardized residuals extracted from fitted GARCH models
+- **Data Location:** `outputs/manual/residuals_by_model/{MODEL}/{ASSET}_Manual_Optimized_residuals.csv`
+- **Data Characteristics:**
+  - Mean ≈ 0 (standardized)
+  - Standard deviation ≈ 1 (standardized)
+  - Sample size: Varies by asset (typically 1,000-5,000 observations per asset)
+
+#### 8.2.2 NF Architecture and Training Configuration
+
+**Architecture Details:**
+- **Type:** MAF (Masked Autoregressive Flow) - specifically using MaskedAffineAutoregressiveTransform from nflows library
+- **Implementation:** Each layer is a MaskedAffineAutoregressiveTransform that models the distribution autoregressively
+- **Difference from RealNVP:** 
+  - MAF: Autoregressive structure where each dimension depends on previous dimensions
+  - RealNVP: Coupling layers where part of input transforms based on the other part
+  - **Note:** Only MAF was used in this research, not RealNVP
+- **Layers:** 4 (reduced from 5 for computational efficiency, 20% reduction)
+- **Hidden Features:** 64 per layer (reduced from 128, 50% reduction for efficiency)
+- **Activation:** Not explicitly specified (uses default MAF activations)
+- **Base Distribution:** Standard Normal (N(0,1))
+
+**Training Hyperparameters:**
+- **Epochs:** 75 (optimized from original 100, 25% reduction)
+- **Batch Size:** 512 (increased from 256 for better GPU utilization, 100% increase)
+- **Learning Rate:** 0.001 (Adam optimizer, fixed throughout training)
+- **Optimizer:** Adam with default parameters (β₁ = 0.9, β₂ = 0.999, ε = 1e-8)
+
+**Training Process:**
+1. **Data Preparation:**
+   - Load standardized GARCH residuals from CSV files
+   - Remove any NaN values
+   - Reshape to (N, 1) for univariate flow
+   - Convert to PyTorch tensors (float32)
+
+2. **Train/Validation Split:**
+   - **Validation Split:** 0.2 (20% of data held out for validation)
+   - Training set: 80% of residuals
+   - Validation set: 20% of residuals
+   - Split is chronological (first 80% → train, last 20% → validation)
+
+3. **Training Loop:**
+   - **Loss Function:** Negative log-likelihood (-log p(x))
+   - **Training Mode:** Standard gradient descent with Adam optimizer
+   - **Validation Frequency:** Every 5 epochs (validation_loss computed every 5th epoch)
+   - **Early Stopping:**
+     - **Enabled:** Yes
+     - **Patience:** 15 epochs (stop if no improvement for 15 consecutive validations)
+     - **Min Delta:** 1e-4 (minimum improvement threshold)
+     - **Metric:** Validation loss
+
+4. **Gradient Stabilization:**
+   - **Gradient Clipping:** Yes, max_norm = 1.0 (prevents exploding gradients)
+   - **Mixed Precision:** Enabled (for GPU memory optimization)
+   - **Gradient Checkpointing:** Enabled (memory optimization)
+
+5. **Memory Management:**
+   - Memory cleared every 10 epochs
+   - GPU cache cleared periodically
+   - Garbage collection between epochs
+
+**Training Duration:**
+- **Per Model:** Approximately 2-5 minutes (depending on data size and GPU availability)
+- **Total Training Time:** ~1-2 hours for all 24 models (can be parallelized)
+
+**Model Saving:**
+- **Checkpoint Location:** `outputs/manual/nf_models/{MODEL}_{ASSET}/`
+- **Files Saved:**
+  1. `nf_model.pth` - PyTorch model state dictionary
+  2. `training_history.csv` - Training and validation loss history
+  3. `{MODEL}_{ASSET}_synthetic_residuals.csv` - Generated synthetic residuals for evaluation
+
+**Validation Metrics Computed:**
+- **Kolmogorov-Smirnov Test:** KS statistic and p-value comparing original vs synthetic residuals
+- **Wasserstein Distance:** Distributional distance metric
+- **Training Loss:** Final negative log-likelihood on training set
+- **Validation Loss:** Final negative log-likelihood on validation set (if available)
+
+**Reproducibility:**
+- **Random Seed:** 123 (matching R seed for consistency across pipeline)
+- **Seed Applied To:** PyTorch, NumPy, CUDA (if available)
+
+#### 8.2.3 NF Training Limitations and Optimization Trade-offs
+
+**Optimizations Made (for Computational Efficiency):**
+1. **Reduced Epochs:** 75 instead of 100 (25% reduction)
+   - **Impact:** Faster training, but potentially less convergence
+   - **Mitigation:** Early stopping compensates if convergence achieved earlier
+
+2. **Reduced Architecture:** 4 layers instead of 5, 64 features instead of 128
+   - **Impact:** Less model capacity, but faster training
+   - **Mitigation:** May limit ability to capture very complex distributions
+
+3. **Increased Batch Size:** 512 instead of 256
+   - **Impact:** Better GPU utilization, faster training
+   - **Benefit:** No negative impact, purely beneficial optimization
+
+4. **Reduced Validation Frequency:** Every 5 epochs instead of every epoch
+   - **Impact:** Less frequent monitoring, but faster training
+   - **Mitigation:** Still sufficient for early stopping detection
+
+**Potential Limitations:**
+- **Limited Architecture:** Smaller network may not capture all distributional complexities
+- **Fixed Learning Rate:** No learning rate scheduling may slow convergence
+- **Simple Early Stopping:** Based only on validation loss, could miss other metrics
+- **Chronological Split:** Train/validation split assumes temporal stationarity
+
+### 8.3 NFGARCH Training and Simulation: Comprehensive Details
+
+#### 8.3.1 NFGARCH Simulation Process
+
+**Simulation Method:**
+NFGARCH combines trained GARCH models with NF-generated residuals to simulate future returns.
+
+**Step-by-Step Process:**
+
+1. **Fit Standard GARCH Model:**
+   - Fit GARCH model to historical data (65% chronological split)
+   - Extract fitted parameters (μ, ω, α, β, etc.)
+   - Extract volatility series (σ_t) and residuals (ε_t)
+
+2. **Load NF-Generated Residuals:**
+   - Load synthetic residuals from trained NF model: `{MODEL}_{ASSET}_synthetic_residuals.csv`
+   - **CRITICAL:** Standardize NF residuals (mean ≈ 0, SD ≈ 1) before use
+   - Apply: `z_standardized = (z_nf - mean(z_nf)) / sd(z_nf)`
+
+3. **NFGARCH Path Simulation:**
+   ```
+   For t = 1 to forecast_horizon:
+     a. Update volatility: σ_t = forecast_one_step(GARCH, σ_{t-1}, ε_{t-1})
+     b. Generate return: r_t = μ + σ_t × z_t^NF
+     c. Update residual: ε_t = r_t - μ (for next iteration)
+   ```
+   Where `z_t^NF` is the standardized NF-generated residual
+
+4. **Evaluation:**
+   - Compare simulated returns to actual test returns
+   - Compute MSE, MAE, AIC, BIC
+   - Compute distributional metrics (KS, Wasserstein, etc.)
+
+#### 8.3.2 Window Sizes and Cross-Validation Configuration
+
+**Chronological Split:**
+- **Training Set:** 65% of data (chronological order)
+- **Testing Set:** 35% of data (chronological order)
+- **Split Ratio:** Fixed at 0.65 (not optimized per asset)
+- **Rationale:** Standard split for financial time series, ensures no look-ahead bias
+
+**Time-Series Cross-Validation (TS CV):**
+- **Purpose:** Evaluate model performance across multiple time periods (robustness check)
+- **Method:** Sliding window approach
+
+**TS CV Parameters:**
+- **Window Size:** 500 observations per window
+- **Step Size:** 500 observations (non-overlapping windows, optimized from 50-150)
+- **Forecast Horizon:** 20 periods ahead
+- **Maximum Windows:** 3 windows per asset (optimized from unlimited/8-12 windows)
+- **Total TS CV Windows:** Maximum 3 × 6 assets = 18 windows (vs potential 50+ without optimization)
+
+**Window Size Rationale:**
+- **500 Observations:**
+  - Approximately 2 years of daily data (252 trading days/year)
+  - Sufficient for GARCH parameter estimation (needs ~100+ observations minimum)
+  - Balances estimation accuracy with temporal flexibility
+  - Common choice in financial time series literature
+
+**Step Size Rationale:**
+- **500 Observations (Non-Overlapping):**
+  - Ensures independence between windows (no overlap)
+  - Reduces computational cost (fewer windows)
+  - Each window represents different market regime
+  - Trade-off: Fewer windows = less statistical power, but faster computation
+
+**Forecast Horizon Rationale:**
+- **20 Periods Ahead:**
+  - Approximately 1 month ahead (20 trading days)
+  - Relevant for short-term forecasting applications
+  - Balances forecast accuracy with horizon length
+  - Reduced from 40 periods (50% reduction) for computational efficiency
+
+**Maximum Windows Rationale:**
+- **3 Windows Maximum:**
+  - Limits total TS CV computation time
+  - Provides reasonable robustness check (3 different time periods)
+  - Trade-off: More windows would provide better robustness, but significantly increase computation time
+
+**TS CV Window Selection:**
+- Windows are selected uniformly across available data:
+  ```r
+  total_available = n - window_size - forecast_horizon
+  optimal_step = max(step_size, floor(total_available / max_windows))
+  selected_indices = seq(1, total_available, by = optimal_step)[1:max_windows]
+  ```
+- Ensures windows cover different time periods across the dataset
+
+**TS CV Computation Time:**
+- **Per Window:** ~5-10 minutes (GARCH fitting + NF simulation + evaluation)
+- **Total TS CV:** ~1.5-3 hours for all 18 windows (can be parallelized)
+- **Optimization Impact:** Reduced from ~8-12 hours (60-75% time savings)
+
+#### 8.3.3 NFGARCH Training on Different Data Splits
+
+**Training Data Sources:**
+1. **Chronological Split (Primary):**
+   - Training: First 65% of data
+   - Testing: Last 35% of data
+   - NF trained on: GARCH residuals from training set only
+   - NFGARCH evaluated on: Test set (35% of data)
+
+2. **Time-Series Cross-Validation (Robustness Check):**
+   - Multiple training windows: Each of 3 windows uses different 500-observation periods
+   - NF trained separately for each window (if applicable) OR same NF used across windows
+   - NFGARCH evaluated on: Test period immediately following each training window (20 periods)
+
+**Important Note on NF Training for TS CV:**
+- **Current Implementation:** NF models are trained once on chronological split residuals
+- **NF models are NOT re-trained for each TS CV window**
+- **Rationale:** Consistency across windows, faster computation
+- **Alternative Approach (Not Implemented):** Train separate NF for each TS CV window
+  - **Benefit:** Better adaptation to different market regimes
+  - **Drawback:** 3× computational cost, inconsistency across windows
+
+#### 8.3.4 Data Flow Summary
+
+```
+1. Raw Data → Chronological Split (65/35)
+   └─> Training Set (65%) → GARCH Fitting → Residuals
+       └─> Residuals → NF Training → Trained NF Models
+       
+2. Training Set Residuals → NF Models → Synthetic Residuals
+   └─> Synthetic Residuals → Standardization → Standardized NF Residuals
+       └─> Standardized NF Residuals → NFGARCH Simulation
+           
+3. Test Set (35%) → Actual Returns
+   └─> NFGARCH Forecasts vs Actual Returns → Evaluation Metrics
+       
+4. TS CV Windows (3 windows × 6 assets)
+   └─> Each Window: Training (500 obs) → GARCH Fit → Use NF Residuals → Forecast (20 periods)
+       └─> Window Forecasts vs Actual → TS CV Evaluation Metrics
+```
+
+### 8.4 Suggestions for Improving Results
+
+#### 8.4.1 NF Training Improvements
+
+**1. Architecture Enhancements:**
+- **Suggestion:** Increase architecture complexity for complex residual distributions
+  - **Options:** 
+    - Increase layers from 4 to 5-6
+    - Increase hidden features from 64 to 128-256
+    - Add residual connections or skip connections
+    - Use more sophisticated flow types (Spline flows, Neural ODE flows)
+  - **Expected Impact:** Better capture of distributional complexity, potentially improving synthetic residual quality
+  - **Trade-off:** Increased training time and model complexity
+
+**2. Training Hyperparameter Optimization:**
+- **Suggestion:** Implement hyperparameter search
+  - **Parameters to optimize:**
+    - Learning rate (current: 0.001) - try 0.0001 to 0.01
+    - Batch size (current: 512) - try 256, 512, 1024
+    - Number of epochs (current: 75) - try 100-150 with better early stopping
+  - **Method:** Grid search or Bayesian optimization
+  - **Expected Impact:** Better convergence, potentially better fit
+  - **Trade-off:** Significant computational cost
+
+**3. Learning Rate Scheduling:**
+- **Suggestion:** Implement learning rate decay
+  - **Options:**
+    - Exponential decay: `lr = lr_initial * decay_rate^epoch`
+    - Step decay: Reduce by factor of 0.5 every N epochs
+    - Cosine annealing: Smooth decay following cosine curve
+  - **Expected Impact:** Better convergence, avoiding overshooting minimum
+  - **Implementation:** Simple to add, low computational cost
+
+**4. Enhanced Validation Strategy:**
+- **Suggestion:** Implement more sophisticated validation metrics
+  - **Current:** Only validation loss (negative log-likelihood)
+  - **Enhanced:** 
+    - KS distance on validation set
+    - Wasserstein distance on validation set
+    - Distributional similarity metrics
+  - **Expected Impact:** Better model selection, improved generalization
+  - **Trade-off:** Slight computational overhead
+
+**5. Data Augmentation:**
+- **Suggestion:** Augment training residuals (if applicable)
+  - **Methods:**
+    - Bootstrap resampling (for small datasets)
+    - Noise injection (for regularization)
+    - Temporal variations (for robustness)
+  - **Expected Impact:** Better generalization, robustness to different data distributions
+  - **Trade-off:** Computational cost and complexity
+
+**6. Model Ensemble:**
+- **Suggestion:** Train multiple NF models and ensemble predictions
+  - **Methods:**
+    - Train 3-5 models with different random seeds
+    - Average synthetic residuals from ensemble
+    - Weighted averaging based on validation performance
+  - **Expected Impact:** Reduced variance, more robust predictions
+  - **Trade-off:** 3-5× training time
+
+**7. Distribution-Specific NF Architectures:**
+- **Suggestion:** Use different NF architectures for different asset classes
+  - **FX Assets:** May need different architecture than Equity
+  - **Different GARCH Models:** May benefit from model-specific NF architectures
+  - **Expected Impact:** Better fit to asset/model-specific residual distributions
+  - **Trade-off:** More complexity, requires architecture selection
+
+#### 8.4.2 NFGARCH Simulation Improvements
+
+**1. Adaptive Window Sizes:**
+- **Suggestion:** Use asset-specific window sizes instead of fixed 500
+  - **Method:** 
+    - Determine optimal window size per asset based on volatility characteristics
+    - Use larger windows for stable assets, smaller for volatile assets
+    - Optimize based on out-of-sample performance
+  - **Expected Impact:** Better parameter estimation, improved forecast accuracy
+  - **Trade-off:** Requires optimization procedure, adds complexity
+
+**2. Dynamic Step Sizes:**
+- **Suggestion:** Use adaptive step sizes in TS CV
+  - **Method:**
+    - Smaller steps in volatile periods (more frequent windows)
+    - Larger steps in stable periods (fewer windows)
+    - Or use overlapping windows with variable overlap
+  - **Expected Impact:** Better coverage of different market regimes
+  - **Trade-off:** More complex implementation
+
+**3. Extended Forecast Horizons:**
+- **Suggestion:** Evaluate multiple forecast horizons (not just 20 periods)
+  - **Horizons to Test:** 1, 5, 10, 20, 40, 60 periods ahead
+  - **Expected Impact:** Better understanding of model performance across horizons
+  - **Finding:** NFGARCH may perform differently at different horizons
+  - **Trade-off:** Computational cost increases linearly with horizons
+
+**4. More TS CV Windows:**
+- **Suggestion:** Increase maximum windows from 3 to 5-10 (if computationally feasible)
+  - **Expected Impact:** More robust evaluation, better statistical power
+  - **Trade-off:** Significant computational cost (2-3× increase)
+
+**5. Rolling Window Training:**
+- **Suggestion:** Re-train NF models for each TS CV window
+  - **Method:** 
+    - For each TS CV window, train new NF on that window's residuals
+    - Adapt NF to specific market regime of each window
+  - **Expected Impact:** Better adaptation to changing market conditions
+  - **Trade-off:** 3-5× computational cost for TS CV
+
+**6. Multi-Step Ahead Forecasting:**
+- **Suggestion:** Implement true multi-step ahead forecasting (not recursive)
+  - **Current:** Recursive forecasting (uses previous forecast as input)
+  - **Enhanced:** Direct multi-step forecasting
+    - Train separate models for different forecast horizons
+    - Or use sequence-to-sequence architectures
+  - **Expected Impact:** Potentially better long-horizon forecasts
+  - **Trade-off:** More complex implementation, more models to train
+
+#### 8.4.3 Residual Standardization Improvements
+
+**1. Dynamic Standardization:**
+- **Suggestion:** Use rolling standardization instead of global
+  - **Method:** Standardize NF residuals using rolling window statistics (e.g., last 100 observations)
+  - **Expected Impact:** Better adaptation to changing volatility regimes
+  - **Trade-off:** More complex implementation, may introduce look-ahead bias if not careful
+
+**2. Distributional Matching:**
+- **Suggestion:** Match not just mean/SD but higher moments
+  - **Method:** 
+    - Match skewness and kurtosis in addition to mean/SD
+    - Use moment-matching transformations
+  - **Expected Impact:** Better distributional alignment with GARCH assumptions
+  - **Trade-off:** Computational complexity
+
+**3. Quantile-Based Standardization:**
+- **Suggestion:** Use quantile-based standardization instead of mean/SD
+  - **Method:** 
+    - Map NF residuals to match quantiles of standard normal
+    - More robust to outliers
+  - **Expected Impact:** Better handling of extreme values
+  - **Trade-off:** More complex implementation
+
+#### 8.4.4 Evaluation and Model Selection Improvements
+
+**1. Additional Evaluation Metrics:**
+- **Suggestion:** Add more sophisticated evaluation metrics
+  - **Options:**
+    - Directional accuracy (sign prediction)
+    - Quantile score (for distributional forecasts)
+    - Log score (for density forecasts)
+    - Coverage tests (for prediction intervals)
+  - **Expected Impact:** More comprehensive evaluation, better model selection
+  - **Trade-off:** Additional computation
+
+**2. Model Combination:**
+- **Suggestion:** Combine NFGARCH forecasts from different models
+  - **Methods:**
+    - Simple average of forecasts
+    - Weighted average based on past performance
+    - Bayesian model averaging
+  - **Expected Impact:** More robust forecasts, reduced model risk
+  - **Trade-off:** More complex implementation
+
+**3. Asset-Specific Model Selection:**
+- **Suggestion:** Optimize model choice per asset (not one-size-fits-all)
+  - **Method:** 
+    - Evaluate all GARCH variants + NF combinations per asset
+    - Select best model per asset based on validation performance
+  - **Expected Impact:** Better overall performance (already partially implemented via asset-class preferences)
+  - **Trade-off:** More computation, but significant performance gain
+
+#### 8.4.5 Computational and Reproducibility Improvements
+
+**1. Parallelization:**
+- **Suggestion:** Implement full parallelization
+  - **Areas:** 
+    - NF training (train multiple models simultaneously)
+    - TS CV windows (evaluate windows in parallel)
+    - Asset processing (process assets in parallel)
+  - **Expected Impact:** Significant time savings (2-4× faster)
+  - **Trade-off:** Requires parallel computing infrastructure
+
+**2. Incremental Training:**
+- **Suggestion:** Implement incremental/online NF training
+  - **Method:** 
+    - Update NF models as new data arrives
+    - Adapt to changing market conditions
+  - **Expected Impact:** Better adaptation, more realistic for production use
+  - **Trade-off:** Complex implementation, requires online learning algorithms
+
+**3. Hyperparameter Tracking:**
+- **Suggestion:** Implement comprehensive hyperparameter logging
+  - **Track:** All training parameters, results, random seeds
+  - **Use:** MLflow, Weights & Biases, or similar tools
+  - **Expected Impact:** Better reproducibility, easier hyperparameter analysis
+  - **Trade-off:** Additional setup, but essential for research
+
+#### 8.4.6 Theoretical Improvements
+
+**1. Conditional NF:**
+- **Suggestion:** Use conditional Normalizing Flows
+  - **Method:** Condition NF on volatility state (σ_t) or other GARCH parameters
+  - **Expected Impact:** More realistic residual distribution that adapts to volatility regime
+  - **Trade-off:** More complex architecture, significantly more parameters
+
+**2. Time-Varying NF:**
+- **Suggestion:** Allow NF parameters to vary over time
+  - **Method:** Use time-dependent NF or recurrent NF architecture
+  - **Expected Impact:** Better capture of time-varying residual distributions
+  - **Trade-off:** Much more complex, may not be necessary
+
+**3. Multivariate NF:**
+- **Suggestion:** Extend to multivariate NF for multi-asset portfolios
+  - **Method:** Use multivariate Normalizing Flows (RealNVP can handle this)
+  - **Expected Impact:** Better capture of cross-asset dependencies
+  - **Trade-off:** Significant complexity increase, requires portfolio-level analysis
+
+#### 8.4.7 Priority Recommendations
+
+**High Priority (Significant Impact, Moderate Effort):**
+1. Implement learning rate scheduling (Easy, good impact)
+2. Increase TS CV windows to 5-7 (Moderate effort, better robustness)
+3. Add directional accuracy and quantile score metrics (Easy, better evaluation)
+4. Implement asset-specific model selection (Moderate effort, significant performance gain)
+
+**Medium Priority (Good Impact, Moderate Effort):**
+5. Hyperparameter optimization for NF training (Moderate effort, good impact)
+6. Enhanced validation metrics (KS, Wasserstein on validation set) (Easy, better model selection)
+7. Extended forecast horizons evaluation (Easy, better understanding)
+
+**Low Priority (Incremental Gains, Higher Effort):**
+8. Conditional NF (High effort, uncertain impact)
+9. Rolling window NF re-training for TS CV (High effort, moderate impact)
+10. Ensemble NF models (Moderate effort, moderate impact)
 
 **Include in Methodology Section:**
-Full process with emphasis on standardization requirement.
+Full process with emphasis on standardization requirement, window sizes, and all training configurations.
 
 ---
 

@@ -234,7 +234,7 @@
             <p>This research employs a <strong>two-stage NF-GARCH design</strong>:</p>
             <ol>
                 <li><strong>Stage 1:</strong> Fit classical GARCH models (sGARCH, eGARCH, TGARCH, gjrGARCH) to financial returns</li>
-                <li><strong>Stage 2:</strong> Extract standardized residuals, train Normalising Flows (RealNVP/MAF) on these residuals, 
+                <li><strong>Stage 2:</strong> Extract standardized residuals, train Normalising Flows (MAF - Masked Autoregressive Flow) on these residuals, 
                 and reinject flow samples as innovations into the unchanged volatility recursion</li>
             </ol>
             

@@ -232,7 +232,7 @@ GARCH Models Implemented
 The repository includes implementations of sGARCH (Standard GARCH), eGARCH (Exponential GARCH), GJR-GARCH (Glosten-Jagannathan-Runkle GARCH), and TGARCH (Threshold GARCH).
 
 Normalizing Flows
-The normalizing flows implementation includes RealNVP (Real-valued Non-Volume Preserving), MAF (Masked Autoregressive Flow), and custom architectures designed for financial time series.
+The normalizing flows implementation uses MAF (Masked Autoregressive Flow) implemented via MaskedAffineAutoregressiveTransform. The architecture is specifically designed for univariate residual distributions in financial time series.
 
 Evaluation Methods
 Evaluation uses chronological splits (traditional train/test split) and time-series CV (rolling window cross-validation). Performance metrics include AIC, BIC, LogLikelihood, MSE, and MAE. Statistical tests include Wilcoxon and Diebold-Mariano tests. The repository includes VaR Backtesting for Value-at-Risk validation (both Standard and NFGARCH), Stress Testing for extreme scenario analysis (both Standard and NFGARCH), and Stylized Facts for model validation and distributional analysis.
