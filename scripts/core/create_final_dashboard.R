@@ -94,6 +94,7 @@ if (nrow(tscv_results) > 0) {
 cat("\n=== ASSET ANALYSIS ===\n")
 
 if (nrow(chrono_results) > 0 && "Asset" %in% names(chrono_results)) {
+  # Summary showing best model per asset
   asset_perf <- chrono_results %>%
     group_by(Asset) %>%
     summarise(
@@ -106,8 +107,20 @@ if (nrow(chrono_results) > 0 && "Asset" %in% names(chrono_results)) {
     ) %>%
     arrange(mean_mse)
   
-  cat("\nPerformance by Asset:\n")
+  cat("\nPerformance by Asset (Best Model Summary):\n")
   print(asset_perf)
+  
+  # Detailed breakdown showing ALL models per asset
+  asset_detailed <- chrono_results %>%
+    select(Asset, Model, AIC, BIC, MSE, MAE, LogLikelihood) %>%
+    arrange(Asset, MSE) %>%
+    mutate(
+      Model_Rank = row_number(),
+      .by = Asset
+    )
+  
+  cat("\nDetailed Asset Analysis (All Models):\n")
+  print(asset_detailed)
 }
 
 # =============================================================================
@@ -236,6 +249,12 @@ if (exists("asset_perf") && nrow(asset_perf) > 0) {
   writeData(wb, "Asset_Analysis", asset_perf)
 }
 
+# Detailed Asset Analysis (all models per asset)
+if (exists("asset_detailed") && nrow(asset_detailed) > 0) {
+  addWorksheet(wb, "Asset_Detailed")
+  writeData(wb, "Asset_Detailed", asset_detailed)
+}
+
 # Model Comparison
 if (exists("model_comparison") && nrow(model_comparison) > 0) {
   addWorksheet(wb, "Model_Comparison")
@@ -327,6 +346,20 @@ if (file.exists(stress_file)) {
   
   addWorksheet(wb, "Stress_Summary")
   writeData(wb, "Stress_Summary", stress_summary)
+  
+  # Load forecast evaluation under stress if available
+  stress_sheets <- getSheetNames(stress_file)
+  if ("Forecast_Under_Stress" %in% stress_sheets) {
+    forecast_under_stress <- read.xlsx(stress_file, sheet = "Forecast_Under_Stress")
+    addWorksheet(wb, "Forecast_Under_Stress")
+    writeData(wb, "Forecast_Under_Stress", forecast_under_stress)
+  }
+  
+  if ("Forecast_Summary" %in% stress_sheets) {
+    forecast_summary_stress <- read.xlsx(stress_file, sheet = "Forecast_Summary")
+    addWorksheet(wb, "Forecast_Summary_Stress")
+    writeData(wb, "Forecast_Summary_Stress", forecast_summary_stress)
+  }
   
   cat("[OK] Loaded stress testing results\n")
 }

@@ -79,11 +79,12 @@ fx_returns <- lapply(fx_xts, function(x) diff(log(x))[-1])
 all_returns <- c(equity_returns, fx_returns)
 all_asset_names <- c(equity_tickers, fx_names)
 
-# Model configurations
+# Model configurations - include all 4 models
 model_configs <- list(
-  sGARCH = list(model = "sGARCH", distribution = "norm", submodel = NULL),
+  sGARCH = list(model = "sGARCH", distribution = "sstd", submodel = NULL),  # Changed to sstd to match NF-GARCH
   eGARCH = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH = list(model = "TGARCH", distribution = "sstd", submodel = NULL)
+  TGARCH = list(model = "TGARCH", distribution = "sstd", submodel = NULL),
+  gjrGARCH = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL)  # Added gjrGARCH
 )
 
 cat("Running standard GARCH simulations (using regular residuals)...\n")
@@ -228,9 +229,10 @@ print(overall_comparison)
 win_rate <- combined_results %>%
   group_by(Model, Asset) %>%
   summarise(
-    nf_mse = MSE[Source == "NF_GARCH"],
-    std_mse = MSE[Source == "Standard"],
-    nf_better = ifelse(!is.na(nf_mse) && !is.na(std_mse), nf_mse < std_mse, NA),
+    nf_mse = MSE[Source == "NF_GARCH"][1],  # Take first if multiple
+    std_mse = MSE[Source == "Standard"][1],  # Take first if multiple
+    nf_better = ifelse(length(nf_mse) > 0 && length(std_mse) > 0 && !is.na(nf_mse) && !is.na(std_mse), 
+                       nf_mse < std_mse, NA),
     .groups = "drop"
   ) %>%
   filter(!is.na(nf_better)) %>%
@@ -258,12 +260,20 @@ if (nrow(combined_results) > 0 && length(unique(combined_results$Model)) > 0) {
     model_data <- combined_results %>%
       filter(Model == model_name) %>%
       select(Asset, Source, MSE, MAE, AIC) %>%
+      # Aggregate duplicates by taking mean (in case of multiple variants)
+      group_by(Asset, Source) %>%
+      summarise(
+        MSE = mean(MSE, na.rm = TRUE),
+        MAE = mean(MAE, na.rm = TRUE),
+        AIC = mean(AIC, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
       pivot_wider(names_from = Source, values_from = c(MSE, MAE, AIC))
     
     # Extract paired comparisons
     if (nrow(model_data) > 0 && "MSE_Standard" %in% names(model_data) && "MSE_NF_GARCH" %in% names(model_data)) {
-      mse_standard <- model_data$MSE_Standard
-      mse_nf <- model_data$MSE_NF_GARCH
+      mse_standard <- as.numeric(model_data$MSE_Standard)
+      mse_nf <- as.numeric(model_data$MSE_NF_GARCH)
       
       # Remove NAs
       valid_pairs <- !is.na(mse_standard) & !is.na(mse_nf)

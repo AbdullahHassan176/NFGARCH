@@ -300,7 +300,14 @@
             <div class="info-box">
                 <strong>Interpretation:</strong> Models with lower MSE provide more accurate volatility forecasts. 
                 The plot shows relative performance across all GARCH variants, helping identify which models 
-                best capture volatility dynamics for different asset classes.
+                best capture volatility dynamics for different asset classes. <strong>Key findings:</strong> TGARCH 
+                demonstrates the lowest MSE (approximately 0.00035-0.00036), indicating superior forecasting accuracy 
+                across all six assets. gjrGARCH follows closely with MSE around 0.00041, showing strong performance 
+                with its leverage effect specification. sGARCH achieves MSE of 0.00047, performing well but slightly 
+                less accurately than threshold-based models. eGARCH exhibits significantly higher MSE (approximately 0.72), 
+                reflecting convergence challenges that limited successful fits to only one asset. The logarithmic scale 
+                emphasizes the substantial performance gap between eGARCH and the other three models. Error bars indicate 
+                the standard error of mean MSE across assets, with narrower bars suggesting more consistent performance.
             </div>
             
             <div class="plot-container">
@@ -309,9 +316,16 @@
             </div>
             
             <div class="info-box">
-                <strong>AIC Explanation:</strong> AIC = 2k - 2ln(L), where k is the number of parameters and L is the likelihood. 
+                <strong>Interpretation:</strong> AIC = 2k - 2ln(L), where k is the number of parameters and L is the likelihood. 
                 AIC balances model fit with complexity, favoring models that achieve good fit with fewer parameters. 
-                The model with the lowest AIC is preferred <a href="https://en.wikipedia.org/wiki/Akaike_information_criterion" target="_blank">(Akaike, 1974)</a>.
+                <strong>Key findings:</strong> gjrGARCH achieves the lowest AIC (mean -27,474), indicating the best balance 
+                between fit quality and model parsimony. TGARCH follows with AIC of -25,490, demonstrating strong fit 
+                relative to its complexity. sGARCH shows AIC of -25,189, slightly higher despite being the simplest model, 
+                suggesting that threshold and leverage specifications provide better fit-to-parameter ratios. eGARCH exhibits 
+                a positive AIC (mean 31,838), which is exceptionally poor and reflects both convergence failures and poor 
+                likelihood values for the single successful fit. Lower (more negative) AIC values indicate better models 
+                that explain the data effectively without overfitting. The large difference between eGARCH and other models 
+                highlights the importance of model selection for volatility forecasting.
             </div>
             
             <div class="citation">
@@ -366,8 +380,7 @@
             <div class="info-box">
                 <strong>Tail Index:</strong> The Hill estimator quantifies tail heaviness in financial returns. 
                 Higher tail index values indicate heavier tails (more extreme events). Financial returns typically 
-                exhibit heavy tails (tail index > 2), requiring distributions beyond Gaussian 
-                <a href="https://en.wikipedia.org/wiki/Hill_estimator" target="_blank">(Hill, 1975)</a>.
+                exhibit heavy tails (tail index > 2), requiring distributions beyond Gaussian.
             </div>
             
             <div class="citation">
@@ -376,9 +389,7 @@
                 <em>Giornale dell'Istituto Italiano degli Attuari</em>, 4, 83-91.<br>
                 • Smirnov, N. (1939). Estimate of deviation between empirical distribution functions in two independent samples. 
                 <em>Bulletin Moscow University</em>, 2(2), 3-16.<br>
-                • Villani, C. (2009). <em>Optimal Transport: Old and New</em>. Springer.<br>
-                • Hill, B. M. (1975). A simple general approach to inference about the tail of a distribution. 
-                <em>Annals of Statistics</em>, 3(5), 1163-1174.
+                • Villani, C. (2009). <em>Optimal Transport: Old and New</em>. Springer.
             </div>
             
             <p><strong>Detailed Distributional Data:</strong></p>
@@ -619,10 +630,6 @@
                 <em>Journal of Derivatives</em>, 3(2), 73-84. 
                 <a href="https://www.jstor.org/stable/2330743" target="_blank">JSTOR</a></li>
                 
-                <li>Christoffersen, P. F. (1998). Evaluating interval forecasts. 
-                <em>International Economic Review</em>, 39(4), 841-862. 
-                <a href="https://www.jstor.org/stable/2527343" target="_blank">JSTOR</a></li>
-                
                 <li>Basel Committee on Banking Supervision. (2011). <em>Basel III: A global regulatory framework for 
                 more resilient banks and banking systems</em>. Bank for International Settlements. 
                 <a href="https://www.bis.org/publ/bcbs158.pdf" target="_blank">PDF</a></li>
@@ -644,10 +651,6 @@
                 <li>Akaike, H. (1974). A new look at the statistical model identification. 
                 <em>IEEE Transactions on Automatic Control</em>, 19(6), 716-723. 
                 <a href="https://doi.org/10.1109/TAC.1974.1100705" target="_blank">DOI</a></li>
-                
-                <li>Hill, B. M. (1975). A simple general approach to inference about the tail of a distribution. 
-                <em>Annals of Statistics</em>, 3(5), 1163-1174. 
-                <a href="https://www.jstor.org/stable/2958369" target="_blank">JSTOR</a></li>
             </ul>
         </section>
         

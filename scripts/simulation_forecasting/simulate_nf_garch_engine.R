@@ -478,10 +478,16 @@ for (config_name in names(model_configs)) {
   
   # FX
   for (asset in names(fx_returns)) {
+    # Extract base model name (e.g., "sGARCH" from "sGARCH_norm" or "sGARCH_sstd")
+    base_model <- cfg[["model"]]
     possible_keys <- c(
       paste0(config_name, "_fx_", asset, "_residuals_synthetic"),
       paste0("fx_", asset, "_residuals_", config_name, "_residuals_synthetic_synthetic"),
-      paste0(config_name, "_", asset, "_residuals_synthetic")
+      paste0(config_name, "_", asset, "_residuals_synthetic"),
+      # Try base model name without suffix (e.g., "sGARCH_EURUSD_residuals_synthetic")
+      paste0(base_model, "_fx_", asset, "_residuals_synthetic"),
+      paste0(base_model, "_", asset, "_residuals_synthetic"),
+      paste0(base_model, "_", asset)  # Matches loaded key format
     )
     
     key <- NULL
@@ -504,10 +510,16 @@ for (config_name in names(model_configs)) {
   
   # Equity
   for (asset in names(equity_returns)) {
+    # Extract base model name (e.g., "sGARCH" from "sGARCH_norm" or "sGARCH_sstd")
+    base_model <- cfg[["model"]]
     possible_keys <- c(
       paste0(config_name, "_equity_", asset, "_residuals_synthetic"),
       paste0("equity_", asset, "_residuals_", config_name, "_residuals_synthetic_synthetic"),
-      paste0(config_name, "_", asset, "_residuals_synthetic")
+      paste0(config_name, "_", asset, "_residuals_synthetic"),
+      # Try base model name without suffix (e.g., "sGARCH_NVDA_residuals_synthetic")
+      paste0(base_model, "_equity_", asset, "_residuals_synthetic"),
+      paste0(base_model, "_", asset, "_residuals_synthetic"),
+      paste0(base_model, "_", asset)  # Matches loaded key format
     )
     
     key <- NULL
@@ -547,6 +559,8 @@ run_all_nfgarch_cv_models_manual <- function(returns_list, model_configs, nf_res
     message("Running NF-GARCH TS CV for model: ", model_name, " (", engine, " engine)")
     
     result <- lapply(names(returns_list), function(asset_name) {
+      # Extract base model name (e.g., "sGARCH" from "sGARCH_norm" or "sGARCH_sstd")
+      base_model <- cfg[["model"]]
       # Find corresponding NF residuals
       possible_keys <- c(
         paste0(model_name, "_", asset_name, "_residuals_synthetic"),
@@ -554,7 +568,12 @@ run_all_nfgarch_cv_models_manual <- function(returns_list, model_configs, nf_res
         paste0(model_name, "_equity_", asset_name, "_residuals_synthetic"),
         paste0(model_name, "_", asset_name, "_residuals_synthetic.csv"),
         paste0(model_name, "_fx_", asset_name, "_residuals_synthetic.csv"),
-        paste0(model_name, "_equity_", asset_name, "_residuals_synthetic.csv")
+        paste0(model_name, "_equity_", asset_name, "_residuals_synthetic.csv"),
+        # Try base model name without suffix (e.g., "sGARCH_EURUSD")
+        paste0(base_model, "_", asset_name, "_residuals_synthetic"),
+        paste0(base_model, "_fx_", asset_name, "_residuals_synthetic"),
+        paste0(base_model, "_equity_", asset_name, "_residuals_synthetic"),
+        paste0(base_model, "_", asset_name)  # Matches loaded key format
       )
       
       key <- NULL
