@@ -1,0 +1,8 @@
+"Scenario_Type","Scenario_Name","N_Assets","Mean_Volatility","Mean_Max_Drawdown","Mean_Volatility_Increase_Pct"
+"Historical_Crisis","COVID_2020",6,0.0287032721053359,-0.126414368878323,NA
+"Historical_Crisis","GFC_2008",6,0.0339078955736443,-0.436763186145276,NA
+"Hypothetical_Shock","mean_shift_down",6,0.016789867869449,-7.39673848505614,8.06269664673822
+"Hypothetical_Shock","price_drop_30",6,0.0170222126831937,-0.497492666111511,10.6198221788595
+"Hypothetical_Shock","price_drop_50",6,0.0183291187815318,-0.564159332778177,25.8500082410277
+"Hypothetical_Shock","volatility_spike_2x",6,0.0161457183757358,-0.399119991836927,0.0164924466629534
+"Hypothetical_Shock","volatility_spike_3x",6,0.0161507920007042,-0.400747317562343,0.0438298885422006

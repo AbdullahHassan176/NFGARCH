@@ -1,0 +1,4 @@
+"Model","Test_Type","Statistic","Pvalue","Significant","Alternative"
+"sGARCH","MSE (NF < Standard)",10,0.5,FALSE,"less"
+"TGARCH","MSE (NF < Standard)",10,0.5,FALSE,"less"
+"gjrGARCH","MSE (NF < Standard)",10,0.5,FALSE,"less"
