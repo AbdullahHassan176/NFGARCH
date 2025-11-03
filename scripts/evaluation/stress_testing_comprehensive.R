@@ -352,6 +352,133 @@ for (asset_name in names(returns_data)) {
       })
     }
   }
+  
+  # Hypothetical shock evaluation
+  hypothetical_shocks <- list(
+    price_drop_30 = list(type = "price_drop", magnitude = 0.30, description = "30% price drop"),
+    price_drop_50 = list(type = "price_drop", magnitude = 0.50, description = "50% price drop"),
+    volatility_spike_2x = list(type = "volatility_spike", magnitude = 2.0, description = "2x volatility spike"),
+    volatility_spike_3x = list(type = "volatility_spike", magnitude = 3.0, description = "3x volatility spike"),
+    mean_shift_down = list(type = "mean_shift", magnitude = 0.01, description = "Negative mean shift")
+  )
+  
+  for (shock_name in names(hypothetical_shocks)) {
+    shock <- hypothetical_shocks[[shock_name]]
+    
+    # Apply shock to returns
+    shocked_returns <- apply_shock(returns_vec, shock$type, shock$magnitude)
+    
+    if (length(shocked_returns) < 500) next  # Need enough data
+    
+    # Split: train on first 70% (pre-shock period), test on shocked portion
+    # For price_drop and volatility_spike (applied at 70%), test on shock point onwards
+    # For mean_shift (applied from 60-80%), test on shifted period
+    if (shock$type == "price_drop" || shock$type == "volatility_spike") {
+      shock_idx <- floor(length(returns_vec) * 0.7)
+      train_returns <- returns_vec[1:(shock_idx - 1)]  # Pre-shock data
+      test_returns <- shocked_returns[shock_idx:length(shocked_returns)]  # Shocked data
+    } else if (shock$type == "mean_shift") {
+      shift_start <- floor(length(returns_vec) * 0.6)
+      shift_end <- floor(length(returns_vec) * 0.8)
+      train_returns <- returns_vec[1:(shift_start - 1)]  # Pre-shift data
+      test_returns <- shocked_returns[shift_start:shift_end]  # Shifted data
+    } else {
+      next
+    }
+    
+    if (length(train_returns) < 500 || length(test_returns) < 10) next
+    
+    # Evaluate each model on shocked data
+    for (model_name in names(model_configs)) {
+      cfg <- model_configs[[model_name]]
+      
+      tryCatch({
+        # Fit model on pre-shock data
+        fit <- engine_fit(
+          model = cfg$model,
+          returns = train_returns,
+          dist = cfg$distribution,
+          submodel = cfg$submodel,
+          engine = "manual"
+        )
+        
+        if (!engine_converged(fit)) next
+        
+        # Forecast on shocked data using NF residuals if available
+        nf_key <- paste0(cfg$model, "_", asset_name)
+        nf_resid <- if (nf_key %in% names(nf_residuals_map)) {
+          nf_residuals_map[[nf_key]]
+        } else {
+          NULL
+        }
+        
+        # Generate forecasts
+        if (!is.null(nf_resid) && length(nf_resid) >= length(test_returns)) {
+          # NF-GARCH forecast
+          sim_result <- engine_path(
+            fit,
+            head(nf_resid, length(test_returns)),
+            length(test_returns),
+            cfg$model,
+            cfg$submodel,
+            engine = "manual"
+          )
+          nf_forecast <- sim_result$returns
+          
+          # Calculate NF-GARCH forecast accuracy
+          nf_mse <- mean((test_returns - nf_forecast)^2, na.rm = TRUE)
+          nf_mae <- mean(abs(test_returns - nf_forecast), na.rm = TRUE)
+        } else {
+          nf_forecast <- NULL
+          nf_mse <- NA
+          nf_mae <- NA
+        }
+        
+        # Standard GARCH forecast (use fitted residuals)
+        standard_resid <- engine_residuals(fit, standardize = TRUE)
+        if (length(standard_resid) >= length(test_returns)) {
+          sim_result_std <- engine_path(
+            fit,
+            head(standard_resid, length(test_returns)),
+            length(test_returns),
+            cfg$model,
+            cfg$submodel,
+            engine = "manual"
+          )
+          std_forecast <- sim_result_std$returns
+          
+          std_mse <- mean((test_returns - std_forecast)^2, na.rm = TRUE)
+          std_mae <- mean(abs(test_returns - std_forecast), na.rm = TRUE)
+        } else {
+          std_mse <- NA
+          std_mae <- NA
+        }
+        
+        # Calculate improvement
+        mse_improvement <- if (!is.na(nf_mse) && !is.na(std_mse) && std_mse > 0) {
+          (std_mse - nf_mse) / std_mse * 100
+        } else {
+          NA
+        }
+        
+        stress_forecast_results[[length(stress_forecast_results) + 1]] <- data.frame(
+          Asset = asset_name,
+          Scenario_Type = "Hypothetical_Shock",
+          Scenario_Name = shock_name,
+          Model = cfg$model,
+          NF_GARCH_MSE = nf_mse,
+          NF_GARCH_MAE = nf_mae,
+          Standard_GARCH_MSE = std_mse,
+          Standard_GARCH_MAE = std_mae,
+          MSE_Improvement_Pct = mse_improvement,
+          N_Test_Periods = length(test_returns)
+        )
+        
+      }, error = function(e) {
+        cat("  WARNING: Failed to evaluate", model_name, "for", asset_name, "-", shock_name, ":", e$message, "\n")
+      })
+    }
+  }
 }
 
 # Combine forecast evaluation results
