@@ -367,22 +367,36 @@ if (file.exists(stress_file)) {
         mse_data <- crisis_summary %>% filter(Metric == "MSE")
         
         if (nrow(mse_data) > 0) {
-          p7a <- mse_data %>%
-            ggplot(aes(x = Crisis, y = Value, fill = Model_Type)) +
-            geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-            scale_y_log10() +
-            labs(title = "Forecast MSE: GFC vs COVID-19 Crisis Periods",
-                 x = "Crisis Period", y = "Mean Squared Error (log scale)",
-                 fill = "Model Type") +
-            theme_minimal() +
-            theme(legend.position = "bottom")
+          # Filter out infinite values and ensure proper scaling
+          mse_data <- mse_data %>% filter(is.finite(Value) & Value > 0)
           
-          # Facet only if multiple models
-          if (length(unique(mse_data$Model)) > 1) {
-            p7a <- p7a + facet_wrap(~ Model, scales = "free_y")
+          if (nrow(mse_data) > 0) {
+            p7a <- mse_data %>%
+              ggplot(aes(x = Crisis, y = Value, fill = Model_Type)) +
+              geom_bar(stat = "identity", position = "dodge", alpha = 0.8, color = "black", linewidth = 0.3) +
+              scale_y_log10() +
+              labs(title = "Forecast MSE: GFC vs COVID-19 Crisis Periods",
+                   x = "Crisis Period", y = "Mean Squared Error (log scale)",
+                   fill = "Model Type") +
+              theme_minimal(base_size = 12) +
+              theme(legend.position = "bottom",
+                    plot.background = element_rect(fill = "white", color = NA),
+                    panel.background = element_rect(fill = "white"),
+                    panel.grid.major = element_line(color = "grey90"),
+                    panel.grid.minor = element_line(color = "grey95"))
+            
+            # Facet only if multiple models
+            if (length(unique(mse_data$Model)) > 1) {
+              p7a <- p7a + facet_wrap(~ Model, scales = "free_y", ncol = 2)
+            }
+          } else {
+            p7a <- ggplot() + 
+              annotate("text", x = 0.5, y = 0.5, label = "No MSE data available", size = 6, color = "black") +
+              theme_void()
           }
         } else {
-          p7a <- ggplot() + annotate("text", x = 0.5, y = 0.5, label = "No MSE data available", size = 6) +
+          p7a <- ggplot() + 
+            annotate("text", x = 0.5, y = 0.5, label = "No MSE data available", size = 6, color = "black") +
             theme_void()
         }
         
@@ -390,28 +404,44 @@ if (file.exists(stress_file)) {
         mae_data <- crisis_summary %>% filter(Metric == "MAE")
         
         if (nrow(mae_data) > 0) {
-          p7b <- mae_data %>%
-            ggplot(aes(x = Crisis, y = Value, fill = Model_Type)) +
-            geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-            labs(title = "Forecast MAE: GFC vs COVID-19 Crisis Periods",
-                 x = "Crisis Period", y = "Mean Absolute Error",
-                 fill = "Model Type") +
-            theme_minimal() +
-            theme(legend.position = "bottom")
+          # Filter out infinite values
+          mae_data <- mae_data %>% filter(is.finite(Value) & Value > 0)
           
-          # Facet only if multiple models
-          if (length(unique(mae_data$Model)) > 1) {
-            p7b <- p7b + facet_wrap(~ Model, scales = "free_y")
+          if (nrow(mae_data) > 0) {
+            p7b <- mae_data %>%
+              ggplot(aes(x = Crisis, y = Value, fill = Model_Type)) +
+              geom_bar(stat = "identity", position = "dodge", alpha = 0.8, color = "black", linewidth = 0.3) +
+              labs(title = "Forecast MAE: GFC vs COVID-19 Crisis Periods",
+                   x = "Crisis Period", y = "Mean Absolute Error",
+                   fill = "Model Type") +
+              theme_minimal(base_size = 12) +
+              theme(legend.position = "bottom",
+                    plot.background = element_rect(fill = "white", color = NA),
+                    panel.background = element_rect(fill = "white"),
+                    panel.grid.major = element_line(color = "grey90"),
+                    panel.grid.minor = element_line(color = "grey95"))
+            
+            # Facet only if multiple models
+            if (length(unique(mae_data$Model)) > 1) {
+              p7b <- p7b + facet_wrap(~ Model, scales = "free_y", ncol = 2)
+            }
+          } else {
+            p7b <- ggplot() + 
+              annotate("text", x = 0.5, y = 0.5, label = "No MAE data available", size = 6, color = "black") +
+              theme_void()
           }
         } else {
-          p7b <- ggplot() + annotate("text", x = 0.5, y = 0.5, label = "No MAE data available", size = 6) +
+          p7b <- ggplot() + 
+            annotate("text", x = 0.5, y = 0.5, label = "No MAE data available", size = 6, color = "black") +
             theme_void()
         }
         
-        # Combine plots
+        # Combine plots with explicit background
         p7 <- grid.arrange(p7a, p7b, nrow = 2, ncol = 1)
+        
+        # Save with explicit background
         ggsave(file.path(fig_dir, "Fig-R7_stress_gfc_vs_covid.png"), 
-               p7, width = 14, height = 12, dpi = 300)
+               p7, width = 14, height = 12, dpi = 300, bg = "white")
         cat("  [OK] Fig-R7 saved\n")
       }
     }
