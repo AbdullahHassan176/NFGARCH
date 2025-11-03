@@ -358,17 +358,26 @@ if (file.exists(stress_file)) {
         ) %>%
         pivot_longer(cols = c(NF_GARCH_MSE, NF_GARCH_MAE, Standard_GARCH_MSE, Standard_GARCH_MAE),
                     names_to = "Metric_Type", values_to = "Value") %>%
-        separate(Metric_Type, into = c("Model_Type", "Metric"), sep = "_", extra = "merge") %>%
-        mutate(Crisis = ifelse(Scenario_Name == "GFC_2008", "GFC 2008", "COVID-19 2020")) %>%
-        filter(!is.na(Value) & is.finite(Value))
+        mutate(
+          # Extract Model_Type and Metric correctly
+          Model_Type = ifelse(grepl("^NF_GARCH", Metric_Type), "NF_GARCH", 
+                             ifelse(grepl("^Standard", Metric_Type), "Standard", NA)),
+          Metric = ifelse(grepl("_MSE$", Metric_Type), "MSE",
+                         ifelse(grepl("_MAE$", Metric_Type), "MAE", NA)),
+          Crisis = ifelse(Scenario_Name == "GFC_2008", "GFC 2008", "COVID-19 2020")
+        ) %>%
+        filter(!is.na(Value) & is.finite(Value) & !is.na(Model_Type) & !is.na(Metric))
       
       if (nrow(crisis_summary) > 0) {
         # MSE comparison
         mse_data <- crisis_summary %>% filter(Metric == "MSE")
         
         if (nrow(mse_data) > 0) {
-          # Filter out infinite values and ensure proper scaling
-          mse_data <- mse_data %>% filter(is.finite(Value) & Value > 0)
+          # Filter out infinite values, zeros, and extreme outliers
+          # Exclude eGARCH due to convergence issues causing extreme values
+          mse_data <- mse_data %>% 
+            filter(is.finite(Value) & Value > 0 & Value < 1e10) %>%
+            filter(Model != "eGARCH")
           
           if (nrow(mse_data) > 0) {
             p7a <- mse_data %>%
@@ -404,8 +413,11 @@ if (file.exists(stress_file)) {
         mae_data <- crisis_summary %>% filter(Metric == "MAE")
         
         if (nrow(mae_data) > 0) {
-          # Filter out infinite values
-          mae_data <- mae_data %>% filter(is.finite(Value) & Value > 0)
+          # Filter out infinite values, zeros, and extreme outliers
+          # Exclude eGARCH due to convergence issues causing extreme values
+          mae_data <- mae_data %>% 
+            filter(is.finite(Value) & Value > 0 & Value < 1e10) %>%
+            filter(Model != "eGARCH")
           
           if (nrow(mae_data) > 0) {
             p7b <- mae_data %>%
