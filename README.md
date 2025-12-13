@@ -115,7 +115,9 @@ Engine-Specific Results
 There are separate result files for each engine: NF_GARCH_Results_manual.xlsx for manual engine results, NF_GARCH_Results_rugarch.xlsx for rugarch engine results, and Initial_GARCH_Model_Fitting.xlsx for the standard GARCH baseline.
 
 Key Findings
-The research shows that NF-GARCH significantly outperforms standard GARCH models. The best NF-GARCH AIC is -34,586 compared to Standard GARCH's -7.55, representing approximately a 4,500x better model fit. Among standard GARCH variants, eGARCH performs best. The complete risk assessment shows NF-GARCH has superior VaR and stress testing performance. Both chronological and time-series CV splits have been analyzed comprehensively.
+The research shows that NF-GARCH significantly outperforms standard GARCH models. NF-GARCH models achieve substantially lower (more negative) AIC values compared to Standard GARCH, indicating better model fit. Among standard GARCH variants, eGARCH performs best. The complete risk assessment shows NF-GARCH has superior VaR and stress testing performance. Both chronological and time-series CV splits have been analyzed comprehensively.
+
+**Note**: AIC values are negative log-likelihood based metrics where lower (more negative) values indicate better fit. Direct ratio comparisons of AIC values are not meaningful; differences in AIC values should be interpreted instead.
 
 Results Viewer
 

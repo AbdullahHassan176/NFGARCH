@@ -2,6 +2,14 @@
 # Generate Visualizations for HTML Dashboard
 # Creates plots for all evaluation metrics and saves them as PNG files
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)

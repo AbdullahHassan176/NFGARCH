@@ -2,6 +2,14 @@
 # Generate Report Figures for Dissertation
 # Creates: Fig-R1, Fig-R2/R3, Fig-R4/R5, Fig-R7, Fig-R8
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(ggplot2)
 library(gridExtra)
 library(openxlsx)

@@ -2,6 +2,14 @@
 # Compare NF-GARCH vs Standard GARCH Models
 # Evaluates whether NF-injected models outperform standard GARCH models
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)

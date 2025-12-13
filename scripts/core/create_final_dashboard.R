@@ -2,6 +2,14 @@
 # Create Final Dashboard from Manual Pipeline Results
 # Consolidates all evaluation results into a comprehensive dashboard
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)

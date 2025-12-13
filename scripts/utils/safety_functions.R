@@ -30,17 +30,10 @@ safe_write_csv <- function(data, file_path, ...) {
   })
 }
 
-# Safe model fitting (DEPRECATED - rugarch not used)
-# Kept for backwards compatibility but will error if called
-safe_ugarchfit <- function(spec, data, ...) {
-  stop("rugarch engine has been removed. Use manual engine with engine_fit() instead.")
-}
-
-# Safe forecasting (DEPRECATED - rugarch not used)
-# Kept for backwards compatibility but will error if called
-safe_ugarchforecast <- function(fit, n.ahead = 1, ...) {
-  stop("rugarch engine has been removed. Use manual engine with engine_forecast() instead.")
-}
+# DEPRECATED FUNCTIONS - REMOVED
+# These functions have been removed as rugarch engine is no longer used.
+# If you need GARCH fitting, use engine_fit() from scripts/engines/engine_selector.R
+# If you need forecasting, use engine_forecast() from scripts/engines/engine_selector.R
 
 # =============================================================================
 # DATA SPLITTING UTILITIES

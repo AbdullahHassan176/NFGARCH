@@ -25,6 +25,7 @@ tryCatch({
   source("scripts/utils/cli_parser.R")
   source("scripts/engines/engine_selector.R")
   source("scripts/utils/safety_functions.R")
+  source("scripts/utils/standardize_residuals.R")
 }, error = function(e) {
   cat("ERROR: Failed to load utility scripts:", e$message, "\n")
   quit(status = 1)
@@ -36,7 +37,16 @@ engine <- get_engine()
 cat("Using engine:", engine, "\n\n")
 
 cat("Starting NF-GARCH simulation with engine:", engine, "...\n")
-set.seed(123)  # Ensure reproducibility
+
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+  cat("Using reproducibility seed:", REPRODUCIBILITY_SEED, "\n")
+} else {
+  set.seed(123)  # Fallback if config not available
+  cat("Using fallback seed: 123\n")
+}
 
 # Initialize pipeline
 tryCatch({
@@ -200,18 +210,17 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
         next
       }
       
-      # CRITICAL FIX: Ensure NF residuals are standardized before use
+      # Ensure NF residuals are standardized before use
+      # NF residuals should already be standardized from training, but verify
       nf_resid_vec <- as.numeric(head(nf_residuals, n_sim))
       nf_resid_vec <- nf_resid_vec[!is.na(nf_resid_vec)]
       if (length(nf_resid_vec) < n_sim) {
         message("WARNING: NF residuals contain NAs for window ", start_idx)
         next
       }
-      # Double-check standardization (should already be done, but ensure it)
-      resid_mean <- mean(nf_resid_vec, na.rm = TRUE)
-      resid_sd <- sd(nf_resid_vec, na.rm = TRUE)
-      if (abs(resid_mean) > 0.1 || abs(resid_sd - 1) > 0.1) {
-        nf_resid_vec <- (nf_resid_vec - resid_mean) / resid_sd
+      # Verify and standardize if needed (NF residuals should already be standardized)
+      if (!is_standardized(nf_resid_vec)) {
+        nf_resid_vec <- standardize_residuals(nf_resid_vec, verify = TRUE)
       }
       
       # Use engine_path for NF-GARCH simulation
@@ -357,19 +366,19 @@ tryCatch({
           next
         }
         
-        # CRITICAL FIX: Standardize NF residuals (mean ≈ 0, SD ≈ 1)
-        # This fixes the improper residual standardization issue
+        # Standardize NF residuals (mean ≈ 0, SD ≈ 1)
+        # NF residuals from training should already be standardized, but ensure consistency
         residual_values <- as.numeric(residual_values)
         residual_values <- residual_values[!is.na(residual_values)]
         if (length(residual_values) > 0) {
-          resid_mean <- mean(residual_values, na.rm = TRUE)
-          resid_sd <- sd(residual_values, na.rm = TRUE)
-          if (!is.finite(resid_sd) || resid_sd == 0) {
-            cat("WARNING: NF residuals have zero/invalid variance for", fname_clean, "- skipping\n")
+          # Use centralized standardization function
+          tryCatch({
+            residual_values <- standardize_residuals(residual_values, verify = TRUE)
+            cat("Standardized NF residuals for", fname_clean, ": Mean =", round(mean(residual_values), 6), "SD =", round(sd(residual_values), 6), "\n")
+          }, error = function(e) {
+            cat("WARNING: Failed to standardize NF residuals for", fname_clean, ":", e$message, "- skipping\n")
             next
-          }
-          residual_values <- (residual_values - resid_mean) / resid_sd
-          cat("Standardized NF residuals for", fname_clean, ": Mean =", round(mean(residual_values), 6), "SD =", round(sd(residual_values), 6), "\n")
+          })
         }
         
         # Store under all possible keys for flexible lookup
@@ -416,19 +425,18 @@ fit_nf_garch <- function(asset_name, asset_returns, model_config, nf_resid) {
       return(NULL)
     }
     
-    # CRITICAL FIX: Ensure NF residuals are standardized before use
+    # Ensure NF residuals are standardized before use
+    # NF residuals should already be standardized from training, but verify
     nf_resid_vec <- as.numeric(head(nf_resid, n_sim))
     nf_resid_vec <- nf_resid_vec[!is.na(nf_resid_vec)]
     if (length(nf_resid_vec) < n_sim) {
       cat("WARNING: NF residuals contain NAs for", asset_name, "-", model_config[["model"]], "\n")
       return(NULL)
     }
-    # Double-check standardization (should already be done, but ensure it)
-    resid_mean <- mean(nf_resid_vec, na.rm = TRUE)
-    resid_sd <- sd(nf_resid_vec, na.rm = TRUE)
-    if (abs(resid_mean) > 0.1 || abs(resid_sd - 1) > 0.1) {
-      nf_resid_vec <- (nf_resid_vec - resid_mean) / resid_sd
-      cat("Re-standardized NF residuals for", asset_name, model_config[["model"]], 
+    # Verify and standardize if needed
+    if (!is_standardized(nf_resid_vec)) {
+      nf_resid_vec <- standardize_residuals(nf_resid_vec, verify = TRUE)
+      cat("Standardized NF residuals for", asset_name, model_config[["model"]], 
           ": Mean =", round(mean(nf_resid_vec), 6), "SD =", round(sd(nf_resid_vec), 6), "\n")
     }
     

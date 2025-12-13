@@ -2,6 +2,14 @@
 # Create Consolidated Methodology Documentation
 # Combines all three methodological analyses into a single document
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 library(dplyr)
 
@@ -191,4 +199,8 @@ md_content <- paste0(
 
 writeLines(md_content, md_file)
 cat("Markdown documentation saved to:", md_file, "\n")
+
+
+
+
 

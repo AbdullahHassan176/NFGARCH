@@ -1,6 +1,14 @@
 #!/usr/bin/env Rscript
 # Verify all results ran successfully
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 
 cat("=== COMPREHENSIVE RESULTS VERIFICATION ===\n\n")

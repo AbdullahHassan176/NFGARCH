@@ -2,6 +2,14 @@
 # Extract Dissertation Tables and Summaries
 # Generates LaTeX tables and summaries from results files
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)
@@ -154,6 +162,28 @@ if (file.exists(nf_comparison_file)) {
     wilcoxon <- read.xlsx(nf_comparison_file, sheet = "Wilcoxon_Test")
     write.csv(wilcoxon, file.path(output_dir, "wilcoxon_test_results.csv"), row.names = FALSE)
     cat("  [OK] Wilcoxon test results saved\n")
+  }
+  
+  # Asset class summary with median values (Table 4.5)
+  if ("Asset_Class_Summary" %in% sheets) {
+    asset_class_summary <- read.xlsx(nf_comparison_file, sheet = "Asset_Class_Summary")
+    write.csv(asset_class_summary, file.path(output_dir, "nf_performance_by_asset_class.csv"), row.names = FALSE)
+    cat("  [OK] Performance by asset class (median values) saved\n")
+  } else if ("Combined_Results" %in% sheets) {
+    # Calculate median values by asset class and source from combined results
+    asset_class_medians <- combined %>%
+      group_by(Asset_Class, Source) %>%
+      summarise(
+        N_Assets = n_distinct(Asset),
+        Median_MSE = median(MSE, na.rm = TRUE),
+        Median_MAE = median(MAE, na.rm = TRUE),
+        Median_AIC = median(AIC, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      arrange(Asset_Class, Source)
+    
+    write.csv(asset_class_medians, file.path(output_dir, "nf_performance_by_asset_class.csv"), row.names = FALSE)
+    cat("  [OK] Performance by asset class (median values) saved\n")
   }
 }
 

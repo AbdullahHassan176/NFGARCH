@@ -2,6 +2,14 @@
 # Create Hyperparameter Sensitivity Summary
 # Creates summary document for hyperparameter selection methodology
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(openxlsx)
 
 # Create summary data
@@ -87,4 +95,8 @@ writeData(wb, "Overfitting_Analysis", overfitting_analysis)
 saveWorkbook(wb, output_file, overwrite = TRUE)
 
 cat("Hyperparameter sensitivity summary saved to:", output_file, "\n")
+
+
+
+
 

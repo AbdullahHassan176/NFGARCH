@@ -2,6 +2,14 @@
 # Calculate Stylized Facts for Financial Time Series
 # Metrics: Volatility clustering, Leverage effects, Autocorrelation decay, Heavy tails, Gain/loss asymmetry
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(xts)
 library(dplyr)
 library(tidyr)

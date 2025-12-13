@@ -2,6 +2,14 @@
 # Residual Stationarity Testing for Methodology Chapter
 # Tests GARCH residuals for stationarity using ADF, KPSS, Ljung-Box, and ARCH tests
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 # Load required libraries
 library(openxlsx)
 library(dplyr)
@@ -344,4 +352,8 @@ if (length(all_results) > 0) {
 } else {
   cat("ERROR: No results generated. Check residual file paths.\n")
 }
+
+
+
+
 

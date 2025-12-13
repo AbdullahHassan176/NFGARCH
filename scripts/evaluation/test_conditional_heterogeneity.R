@@ -3,6 +3,14 @@
 # Tests for conditional heterogeneity in GARCH residuals and assesses
 # impact on NF model stability
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 # Load required libraries
 library(openxlsx)
 library(dplyr)

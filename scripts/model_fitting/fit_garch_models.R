@@ -2,7 +2,13 @@
 # This script implements and evaluates various GARCH-family models on FX and equity returns
 # to capture volatility clustering and leverage effects in financial markets
 
-set.seed(123)  # Ensure reproducibility
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
 
 # Load required libraries (no parallel processing)
 library(xts)

@@ -1,12 +1,13 @@
 # scripts/utils/utils_nf_garch.R
 # Manual NF-GARCH simulator with safety floors and robust variance handling
 
+# Load centralized standardization function
+source("scripts/utils/standardize_residuals.R")
+
+# Deprecated: Use standardize_residuals() instead
+# Kept for backwards compatibility
 .standardize_nf <- function(z) {
-  z <- as.numeric(z)
-  z <- z - mean(z, na.rm = TRUE)
-  sdv <- sd(z, na.rm = TRUE)
-  if (!is.finite(sdv) || sdv == 0) stop("NF shocks have zero/invalid variance after centering.")
-  z / sdv
+  standardize_residuals(z, verify = FALSE)
 }
 
 # ---- Model recursions with safety floors ----
@@ -42,10 +43,13 @@
 
 .sim_eGARCH <- function(par, sigma0, eps0, z, mu=0, Ezabs=NULL, var_floor=1e-12) {
   # log(h_t) = omega + beta*log(h_{t-1}) + alpha*(|z_{t-1}| - E|z|) + gamma*z_{t-1}
+  # E|z| should be theoretical expectation, not sample mean
   omega <- par["omega"]; alpha <- par["alpha1"]; beta <- par["beta1"]; gamma <- par["gamma1"]
   n <- length(z); h <- numeric(n); eps <- numeric(n); r <- numeric(n)
   h_prev <- max(as.numeric(sigma0)^2, var_floor); z_prev <- as.numeric(eps0) / sqrt(h_prev)
-  if (is.null(Ezabs)) Ezabs <- mean(abs(z), na.rm = TRUE)
+  # Use theoretical E|z| for Normal distribution: sqrt(2/pi) ≈ 0.798
+  # For Student-t, should pass nu and use E_abs_t(nu), but defaulting to Normal
+  if (is.null(Ezabs)) Ezabs <- sqrt(2/pi)  # Theoretical E|z| for N(0,1)
   for (t in 1:n) {
     logh_t <- omega + beta * log(h_prev) + alpha * (abs(z_prev) - Ezabs) + gamma * z_prev
     h_t <- max(exp(logh_t), var_floor)
@@ -120,9 +124,13 @@ simulate_nf_garch <- function(fit,
   eps <- numeric(horizon)
   sig <- numeric(horizon)
 
-  # eGARCH needs E|z| term; estimate from supplied NF draws
-  Ez_abs <- mean(abs(z_nf), na.rm = TRUE)
-  if (!is.finite(Ez_abs) || Ez_abs <= 0) Ez_abs <- sqrt(2/pi) # N(0,1) fallback
+  # eGARCH needs E|z| term; use theoretical expectation
+  # For standardized residuals (mean=0, SD=1), E|z| depends on distribution
+  # Default to Normal: E|z| = sqrt(2/pi) ≈ 0.798
+  # Note: This assumes z_nf are standardized Normal residuals
+  # For Student-t, should use E_abs_t(nu) but nu is not available here
+  # Using theoretical Normal expectation is correct for standardized Normal residuals
+  Ez_abs <- sqrt(2/pi)  # Theoretical E|z| for N(0,1)
 
   # Coeff helpers (presence differs by spec)
   get <- function(nm, default = 0) if (nm %in% names(cf)) as.numeric(cf[nm]) else default

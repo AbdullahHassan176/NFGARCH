@@ -158,6 +158,36 @@ OUTPUT_PATHS <- list(
 )
 
 # =============================================================================
+# REPRODUCIBILITY CONFIGURATION
+# =============================================================================
+
+# Centralized seed for reproducibility across all scripts
+# This seed should be used consistently across R and Python scripts
+REPRODUCIBILITY_SEED <- 123
+
+# Get R and Python executables from environment or use defaults
+get_r_executable <- function() {
+  r_exe <- Sys.getenv("RSCRIPT", unset = NA)
+  if (is.na(r_exe)) {
+    # Try common locations
+    if (.Platform$OS.type == "windows") {
+      r_exe <- "Rscript.exe"
+    } else {
+      r_exe <- "Rscript"
+    }
+  }
+  return(r_exe)
+}
+
+get_python_executable <- function() {
+  py_exe <- Sys.getenv("PYTHON", unset = NA)
+  if (is.na(py_exe)) {
+    py_exe <- "python"
+  }
+  return(py_exe)
+}
+
+# =============================================================================
 # SIMULATION PARAMETERS
 # =============================================================================
 
@@ -166,7 +196,7 @@ SIMULATION_PARAMS <- list(
   n_simulations = 1000,
   forecast_horizon = 10,
   confidence_levels = c(0.95, 0.99),
-  seed = 12345
+  seed = REPRODUCIBILITY_SEED  # Use centralized seed
 )
 
 # OPTIMIZED TSCV PARAMETERS for speed

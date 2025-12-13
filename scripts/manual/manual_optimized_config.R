@@ -8,31 +8,37 @@
 # ASSET REDUCTION (50% time savings)
 # =============================================================================
 
-# Reduced from 12 to 6 most representative assets
+# Full asset list to match origin/main (12 assets total)
 MANUAL_ASSETS <- c(
-  "EURUSD", "GBPUSD", "USDZAR",  # FX (3 most liquid)
-  "NVDA", "MSFT", "AMZN"         # Equity (3 most volatile)
+  "EURUSD", "GBPUSD", "GBPCNY", "USDZAR", "GBPZAR", "EURZAR",  # FX (6 assets)
+  "X", "NVDA", "MSFT", "PG", "CAT", "WMT", "AMZN"             # Equity (7 assets, but X may not be available)
 )
 
 # Asset metadata for reference
 ASSET_METADATA <- list(
-  FX = c("EURUSD", "GBPUSD", "USDZAR"),
-  EQUITY = c("NVDA", "MSFT", "AMZN"),
-  total_count = 6,
+  FX = c("EURUSD", "GBPUSD", "GBPCNY", "USDZAR", "GBPZAR", "EURZAR"),
+  EQUITY = c("X", "NVDA", "MSFT", "PG", "CAT", "WMT", "AMZN"),
+  total_count = 13,  # Note: May be 12 if X is not available
   original_count = 12,
-  reduction_pct = 50
+  reduction_pct = 0  # No reduction - using full set
 )
 
 # =============================================================================
 # MODEL REDUCTION (40% time savings)
 # =============================================================================
 
-# All 4 GARCH variants required by dissertation
-MANUAL_MODELS <- c("sGARCH", "eGARCH", "TGARCH", "gjrGARCH")
+# All 5 GARCH variants to match origin/main
+MANUAL_MODELS <- c("sGARCH_norm", "sGARCH_sstd", "eGARCH", "TGARCH", "gjrGARCH")
 
-# Model configuration for manual execution
+# Model configuration for manual execution (matching origin/main)
 MANUAL_MODEL_CONFIG <- list(
-  sGARCH = list(
+  sGARCH_norm = list(
+    model = "sGARCH",
+    distribution = "norm",
+    submodel = NULL,
+    description = "Standard GARCH with normal distribution"
+  ),
+  sGARCH_sstd = list(
     model = "sGARCH",
     distribution = "sstd",
     submodel = NULL,
@@ -40,19 +46,19 @@ MANUAL_MODEL_CONFIG <- list(
   ),
   eGARCH = list(
     model = "eGARCH", 
-    distribution = "sstd",
+    distribution = "norm",  # Note: origin/main uses norm for eGARCH
     submodel = NULL,
     description = "Exponential GARCH with asymmetric effects"
   ),
   TGARCH = list(
     model = "TGARCH",
-    distribution = "sstd", 
+    distribution = "norm",  # Note: origin/main uses norm for TGARCH
     submodel = NULL,
     description = "Threshold GARCH with regime-dependent behavior"
   ),
   gjrGARCH = list(
     model = "gjrGARCH",
-    distribution = "sstd",
+    distribution = "norm",  # Note: origin/main uses norm for gjrGARCH
     submodel = NULL,
     description = "Glosten-Jagannathan-Runkle GARCH with leverage effects"
   )
@@ -60,51 +66,51 @@ MANUAL_MODEL_CONFIG <- list(
 
 # Model metadata
 MODEL_METADATA <- list(
-  total_count = 4,
+  total_count = 5,
   original_count = 5,
-  reduction_pct = 20,
-  excluded_models = c("sGARCH_norm")
+  reduction_pct = 0,  # No reduction - using full set
+  excluded_models = c()
 )
 
 # =============================================================================
 # CV OPTIMIZATION (60% time savings)
 # =============================================================================
 
-# Optimized Time-Series Cross-Validation parameters
+# Full Time-Series Cross-Validation parameters (matching origin/main)
 MANUAL_CV_CONFIG <- list(
-  # Reduced CV folds
-  n_folds = 3,                    # Reduced from 5 (40% reduction)
+  # Full CV folds
+  n_folds = 5,                    # Full configuration
   
-  # Optimized window parameters
-  window_size = 0.5,              # Reduced from 0.65 (23% reduction)
-  step_size = 0.15,               # Increased from 0.1 (50% fewer steps)
-  min_train_size = 0.3,           # Reduced from 0.4 (25% reduction)
+  # Full window parameters
+  window_size = 0.65,             # Full window size
+  step_size = 0.1,                 # Original step size
+  min_train_size = 0.4,            # Full minimum train size
   
   # Forecast parameters
-  forecast_horizon = 15,           # Reduced from 20 (25% reduction)
-  max_windows = 3,                # Reduced from 4 (25% reduction)
+  forecast_horizon = 20,           # Full forecast horizon
+  max_windows = NULL,              # No limit - use all windows
   
   # Parallel processing
-  parallel_cores = 4,             # Use 4 cores for parallel CV
+  parallel_cores = 4,              # Use 4 cores for parallel CV
   parallel_enabled = TRUE,
   
-  # Early stopping
-  early_stopping = TRUE,
-  patience = 2,                   # Stop if no improvement for 2 folds
+  # Early stopping (disabled for full run)
+  early_stopping = FALSE,
+  patience = NULL,
   
   # Memory optimization
   clear_memory = TRUE,            # Clear memory between folds
   batch_size = 1000              # Process in batches
 )
 
-# CV optimization metadata
+# CV metadata (full configuration)
 CV_METADATA <- list(
   original_folds = 5,
-  optimized_folds = 3,
+  optimized_folds = 5,  # Using full configuration
   original_windows = 8,
-  optimized_windows = 3,
-  time_savings_pct = 60,
-  memory_reduction_pct = 40
+  optimized_windows = 8,  # Using full configuration
+  time_savings_pct = 0,  # No optimization - full run
+  memory_reduction_pct = 0
 )
 
 # =============================================================================

@@ -70,12 +70,28 @@ PERFORMANCE_CONFIG = {
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def set_seed(seed=123):
-    """Set random seeds for reproducibility (matching R seed)"""
+def set_seed(seed=None):
+    """Set random seeds for reproducibility (matching R seed)
+    
+    Args:
+        seed: Random seed value. If None, uses REPRODUCIBILITY_SEED from config (123)
+    """
+    if seed is None:
+        # Try to get seed from config if available
+        try:
+            import sys
+            import os
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            # Default to 123 if config not available
+            seed = 123
+        except:
+            seed = 123
+    
     torch.manual_seed(seed)
     np.random.seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)  # For multi-GPU setups
 
 def clear_memory():
     """Clear GPU and CPU memory"""
@@ -304,7 +320,8 @@ def train_optimized_nf(file_path, model_key, output_dir="outputs/manual/nf_model
 def main():
     """Main training pipeline with optimizations"""
     
-    # Set reproducibility (matching R seed 123 for consistency)
+    # Set reproducibility (matching R seed for consistency)
+    # Use seed 123 to match R's REPRODUCIBILITY_SEED
     set_seed(123)
     
     # Print optimization summary

@@ -11,7 +11,13 @@ source("scripts/manual_garch/fit_gjr_manual.R")
 source("scripts/manual_garch/fit_tgarch_manual.R")
 
 # Test data - simple returns series
-set.seed(123)
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
 n <- 1000
 test_returns <- rnorm(n, mean = 0, sd = 0.02)
 

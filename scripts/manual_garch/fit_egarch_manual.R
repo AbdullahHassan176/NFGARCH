@@ -49,7 +49,8 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
         log_sigma2 <- rep(log(sample_var), n)
         residuals <- returns - mu
         
-        # E|z| for normal distribution
+        # E|z| for normal distribution (theoretical expectation)
+        # Source: E|z| = sqrt(2/pi) for z ~ N(0,1)
         E_z <- sqrt(2/pi)
         
         # Variance recursion with burn-in and better numerical stability
@@ -90,7 +91,8 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
         log_sigma2 <- rep(log(sample_var), n)
         residuals <- returns - mu
         
-        # E|z| for Student-t distribution
+        # E|z| for Student-t distribution (theoretical expectation)
+        # Source: E|z| = sqrt(ν/π) · Γ((ν-1)/2) / Γ(ν/2) for z ~ t(ν)
         E_z <- E_abs_t(nu)
         
         # Variance recursion with burn-in and better numerical stability

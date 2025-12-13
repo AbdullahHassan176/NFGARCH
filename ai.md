@@ -178,31 +178,47 @@ conda env create -f environment/environment.yml
 
 ## Global Instructions for Maintaining Code Consistency
 
-### 1. Model Configuration Updates
+### 1. Reproducibility Requirements
+- **ALWAYS** use `REPRODUCIBILITY_SEED` from `scripts/core/config.R` for all random operations
+- **ALWAYS** set seed at the beginning of every script (R: `set.seed(REPRODUCIBILITY_SEED)`, Python: `set_seed(123)`)
+- **NEVER** hardcode seed values - use centralized configuration
+
+### 2. Standardization Requirements
+- **ALWAYS** use `standardize_residuals()` from `scripts/utils/standardize_residuals.R`
+- **NEVER** implement standardization logic inline - use centralized function
+- **VERIFY** standardization only when needed (use `is_standardized()` check)
+
+### 3. eGARCH E|z| Requirements
+- **ALWAYS** use theoretical E|z| values:
+  - Normal: `sqrt(2/pi)` ≈ 0.798
+  - Student-t: Use `E_abs_t(nu)` from `manual_garch_core.R`
+- **NEVER** use sample mean for E|z| in eGARCH calculations
+
+### 4. Model Configuration Updates
 When adding new GARCH models:
 - Update `model_configs` in ALL relevant scripts
 - Ensure consistent naming across the pipeline
 - Update documentation and configuration files
 
-### 2. Asset Coverage
+### 5. Asset Coverage
 When adding new assets:
 - Update asset lists in data loading scripts
 - Ensure NF residuals are generated for all combinations
 - Update evaluation scripts to include new assets
 
-### 3. Pipeline Integration
+### 6. Pipeline Integration
 When modifying scripts:
 - Maintain backward compatibility
-- Update Makefile and batch scripts
+- Use `%RSCRIPT%` variable in batch files (not hardcoded paths)
 - Test complete pipeline execution
 
-### 4. Error Handling
+### 7. Error Handling
 Always implement:
 - Try-catch blocks for model fitting
 - Graceful handling of convergence failures
 - Comprehensive error logging
 
-### 5. Performance Optimization
+### 8. Performance Optimization
 - Use efficient data structures (XTS for time series)
 - Implement parallel processing where appropriate
 - Monitor memory usage for large datasets
@@ -214,9 +230,17 @@ Always implement:
 - **Complete NF Residual Coverage**: All model-asset combinations have synthetic residuals
 - **Comprehensive Evaluation**: Forecasting, stylized facts, VaR, and stress testing
 - **Robust Error Handling**: Manual simulation fallbacks and convergence checks
-- **Cross-Platform Support**: Windows batch scripts and Unix makefiles
+- **Cross-Platform Support**: Windows batch scripts with automatic R detection
 
-### Recent Fixes
+### Recent Critical Fixes (2025-01-XX)
+- **Standardization Fix**: Created centralized `standardize_residuals()` function, removed redundant standardization calls
+- **eGARCH E|z| Fix**: Now uses theoretical expectation (√(2/π) for Normal) instead of sample mean
+- **Platform Independence**: Added automatic R detection, removed hardcoded paths
+- **Seed Management**: Centralized seed (123) in config.R, added to all scripts
+- **Documentation**: Fixed README claims, created REPRODUCIBILITY.md guide
+- **Dependencies**: Created requirements_frozen.txt template, updated environment.yml
+
+### Previous Fixes
 - **Naming Convention Resolution**: Fixed missing eGARCH, gjrGARCH, and TGARCH residuals
 - **Manual Simulation**: Replaced problematic `ugarchpath` with custom implementation
 - **Quick Testing**: Added comprehensive testing framework for pipeline validation

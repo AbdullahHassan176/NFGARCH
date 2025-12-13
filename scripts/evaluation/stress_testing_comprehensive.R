@@ -2,6 +2,14 @@
 # Comprehensive Stress Testing
 # Historical crises and hypothetical shocks
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(dplyr)
 library(tidyr)
 library(stringr)

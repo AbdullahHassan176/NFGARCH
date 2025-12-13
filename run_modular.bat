@@ -14,7 +14,14 @@ set "LOG_DIR=logs"
 set "STATUS_FILE=%CHECKPOINT_DIR%\pipeline_status.json"
 set "LOG_FILE=%LOG_DIR%\pipeline_%date:~-4,4%%date:~-7,2%%date:~-10,2%_%time:~0,2%%time:~3,2%%time:~6,2%.log"
 set "LOG_FILE=%LOG_FILE: =0%"
-set "RSCRIPT=C:\Program Files\R\R-4.5.1\bin\Rscript.exe"
+
+REM Find Rscript executable
+call scripts\utils\find_r_executable.bat
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to find Rscript executable
+    pause
+    exit /b 1
+)
 
 REM Create directories
 if not exist "%CHECKPOINT_DIR%" mkdir "%CHECKPOINT_DIR%"

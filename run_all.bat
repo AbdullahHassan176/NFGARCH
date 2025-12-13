@@ -11,10 +11,12 @@ echo ========================================
 echo.
 echo This will:
 echo  1. Clear previous outputs and results
-echo  2. Run complete optimized pipeline (45-90 minutes)
+echo  2. Run complete optimized pipeline (60-120 minutes)
 echo  3. Compare NF-GARCH vs Standard GARCH
 echo  4. Evaluate and summarize results
-echo  5. Create final dashboard
+echo  5. Run methodology validation tests
+echo  6. Create final dashboard
+echo  7. Generate dissertation tables and figures
 echo.
 echo Optimizations:
 echo  - Assets: 6 (EURUSD, GBPUSD, USDZAR, NVDA, MSFT, AMZN)
@@ -23,7 +25,7 @@ echo  - CV: 3 folds, max 3 windows
 echo  - NF Training: 75 epochs, optimized architecture
 echo  - Seed: 123 (for reproducibility)
 echo.
-echo Expected time: 45-90 minutes
+echo Expected time: 60-120 minutes (includes all validation and academic outputs)
 echo ========================================
 echo.
 
@@ -71,6 +73,8 @@ if not exist "outputs\manual\nf_models" mkdir "outputs\manual\nf_models"
 if not exist "outputs\manual\evaluation" mkdir "outputs\manual\evaluation"
 if not exist "results\consolidated" mkdir "results\consolidated"
 if not exist "results\diagnostics" mkdir "results\diagnostics"
+if not exist "results\dissertation_tables" mkdir "results\dissertation_tables"
+if not exist "results\figures" mkdir "results\figures"
 
 echo.
 echo [OK] Outputs cleared and directories recreated
@@ -90,7 +94,7 @@ echo   Models: sGARCH, eGARCH, TGARCH (3 total)
 echo   CV: 3 folds, optimized windows
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\manual\manual_garch_fitting.R
+"%RSCRIPT%" scripts\manual\manual_garch_fitting.R
 if %errorlevel% neq 0 (
     echo [ERROR] GARCH fitting failed
     echo Check outputs\manual\garch_fitting\ for details
@@ -139,7 +143,7 @@ echo   Engine: manual
 echo   Using: Properly standardized NF residuals
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\simulation_forecasting\simulate_nf_garch_engine.R --engine manual
+"%RSCRIPT%" scripts\simulation_forecasting\simulate_nf_garch_engine.R --engine manual
 if %errorlevel% neq 0 (
     echo [WARNING] NF-GARCH simulation had issues, continuing...
 ) else (
@@ -158,7 +162,7 @@ echo.
 echo Running comparison analysis...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\compare_nf_vs_standard_garch.R
+"%RSCRIPT%" scripts\evaluation\compare_nf_vs_standard_garch.R
 if %errorlevel% neq 0 (
     echo [WARNING] Comparison analysis had issues, continuing...
 ) else (
@@ -177,7 +181,7 @@ echo.
 echo Calculating KS distance, Wasserstein, Tail index, Skewness, Kurtosis...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\calculate_distributional_metrics.R
+"%RSCRIPT%" scripts\evaluation\calculate_distributional_metrics.R
 if %errorlevel% neq 0 (
     echo [WARNING] Distributional metrics calculation had issues, continuing...
 ) else (
@@ -196,7 +200,7 @@ echo.
 echo Calculating volatility clustering, leverage effects, autocorrelation...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\calculate_stylized_facts.R
+"%RSCRIPT%" scripts\evaluation\calculate_stylized_facts.R
 if %errorlevel% neq 0 (
     echo [WARNING] Stylized facts calculation had issues, continuing...
 ) else (
@@ -215,7 +219,7 @@ echo.
 echo Running VaR backtesting (Kupiec, Christoffersen)...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\var_backtesting_comprehensive.R
+"%RSCRIPT%" scripts\evaluation\var_backtesting_comprehensive.R
 if %errorlevel% neq 0 (
     echo [WARNING] VaR backtesting had issues, continuing...
 ) else (
@@ -234,7 +238,7 @@ echo.
 echo Running stress tests (historical crises, hypothetical shocks)...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\stress_testing_comprehensive.R
+"%RSCRIPT%" scripts\evaluation\stress_testing_comprehensive.R
 if %errorlevel% neq 0 (
     echo [WARNING] Stress testing had issues, continuing...
 ) else (
@@ -243,17 +247,55 @@ if %errorlevel% neq 0 (
 echo.
 
 REM =============================================================================
-REM STEP 10: VERIFY RESULTS
+REM STEP 10: METHODOLOGY VALIDATION - RESIDUAL STATIONARITY
 REM =============================================================================
 
 echo ========================================
-echo STEP 10: VERIFYING RESULTS
+echo STEP 10: METHODOLOGY VALIDATION - RESIDUAL STATIONARITY
+echo ========================================
+echo.
+echo Testing GARCH residuals for stationarity (ADF, KPSS, Ljung-Box, ARCH tests)...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\test_residual_stationarity.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Residual stationarity testing had issues, continuing...
+) else (
+    echo [OK] Residual stationarity testing completed
+)
+echo.
+
+REM =============================================================================
+REM STEP 11: METHODOLOGY VALIDATION - CONDITIONAL HETEROGENEITY
+REM =============================================================================
+
+echo ========================================
+echo STEP 11: METHODOLOGY VALIDATION - CONDITIONAL HETEROGENEITY
+echo ========================================
+echo.
+echo Testing for conditional heterogeneity in GARCH residuals...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\test_conditional_heterogeneity.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Conditional heterogeneity testing had issues, continuing...
+) else (
+    echo [OK] Conditional heterogeneity testing completed
+)
+echo.
+
+REM =============================================================================
+REM STEP 12: VERIFY RESULTS
+REM =============================================================================
+
+echo ========================================
+echo STEP 12: VERIFYING RESULTS
 echo ========================================
 echo.
 echo Verifying all results...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\verify_all_results.R
+"%RSCRIPT%" scripts\evaluation\verify_all_results.R
 if %errorlevel% neq 0 (
     echo [WARNING] Verification had issues
 ) else (
@@ -262,17 +304,17 @@ if %errorlevel% neq 0 (
 echo.
 
 REM =============================================================================
-REM STEP 11: CONSOLIDATE RESULTS
+REM STEP 13: CONSOLIDATE RESULTS
 REM =============================================================================
 
 echo ========================================
-echo STEP 11: CONSOLIDATING RESULTS
+echo STEP 13: CONSOLIDATING RESULTS
 echo ========================================
 echo.
 echo Creating consolidated results...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" -e "source('scripts/core/consolidation.R'); consolidate_all_results('results/consolidated')"
+"%RSCRIPT%" -e "source('scripts/core/consolidation.R'); consolidate_all_results('results/consolidated')"
 if %errorlevel% neq 0 (
     echo [WARNING] Consolidation had issues, continuing...
 ) else (
@@ -281,17 +323,55 @@ if %errorlevel% neq 0 (
 echo.
 
 REM =============================================================================
-REM STEP 12: CREATE FINAL DASHBOARD
+REM STEP 14: CREATE HYPERPARAMETER SENSITIVITY SUMMARY
 REM =============================================================================
 
 echo ========================================
-echo STEP 12: CREATING FINAL DASHBOARD
+echo STEP 14A: CREATING HYPERPARAMETER SENSITIVITY SUMMARY
+echo ========================================
+echo.
+echo Creating hyperparameter selection methodology documentation...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\create_hyperparameter_summary.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Hyperparameter summary creation had issues, continuing...
+) else (
+    echo [OK] Hyperparameter summary created
+)
+echo.
+
+REM =============================================================================
+REM STEP 14: CREATE METHODOLOGY CONSOLIDATED DOCUMENTATION
+REM =============================================================================
+
+echo ========================================
+echo STEP 14: CREATING METHODOLOGY CONSOLIDATED DOCUMENTATION
+echo ========================================
+echo.
+echo Consolidating methodology validation results...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\create_methodology_consolidated.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Methodology consolidation had issues, continuing...
+) else (
+    echo [OK] Methodology consolidated documentation created
+)
+echo.
+
+REM =============================================================================
+REM STEP 15: CREATE FINAL DASHBOARD
+REM =============================================================================
+
+echo ========================================
+echo STEP 15: CREATING FINAL DASHBOARD
 echo ========================================
 echo.
 echo Creating comprehensive Excel dashboard...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\core\create_final_dashboard.R
+"%RSCRIPT%" scripts\core\create_final_dashboard.R
 if %errorlevel% neq 0 (
     echo [WARNING] Dashboard creation had issues, continuing...
 ) else (
@@ -300,21 +380,59 @@ if %errorlevel% neq 0 (
 echo.
 
 REM =============================================================================
-REM STEP 13: GENERATE HTML DASHBOARD VISUALIZATIONS
+REM STEP 16: GENERATE HTML DASHBOARD VISUALIZATIONS
 REM =============================================================================
 
 echo ========================================
-echo STEP 13: GENERATING HTML DASHBOARD
+echo STEP 16: GENERATING HTML DASHBOARD
 echo ========================================
 echo.
 echo Generating visualization plots and HTML dashboard...
 echo.
 
-"C:\Program Files\R\R-4.5.1\bin\Rscript.exe" scripts\evaluation\generate_dashboard_visualizations.R
+"%RSCRIPT%" scripts\evaluation\generate_dashboard_visualizations.R
 if %errorlevel% neq 0 (
     echo [WARNING] HTML dashboard generation had issues, continuing...
 ) else (
     echo [OK] HTML dashboard visualizations generated
+)
+echo.
+
+REM =============================================================================
+REM STEP 17: EXTRACT DISSERTATION TABLES
+REM =============================================================================
+
+echo ========================================
+echo STEP 17: EXTRACTING DISSERTATION TABLES
+echo ========================================
+echo.
+echo Generating LaTeX tables for dissertation...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\extract_dissertation_tables.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Dissertation tables extraction had issues, continuing...
+) else (
+    echo [OK] Dissertation tables extracted
+)
+echo.
+
+REM =============================================================================
+REM STEP 18: GENERATE DISSERTATION FIGURES
+REM =============================================================================
+
+echo ========================================
+echo STEP 18: GENERATING DISSERTATION FIGURES
+echo ========================================
+echo.
+echo Generating dissertation report figures (Fig-R1, Fig-R2/R3, Fig-R4/R5, Fig-R7, Fig-R8)...
+echo.
+
+"%RSCRIPT%" scripts\evaluation\generate_report_figures.R
+if %errorlevel% neq 0 (
+    echo [WARNING] Dissertation figures generation had issues, continuing...
+) else (
+    echo [OK] Dissertation figures generated
 )
 echo.
 
@@ -335,8 +453,13 @@ echo   - results\consolidated\Stylized_Facts.xlsx
 echo   - results\consolidated\VaR_Backtesting.xlsx
 echo   - results\consolidated\Stress_Testing.xlsx
 echo   - results\consolidated\Final_Dashboard.xlsx (Excel dashboard)
+echo   - results\consolidated\Methodology_Residual_Stationarity.xlsx
+echo   - results\consolidated\Methodology_Conditional_Heterogeneity.xlsx
+echo   - results\consolidated\Methodology_Consolidated.xlsx
 echo   - results\dashboard_visualizations.html (Interactive HTML dashboard)
 echo   - results\dashboard_plots\ (13 visualization plots)
+echo   - results\dissertation_tables\ (LaTeX tables for dissertation)
+echo   - results\figures\ (Dissertation figures: Fig-R1, Fig-R2/R3, Fig-R4/R5, Fig-R7, Fig-R8)
 echo   - results\diagnostics\ (investigation summaries)
 echo.
 echo Next steps:
@@ -349,7 +472,13 @@ echo   4. Review distributional metrics: Distributional_Metrics.xlsx
 echo   5. Review stylized facts: Stylized_Facts.xlsx
 echo   6. Review VaR backtesting: VaR_Backtesting.xlsx
 echo   7. Review stress testing: Stress_Testing.xlsx
-echo   8. Run: start_research_dashboard.bat (opens HTML dashboard in browser)
+echo   8. Review methodology validation:
+echo      - Residual Stationarity: Methodology_Residual_Stationarity.xlsx
+echo      - Conditional Heterogeneity: Methodology_Conditional_Heterogeneity.xlsx
+echo      - Consolidated: Methodology_Consolidated.xlsx
+echo   9. Review dissertation tables: results\dissertation_tables\
+echo  10. Review dissertation figures: results\figures\
+echo  11. Run: start_research_dashboard.bat (opens HTML dashboard in browser)
 echo.
 echo ========================================
 echo.

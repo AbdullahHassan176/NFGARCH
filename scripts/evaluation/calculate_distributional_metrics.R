@@ -2,6 +2,14 @@
 # Calculate Distributional Metrics for GARCH Models
 # Required metrics: KS distance, Wasserstein distance, Tail index, Skewness, Kurtosis
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 library(dplyr)
 library(tidyr)
 library(stringr)

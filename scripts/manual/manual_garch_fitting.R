@@ -12,6 +12,14 @@ library(lubridate)
 library(parallel)
 library(doParallel)
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 # Load manual optimization configuration
 source("scripts/manual/manual_optimized_config.R")
 
@@ -45,11 +53,20 @@ raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 # Extract price matrix without date column
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 
-# Use optimized asset selection (50% reduction)
-equity_tickers <- c("NVDA", "MSFT", "AMZN")  # 3 most representative equity assets
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")  # 3 most representative FX assets
+# Use full asset list from config (matching origin/main)
+all_assets <- get_manual_assets()
+# Separate into FX and Equity based on available data
+fx_names <- c("EURUSD", "GBPUSD", "GBPCNY", "USDZAR", "GBPZAR", "EURZAR")
+equity_tickers <- c("X", "NVDA", "MSFT", "PG", "CAT", "WMT", "AMZN")
 
-cat("Using optimized assets:", paste(c(equity_tickers, fx_names), collapse = ", "), "\n")
+# Filter to only assets that exist in the data
+available_assets <- names(price_data_matrix)
+fx_names <- fx_names[fx_names %in% available_assets]
+equity_tickers <- equity_tickers[equity_tickers %in% available_assets]
+
+cat("Using full asset set:", paste(c(equity_tickers, fx_names), collapse = ", "), "\n")
+cat("  FX assets:", length(fx_names), "\n")
+cat("  Equity assets:", length(equity_tickers), "\n")
 
 # Convert price series to XTS objects
 equity_xts <- lapply(equity_tickers, function(ticker) {

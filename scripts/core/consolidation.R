@@ -3,6 +3,14 @@
 # This file combines all consolidation functionality into a single, unified module
 # Replaces: consolidate_results.R, consolidate_results_improved.R, consolidate_results_final.R, etc.
 
+# Load centralized seed configuration
+if (file.exists("scripts/core/config.R")) {
+  source("scripts/core/config.R")
+  set.seed(REPRODUCIBILITY_SEED)
+} else {
+  set.seed(123)  # Fallback if config not available
+}
+
 # Load required libraries
 library(openxlsx)
 library(dplyr)
