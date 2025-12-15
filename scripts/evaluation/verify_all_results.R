@@ -147,7 +147,7 @@ if (all_ok) {
   cat("[OK] NF-GARCH simulation completed successfully\n")
   cat("[OK] Results are valid and correct\n")
   cat("[OK] Standardization fix is applied\n")
-  cat("\nEverything ran successfully!\n")
+  cat("\nEverything ran successfully.\n")
 } else {
   cat("[WARNING] SOME ISSUES FOUND\n")
   cat("Please review the warnings above.\n")

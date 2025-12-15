@@ -322,13 +322,3 @@ Acknowledgments
 This research was conducted as part of an MSc in Mathematical Statistics at the University of the Witwatersrand, exploring the intersection of traditional econometric methods and modern machine learning techniques.
 
 ---
-
-Quick Success Checklist
-
-- [ ] Setup: Run quick_install.R and quick_install_python.py
-- [ ] Test: Run run_all.bat
-- [ ] Results: Check Dissertation_Consolidated_Results.xlsx
-- [ ] Analysis: Review performance metrics and model comparisons
-- [ ] Customize: Modify parameters or add new models as needed
-
-Ready to explore enhanced financial return modelling with NF-GARCH!

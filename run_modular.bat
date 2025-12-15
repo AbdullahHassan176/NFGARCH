@@ -471,7 +471,7 @@ call :log_message "Pipeline completed successfully"
 call :log_message "End time: %date% %time%"
 call :log_message "========================================"
 
-echo All steps completed!
+echo All steps completed.
 echo.
 echo Results saved to:
 echo   - results\consolidated\NF_GARCH_Results_manual.xlsx
@@ -489,13 +489,6 @@ echo Log file: %LOG_FILE%
 echo.
 echo Final status:
 %RSCRIPT% scripts\utils\checkpoint_manager.R status 2>nul
-echo.
-echo Next steps:
-echo   1. Review results in: results\consolidated\
-echo   2. View dashboards:
-echo      - Excel: Final_Dashboard.xlsx
-echo      - HTML: dashboard_visualizations.html (run start_research_dashboard.bat)
-echo   3. Check log file for detailed execution information: %LOG_FILE%
 echo.
 echo ========================================
 echo.

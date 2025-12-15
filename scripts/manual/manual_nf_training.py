@@ -406,7 +406,7 @@ def main():
     with open(output_dir / "training_summary.json", 'w') as f:
         json.dump(results_summary, f, indent=2)
     
-    print(f"\n[OK] Manual optimized NF training completed!")
+    print(f"\n[OK] Manual optimized NF training completed.")
     print(f"Results saved to: {output_dir}")
     print(f"Generated {len(all_samples)} synthetic residual files")
     

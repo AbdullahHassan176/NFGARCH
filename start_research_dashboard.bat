@@ -23,7 +23,7 @@ if exist "results\dashboard_visualizations.html" (
     REM Open HTML dashboard in default browser
     start "" "results\dashboard_visualizations.html"
     
-    echo [OK] Dashboard opened successfully!
+    echo [OK] Dashboard opened successfully.
     echo.
     echo The dashboard includes:
     echo   - Interactive navigation menu
@@ -53,11 +53,11 @@ if exist "results\dashboard_visualizations.html" (
         
         REM Check if HTML dashboard was created
         if exist "results\dashboard_visualizations.html" (
-            echo [OK] HTML dashboard generated successfully!
+            echo [OK] HTML dashboard generated successfully.
             echo.
             echo Opening dashboard in default browser...
             start "" "results\dashboard_visualizations.html"
-            echo [OK] Dashboard opened successfully!
+            echo [OK] Dashboard opened successfully.
         ) else (
             echo [WARNING] HTML dashboard not generated. Falling back to Excel dashboard...
             goto :open_excel

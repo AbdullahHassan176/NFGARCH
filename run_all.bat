@@ -462,24 +462,6 @@ echo   - results\dissertation_tables\ (LaTeX tables for dissertation)
 echo   - results\figures\ (Dissertation figures: Fig-R1, Fig-R2/R3, Fig-R4/R5, Fig-R7, Fig-R8)
 echo   - results\diagnostics\ (investigation summaries)
 echo.
-echo Next steps:
-echo   1. Review results in: results\consolidated\
-echo   2. Check comparison: NF_vs_Standard_GARCH_Comparison.xlsx
-echo   3. View comprehensive dashboards:
-echo      - Excel: Final_Dashboard.xlsx (includes all metrics)
-echo      - HTML: dashboard_visualizations.html (interactive with plots)
-echo   4. Review distributional metrics: Distributional_Metrics.xlsx
-echo   5. Review stylized facts: Stylized_Facts.xlsx
-echo   6. Review VaR backtesting: VaR_Backtesting.xlsx
-echo   7. Review stress testing: Stress_Testing.xlsx
-echo   8. Review methodology validation:
-echo      - Residual Stationarity: Methodology_Residual_Stationarity.xlsx
-echo      - Conditional Heterogeneity: Methodology_Conditional_Heterogeneity.xlsx
-echo      - Consolidated: Methodology_Consolidated.xlsx
-echo   9. Review dissertation tables: results\dissertation_tables\
-echo  10. Review dissertation figures: results\figures\
-echo  11. Run: start_research_dashboard.bat (opens HTML dashboard in browser)
-echo.
 echo ========================================
 echo.
 pause

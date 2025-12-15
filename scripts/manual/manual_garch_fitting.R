@@ -407,7 +407,7 @@ if (exists("cl")) {
 # Final garbage collection
 gc()
 
-cat("\nOptimized GARCH fitting completed successfully!\n")
+cat("\nOptimized GARCH fitting completed successfully.\n")
 cat("Results saved to outputs/manual/garch_fitting/\n")
 cat("Residuals saved to outputs/manual/residuals_by_model/\n")
 cat("===============================================\n")

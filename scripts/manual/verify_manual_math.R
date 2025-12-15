@@ -313,7 +313,7 @@ if (all_passed) {
   cat("  - Log-likelihood calculations\n")
   cat("  - Parameter constraints\n")
   cat("  - Stationarity conditions\n")
-  cat("\nYou can proceed with confidence!\n")
+  cat("\nYou can proceed with confidence.\n")
 } else {
   cat("[FAILED] Some verifications FAILED\n")
   cat("Please review the errors above.\n")
