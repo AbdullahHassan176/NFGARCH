@@ -63,3 +63,6 @@ is_standardized <- function(z, mean_tolerance = 0.1, sd_tolerance = 0.1) {
   return(abs(z_mean) <= mean_tolerance && abs(z_sd - 1) <= sd_tolerance)
 }
 
+
+
+
