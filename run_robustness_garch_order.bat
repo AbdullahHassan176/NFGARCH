@@ -5,18 +5,17 @@ REM This script runs the robustness test to check if NF gains persist with highe
 echo === GARCH Order Robustness Experiment ===
 echo.
 
-REM Check if R is available
-where Rscript >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Rscript not found in PATH
-    echo Please ensure R is installed and Rscript is in your PATH
+REM Find Rscript executable
+call scripts\utils\find_r_executable.bat
+if %errorlevel% neq 0 (
+    echo [ERROR] Failed to find Rscript executable
     pause
     exit /b 1
 )
 
 REM Run the experiment
 echo Running robustness experiment...
-Rscript scripts/experiments/robustness_garch_order.R
+"%RSCRIPT%" scripts/experiments/robustness_garch_order.R
 
 if %ERRORLEVEL% EQU 0 (
     echo.

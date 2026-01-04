@@ -22,6 +22,7 @@ library(stringr)
 # Load utility functions
 source("scripts/utils/safety_functions.R")
 source("scripts/utils/standardize_residuals.R")
+source("scripts/utils/utils_nf_garch.R")  # For manual NF-GARCH simulator fallback
 
 # =============================================================================
 # CONFIGURATION
@@ -313,10 +314,22 @@ simulate_nf_garch_rugarch <- function(fit, nf_residuals, horizon, model_family) 
     # Get model specification
     spec <- getspec(fit)
     
+    # Get coefficients and create ordered parameter vector
+    # This ensures parameter names match the specification
+    ordered_pars <- coef(spec)  # defaults from spec
+    fitted_pars <- coef(fit)    # estimated values
+    ordered_pars[names(fitted_pars)] <- fitted_pars  # overwrite with fitted
+    ordered_pars <- as.numeric(ordered_pars)
+    names(ordered_pars) <- names(coef(spec))
+    
     # Get last state
     last_sigma <- as.numeric(tail(sigma(fit), 1))
     last_residual <- as.numeric(tail(residuals(fit), 1))
     last_return <- as.numeric(tail(fitted(fit), 1))
+    
+    # Handle NA values
+    if (is.na(last_return)) last_return <- mean(fitted(fit), na.rm = TRUE)
+    if (is.na(last_return)) last_return <- 0
     
     # Use NF residuals for simulation (standardized innovations)
     nf_innovations <- head(nf_residuals, horizon)
@@ -327,22 +340,44 @@ simulate_nf_garch_rugarch <- function(fit, nf_residuals, horizon, model_family) 
     }
     
     # Create path simulation with NF innovations
-    # Note: innovations should be a matrix (n.sim x m.sim)
+    # Note: presigma, preresiduals, prereturns should be scalars, not matrices
     sim <- ugarchpath(
       spec = spec,
       n.sim = horizon,
       m.sim = 1,
-      presigma = matrix(last_sigma, nrow = 1, ncol = 1),
-      preresiduals = matrix(last_residual, nrow = 1, ncol = 1),
-      prereturns = matrix(last_return, nrow = 1, ncol = 1),
-      innovations = matrix(nf_innovations, nrow = horizon, ncol = 1)
+      presigma = last_sigma,
+      preresiduals = last_residual,
+      prereturns = last_return,
+      innovations = nf_innovations,
+      pars = ordered_pars
     )
     
     simulated_returns <- as.numeric(fitted(sim))
     return(simulated_returns)
   }, error = function(e) {
-    warning("NF-GARCH simulation failed: ", e$message)
-    return(rep(NA, horizon))
+    # Fallback to manual simulator
+    tryCatch({
+      # Map model family to manual simulator format
+      manual_model <- if (model_family == "gjrGARCH") "gjrGARCH" else if (model_family == "eGARCH") "eGARCH" else "sGARCH"
+      
+      manual_result <- simulate_nf_garch(
+        fit = fit,
+        z_nf = head(nf_residuals, horizon),
+        horizon = horizon,
+        model = manual_model,
+        submodel = NULL
+      )
+      
+      if (!is.null(manual_result) && !is.null(manual_result$returns)) {
+        return(manual_result$returns)
+      } else {
+        warning("NF-GARCH simulation failed (both rugarch and manual): ", e$message)
+        return(rep(NA, horizon))
+      }
+    }, error = function(e2) {
+      warning("NF-GARCH simulation failed (both rugarch and manual): ", e2$message)
+      return(rep(NA, horizon))
+    })
   })
 }
 
