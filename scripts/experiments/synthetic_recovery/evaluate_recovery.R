@@ -400,7 +400,7 @@ generate_experiment_report <- function(dgp_config, evaluation_results, output_fi
     paste("- **Alpha (α):**", dgp_config$alpha),
     paste("- **Beta (β):**", dgp_config$beta),
     paste("- **Stationarity:** α + β =", dgp_config$alpha + dgp_config$beta, 
-          ifelse(dgp_config$alpha + dgp_config$beta < 1, "✓ (stationary)", "✗ (non-stationary)")),
+          ifelse(dgp_config$alpha + dgp_config$beta < 1, "(stationary)", "(non-stationary)")),
     "",
     "### Innovation Distribution",
     paste("- **Type:**", dgp_config$innovation_type),

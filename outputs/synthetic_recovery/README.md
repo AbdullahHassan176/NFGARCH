@@ -11,7 +11,7 @@ This experiment evaluates how well different GARCH models recover the **true inn
 - **Omega (ω):** 1e-04
 - **Alpha (α):** 0.1
 - **Beta (β):** 0.85
-- **Stationarity:** α + β = 0.95 ✓ (stationary)
+- **Stationarity:** α + β = 0.95 (stationary)
 
 ### Innovation Distribution
 - **Type:** skewed_t
@@ -23,7 +23,7 @@ This experiment evaluates how well different GARCH models recover the **true inn
 1. **Gaussian GARCH(1,1)**: Standard GARCH with normal innovations
 2. **Student-t GARCH(1,1)**: GARCH with Student-t innovations
 3. **NF-GARCH(1,1)**: Two-stage approach
-   - Fit Gaussian GARCH(1,1) to extract standardized residuals
+   - Fit Student-t GARCH(1,1) to extract standardized residuals
    - Train normalizing flow on residuals
    - Sample from fitted flow
 
@@ -72,8 +72,12 @@ All plots are saved in the `plots/` directory:
 
 ## Notes
 
-- This experiment focuses on **distribution recovery**, not forecast accuracy
+- This experiment focuses on distribution recovery, not forecast accuracy
 - The true innovation distribution `z_true` is the ground truth
 - Lower metric values indicate better recovery
 - NF-GARCH uses a two-stage approach: GARCH fit → NF training → sampling
+
+## Detailed Analysis
+
+For detailed analysis and interpretation of results, see `RESULTS.md`.
 

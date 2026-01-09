@@ -113,9 +113,9 @@ if (!is.null(fit_gaussian) && fit_gaussian$convergence) {
   write.csv(data.frame(residual = z_hat_gaussian), 
             file.path(OUTPUT_DIR, "residuals", "z_hat_gaussian.csv"), 
             row.names = FALSE)
-  cat("    ✓ Converged. Extracted", length(z_hat_gaussian), "standardized residuals\n")
+  cat("    [OK] Converged. Extracted", length(z_hat_gaussian), "standardized residuals\n")
 } else {
-  cat("    ✗ Failed to converge\n")
+  cat("    [FAILED] Failed to converge\n")
   z_hat_gaussian <- NULL
 }
 
@@ -134,9 +134,9 @@ if (!is.null(fit_student_t) && fit_student_t$convergence) {
   write.csv(data.frame(residual = z_hat_student_t), 
             file.path(OUTPUT_DIR, "residuals", "z_hat_student_t.csv"), 
             row.names = FALSE)
-  cat("    ✓ Converged. Extracted", length(z_hat_student_t), "standardized residuals\n")
+  cat("    [OK] Converged. Extracted", length(z_hat_student_t), "standardized residuals\n")
 } else {
-  cat("    ✗ Failed to converge\n")
+  cat("    [FAILED] Failed to converge\n")
   z_hat_student_t <- NULL
 }
 
@@ -193,15 +193,15 @@ if (!is.null(z_hat_base)) {
   # Check if NF model was created
   nf_model_file <- file.path(OUTPUT_DIR, "nf_model.pth")
   if (file.exists(nf_model_file)) {
-    cat("    ✓ NF model trained and saved\n")
+    cat("    [OK] NF model trained and saved\n")
     
     # Sample from NF (will be done in evaluation script)
     cat("    NF samples will be generated in evaluation step\n")
   } else {
-    cat("    ✗ NF model training failed\n")
+    cat("    [FAILED] NF model training failed\n")
   }
 } else {
-  cat("    ✗ Cannot fit NF-GARCH: base GARCH fit failed\n")
+  cat("    [FAILED] Cannot fit NF-GARCH: base GARCH fit failed\n")
 }
 
 cat("\n")

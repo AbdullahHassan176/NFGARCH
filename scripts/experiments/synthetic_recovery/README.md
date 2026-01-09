@@ -56,7 +56,7 @@ Fits three competing approaches:
    - Extracts standardized residuals `z_hat_student_t`
 
 3. **NF-GARCH(1,1)**: Two-stage approach
-   - Fit Gaussian GARCH(1,1) as base
+   - Fit Student-t GARCH(1,1) as base
    - Extract standardized residuals
    - Train normalizing flow on residuals
    - Sample `z_nf` from fitted flow
