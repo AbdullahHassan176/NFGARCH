@@ -1,6 +1,6 @@
 # GARCH Order Robustness Experiment - Results Summary
 
-## Experiment Status: ✅ COMPLETED
+## Experiment Status: COMPLETED
 
 The experiment ran successfully and generated results comparing classical GARCH vs NF-GARCH across different GARCH orders.
 
@@ -88,4 +88,6 @@ The experiment tested GARCH orders (1,1), (2,1), (1,2), and (2,2) and selected t
 - `garch_order_robustness_results.csv` - Full results (37 rows)
 - `garch_order_robustness_results.xlsx` - Excel format
 - `garch_order_robustness_table.tex` - LaTeX summary table
+
+
 
