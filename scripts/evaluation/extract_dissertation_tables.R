@@ -128,9 +128,13 @@ if (file.exists(nf_comparison_file)) {
     write.csv(overall_comparison, file.path(output_dir, "nf_vs_standard_overall.csv"), row.names = FALSE)
     cat("  [OK] Overall NF vs Standard comparison saved\n")
     
-    # By model comparison
-    model_comparison <- combined %>%
-      group_by(Model, Source) %>%
+    # By model comparison (Model, Distribution, Source to align with compare_nf_vs_standard_garch)
+    grp <- if ("Distribution" %in% names(combined)) {
+      combined %>% group_by(Model, Distribution, Source)
+    } else {
+      combined %>% group_by(Model, Source)
+    }
+    model_comparison <- grp %>%
       summarise(
         N = n(),
         Mean_MSE = mean(MSE, na.rm = TRUE),

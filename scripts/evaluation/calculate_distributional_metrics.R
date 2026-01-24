@@ -160,7 +160,12 @@ if (!file.exists(nf_results_file)) {
   nf_results <- NULL
 } else {
   nf_chrono <- read.xlsx(nf_results_file, sheet = "Chrono_Split_NF_GARCH")
-  nf_tscv <- read.xlsx(nf_results_file, sheet = "TS_CV_NF_GARCH")
+  sheets_nf <- getSheetNames(nf_results_file)
+  nf_tscv <- if ("TS_CV_NF_GARCH" %in% sheets_nf) {
+    read.xlsx(nf_results_file, sheet = "TS_CV_NF_GARCH")
+  } else {
+    data.frame()
+  }
   cat("[OK] Loaded NF-GARCH results\n")
 }
 

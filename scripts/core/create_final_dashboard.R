@@ -27,7 +27,12 @@ cat("Loading results...\n")
 results_file <- "results/consolidated/NF_GARCH_Results_manual.xlsx"
 if (file.exists(results_file)) {
   chrono_results <- read.xlsx(results_file, sheet = "Chrono_Split_NF_GARCH")
-  tscv_results <- read.xlsx(results_file, sheet = "TS_CV_NF_GARCH")
+  sheets_nf <- getSheetNames(results_file)
+  if ("TS_CV_NF_GARCH" %in% sheets_nf) {
+    tscv_results <- read.xlsx(results_file, sheet = "TS_CV_NF_GARCH")
+  } else {
+    tscv_results <- data.frame()
+  }
   cat("[OK] Loaded simulation results\n")
   cat("  - Chrono results: ", nrow(chrono_results), " rows\n")
   cat("  - TS CV results: ", nrow(tscv_results), " rows\n")

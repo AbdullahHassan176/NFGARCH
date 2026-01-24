@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 REM Financial-SDG-GARCH - Complete Manual Pipeline
 REM Clears outputs, runs entire pipeline, compares NF-GARCH vs Standard GARCH
 REM Produces evaluation summaries and dashboard
@@ -29,14 +30,16 @@ echo Expected time: 60-120 minutes (includes all validation and academic outputs
 echo ========================================
 echo.
 
-REM Confirm before proceeding
-set /p confirm="Continue with pipeline? (Y/N): "
-if /i not "%confirm%"=="Y" (
+REM When called with /Y (e.g. from run_full_dissertation.bat), skip confirm
+if /i not "%~1"=="/Y" (
+  set /p confirm="Continue with pipeline? (Y/N): "
+  if /i not "!confirm!"=="Y" (
     echo Pipeline cancelled.
     exit /b 0
+  )
 )
-
 echo.
+
 echo ========================================
 echo STEP 1: CLEARING PREVIOUS OUTPUTS
 echo ========================================
@@ -464,4 +467,4 @@ echo   - results\diagnostics\ (investigation summaries)
 echo.
 echo ========================================
 echo.
-pause
+if /i not "%~1"=="/Y" ( pause )

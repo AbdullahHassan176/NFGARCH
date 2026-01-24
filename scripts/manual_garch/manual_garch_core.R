@@ -174,7 +174,13 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     gamma <- fit$coef[gamma_idx[1]]
     beta <- fit$coef[beta_idx[1]]
     z_last <- last_residual / last_sigma
-    E_z <- sqrt(2/pi)  # E|z| for normal
+    # E|z|: use Student-t when fit has nu (std), else normal
+    if (!is.null(fit$distribution) && fit$distribution == "std" && "nu" %in% names(fit$coef)) {
+      nu <- fit$coef["nu"]
+      if (is.finite(nu) && nu > 2) E_z <- E_abs_t(nu) else E_z <- sqrt(2/pi)
+    } else {
+      E_z <- sqrt(2/pi)  # E|z| for normal
+    }
     log_sigma2_next <- omega + beta * log(last_sigma^2) + alpha * (abs(z_last) - E_z) + gamma * z_last
     return(safe_sqrt(exp(log_sigma2_next)))
   } else if (model_type == "TGARCH") {

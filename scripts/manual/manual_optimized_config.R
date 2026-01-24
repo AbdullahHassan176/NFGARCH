@@ -45,20 +45,20 @@ MANUAL_MODEL_CONFIG <- list(
     description = "Standard GARCH with skewed t-distribution"
   ),
   eGARCH = list(
-    model = "eGARCH", 
-    distribution = "norm",  # Note: origin/main uses norm for eGARCH
+    model = "eGARCH",
+    distribution = "sstd",
     submodel = NULL,
     description = "Exponential GARCH with asymmetric effects"
   ),
   TGARCH = list(
     model = "TGARCH",
-    distribution = "norm",  # Note: origin/main uses norm for TGARCH
+    distribution = "sstd",
     submodel = NULL,
     description = "Threshold GARCH with regime-dependent behavior"
   ),
   gjrGARCH = list(
     model = "gjrGARCH",
-    distribution = "norm",  # Note: origin/main uses norm for gjrGARCH
+    distribution = "sstd",
     submodel = NULL,
     description = "Glosten-Jagannathan-Runkle GARCH with leverage effects"
   )

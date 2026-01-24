@@ -309,8 +309,8 @@ for (config_name in names(model_configs))
 {
   cfg <- model_configs[[config_name]]
   
-  equity_chrono_split_fit <- fit_models(equity_train_returns, model_type = cfg$model, dist_type = cfg$dist, submodel = cfg$submodel)
-  fx_chrono_split_fit     <- fit_models(fx_train_returns, model_type = cfg$model, dist_type = cfg$dist, submodel = cfg$submodel)
+  equity_chrono_split_fit <- fit_models(equity_train_returns, model_type = cfg$model, dist_type = cfg$distribution, submodel = cfg$submodel)
+  fx_chrono_split_fit     <- fit_models(fx_train_returns, model_type = cfg$model, dist_type = cfg$distribution, submodel = cfg$submodel)
   
   Fitted_Chrono_Split_models[[paste0("equity_", config_name)]] <- equity_chrono_split_fit
   Fitted_Chrono_Split_models[[paste0("fx_", config_name)]]     <- fx_chrono_split_fit
@@ -331,7 +331,7 @@ run_all_cv_models <- function(returns_list, model_configs, window_size = 500, fo
       tryCatch({
         ts_cross_validate(ret, 
                           model_type = cfg$model, 
-                          dist_type  = cfg$dist, 
+                          dist_type  = cfg$distribution, 
                           submodel   = cfg$submodel,
                           window_size = window_size,
                           forecast_horizon = forecast_horizon)
@@ -405,8 +405,8 @@ for (model_key in names(Fitted_Chrono_Split_models)) {
     fit <- model_fits[[asset_name]]
     
     if (is.null(fit) || inherits(fit, "try-error")) next
-    
-    resid_vec <- residuals(fit, standardize = TRUE)
+
+    resid_vec <- engine_residuals(fit, standardize = TRUE)
     
     # Align length with original returns
     full_length <- length(return_list[[asset_name]])

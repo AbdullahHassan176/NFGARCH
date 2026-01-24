@@ -38,8 +38,9 @@ generate_multiple_paths <- function(fit, nf_residuals, horizon, model_type, subm
         path_residuals <- sample(nf_residuals, size = horizon, replace = FALSE)
       }
       
-      # Ensure residuals are standardized
-      path_residuals <- (path_residuals - mean(path_residuals, na.rm = TRUE)) / sd(path_residuals, na.rm = TRUE)
+      # Use residuals as-is: nf_residuals are already standardized (mean 0, SD 1).
+      # Re-standardizing the sample would rescale innovations and is incorrect for the
+      # GARCH recursion, which expects z_t with E[z]=0, Var[z]=1 in the population.
       path_residuals[is.na(path_residuals)] <- 0
       
       # Generate one simulation path
@@ -117,7 +118,7 @@ calculate_predictive_loglik <- function(actual_returns, all_paths, method = "ker
   
   loglik <- 0
   
-  for (t in 1:length(actual_returns)) {
+  for (t in seq_along(actual_returns)) {
     # Get all simulated returns at time t
     sim_returns_t <- all_paths[t, ]
     sim_returns_t <- sim_returns_t[!is.na(sim_returns_t)]

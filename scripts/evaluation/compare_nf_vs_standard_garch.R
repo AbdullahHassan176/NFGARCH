@@ -26,8 +26,12 @@ if (!file.exists(nf_results_file)) {
 
 cat("Loading NF-GARCH results from:", nf_results_file, "\n")
 nf_chrono <- read.xlsx(nf_results_file, sheet = "Chrono_Split_NF_GARCH")
-nf_tscv <- read.xlsx(nf_results_file, sheet = "TS_CV_NF_GARCH")
-
+sheets_nf <- openxlsx::getSheetNames(nf_results_file)
+if ("TS_CV_NF_GARCH" %in% sheets_nf) {
+  nf_tscv <- read.xlsx(nf_results_file, sheet = "TS_CV_NF_GARCH")
+} else {
+  nf_tscv <- data.frame()
+}
 cat("NF-GARCH results loaded:\n")
 cat("  - Chrono: ", nrow(nf_chrono), " models\n")
 cat("  - TS CV: ", nrow(nf_tscv), " windows\n\n")
@@ -38,13 +42,19 @@ cat("  - TS CV: ", nrow(nf_tscv), " windows\n\n")
 
 cat("=== CREATING STANDARD GARCH BASELINE ===\n")
 
-# Load GARCH fitting summary to get standard GARCH fits
-garch_summary <- read.csv("outputs/manual/garch_fitting/model_summary.csv")
-cat("GARCH fitting summary loaded: ", nrow(garch_summary), " models\n")
+# Load GARCH fitting summary (optional, for log message only; Standard re-fits in this script)
+if (file.exists("outputs/manual/garch_fitting/model_summary.csv")) {
+  garch_summary <- read.csv("outputs/manual/garch_fitting/model_summary.csv")
+  cat("GARCH fitting summary loaded: ", nrow(garch_summary), " models\n")
+} else {
+  garch_summary <- data.frame()
+  cat("GARCH fitting summary not found (optional).\n")
+}
 
-# Load engine utilities
+# Load engine utilities and return forecast evaluation (must match NF-GARCH: 1000-path point forecast)
 source("scripts/engines/engine_selector.R")
 source("scripts/utils/safety_functions.R")
+source("scripts/utils/return_forecast_evaluation.R")
 
 # Load data to simulate standard GARCH models
 raw_price_data <- read.csv("./data/processed/raw (FX + EQ).csv", row.names = 1)
@@ -87,12 +97,13 @@ fx_returns <- lapply(fx_xts, function(x) diff(log(x))[-1])
 all_returns <- c(equity_returns, fx_returns)
 all_asset_names <- c(equity_tickers, fx_names)
 
-# Model configurations - include all 4 models
+# Model configurations - align with NF-GARCH: sGARCH_norm, sGARCH_sstd, eGARCH, TGARCH, gjrGARCH
 model_configs <- list(
-  sGARCH = list(model = "sGARCH", distribution = "sstd", submodel = NULL),  # Changed to sstd to match NF-GARCH
-  eGARCH = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH = list(model = "TGARCH", distribution = "sstd", submodel = NULL),
-  gjrGARCH = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL)  # Added gjrGARCH
+  sGARCH_norm = list(model = "sGARCH", distribution = "norm", submodel = NULL),
+  sGARCH_sstd = list(model = "sGARCH", distribution = "sstd", submodel = NULL),
+  eGARCH      = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
+  TGARCH      = list(model = "TGARCH", distribution = "sstd", submodel = NULL),
+  gjrGARCH    = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL)
 )
 
 cat("Running standard GARCH simulations (using regular residuals)...\n")
@@ -100,7 +111,7 @@ cat("Running standard GARCH simulations (using regular residuals)...\n")
 # Standard GARCH simulation (using regular residuals from fitted models)
 standard_garch_results <- list()
 
-for (asset_idx in 1:length(all_returns)) {
+for (asset_idx in seq_along(all_returns)) {
   asset_name <- all_asset_names[asset_idx]
   returns_data <- all_returns[[asset_idx]]
   
@@ -111,57 +122,51 @@ for (asset_idx in 1:length(all_returns)) {
     cat("  Standard GARCH:", model_name, "\n")
     
     tryCatch({
-      # Fit GARCH model
+      # Same 65/35 train/test split as NF-GARCH (simulate_nf_garch_engine.R)
+      ret_vec <- as.numeric(returns_data)
+      n_obs <- length(ret_vec)
+      split_idx <- floor(n_obs * 0.65)
+      train_returns <- ret_vec[1:split_idx]
+      test_returns <- ret_vec[(split_idx + 1):n_obs]
+      if (length(test_returns) < 5L) next
+
+      # Fit on train only (NF-GARCH is also fit on train only)
       fit <- engine_fit(
         model = cfg$model,
-        returns = as.numeric(returns_data),
+        returns = train_returns,
         dist = cfg$distribution,
         submodel = cfg$submodel,
         engine = "manual"
       )
-      
+
       if (engine_converged(fit)) {
-        # Simulate using standard residuals (from the fitted model)
-        # For standard GARCH, we use the residuals directly from the fit
         standard_residuals <- engine_residuals(fit, standardize = TRUE)
-        
-        # Create test set (same as NF-GARCH)
-        n_obs <- length(returns_data)
-        test_size <- min(40, floor(n_obs * 0.35))
-        test_returns <- returns_data[(n_obs - test_size + 1):n_obs]
-        
-        # Simulate path using standard residuals
-        n_sim <- min(length(standard_residuals), test_size)
-        if (n_sim < test_size) {
-          # Resample if needed
-          standard_residuals <- sample(standard_residuals, test_size, replace = TRUE)
-        }
-        
-        sim_result <- engine_path(
-          fit,
-          head(standard_residuals, test_size),
-          test_size,
-          cfg$model,
-          cfg$submodel,
-          engine = "manual"
+        # Use evaluate_return_forecasts with n_paths=1000 so point forecast = mean of paths,
+        # matching NF-GARCH. (Previously: one engine_path = one random path, inflating Standard MSE.)
+        eval_result <- evaluate_return_forecasts(
+          fit = fit,
+          nf_residuals = standard_residuals,
+          actual_returns = test_returns,
+          horizon = length(test_returns),
+          model_type = cfg$model,
+          submodel = cfg$submodel,
+          engine = "manual",
+          n_paths = 1000L
         )
-        
-        sim_returns <- sim_result$returns
-        
-        # Calculate metrics
-        mse <- mean((test_returns - sim_returns)^2, na.rm = TRUE)
-        mae <- mean(abs(test_returns - sim_returns), na.rm = TRUE)
+        if (is.null(eval_result) || is.na(eval_result$mse) || eval_result$n_valid_paths < 1L) next
+
         ic <- engine_infocriteria(fit)
-        
-        standard_garch_results[[length(standard_garch_results) + 1]] <- data.frame(
-          Model = model_name,
+        standard_garch_results[[length(standard_garch_results) + 1L]] <- data.frame(
+          Model = cfg$model,
           Distribution = cfg$distribution,
           Asset = asset_name,
           AIC = ic["AIC"],
           BIC = ic["BIC"],
           LogLikelihood = ic["LogLikelihood"],
-          MSE = mse,
-          MAE = mae,
+          MSE = eval_result$mse,
+          MAE = eval_result$mae,
+          PredictiveLogLik = eval_result$loglik,
+          NPaths = eval_result$n_valid_paths,
           Source = "Standard",
           SplitType = "Chrono"
         )
@@ -184,15 +189,15 @@ cat("\n=== COMPARING NF-GARCH vs STANDARD GARCH ===\n")
 # Prepare NF-GARCH results for comparison (rename to avoid hyphen issues)
 nf_chrono$Source <- "NF_GARCH"
 
-# Combine results
+# Combine results (drop SplitType if present, for clean bind)
 combined_results <- bind_rows(
-  standard_df %>% select(-SplitType),
-  nf_chrono %>% select(-SplitType)
+  standard_df %>% select(-any_of("SplitType")),
+  nf_chrono %>% select(-any_of("SplitType"))
 )
 
-# Performance comparison by model
+# Performance comparison by (Model, Distribution)
 comparison_by_model <- combined_results %>%
-  group_by(Model, Source) %>%
+  group_by(Model, Distribution, Source) %>%
   summarise(
     n_assets = n(),
     mean_AIC = mean(AIC, na.rm = TRUE),
@@ -233,18 +238,18 @@ overall_comparison <- combined_results %>%
 cat("\nOverall Performance:\n")
 print(overall_comparison)
 
-# Win rate analysis
+# Win rate analysis: pair NF vs Standard by (Model, Distribution, Asset)
 win_rate <- combined_results %>%
-  group_by(Model, Asset) %>%
+  group_by(Model, Distribution, Asset) %>%
   summarise(
-    nf_mse = MSE[Source == "NF_GARCH"][1],  # Take first if multiple
-    std_mse = MSE[Source == "Standard"][1],  # Take first if multiple
-    nf_better = ifelse(length(nf_mse) > 0 && length(std_mse) > 0 && !is.na(nf_mse) && !is.na(std_mse), 
+    nf_mse = MSE[Source == "NF_GARCH"][1],
+    std_mse = MSE[Source == "Standard"][1],
+    nf_better = ifelse(length(nf_mse) > 0 && length(std_mse) > 0 && !is.na(nf_mse) && !is.na(std_mse),
                        nf_mse < std_mse, NA),
     .groups = "drop"
   ) %>%
   filter(!is.na(nf_better)) %>%
-  group_by(Model) %>%
+  group_by(Model, Distribution) %>%
   summarise(
     total_comparisons = n(),
     nf_wins = sum(nf_better, na.rm = TRUE),
@@ -261,39 +266,33 @@ print(win_rate)
 
 cat("\n=== WILCOXON SIGNED-RANK TEST ===\n")
 
-if (nrow(combined_results) > 0 && length(unique(combined_results$Model)) > 0) {
+if (nrow(combined_results) > 0) {
   wilcoxon_results <- list()
+  model_dist <- combined_results %>% distinct(Model, Distribution)
   
-  for (model_name in unique(combined_results$Model)) {
+  for (i in seq_len(nrow(model_dist))) {
+    m <- model_dist$Model[i]
+    d <- model_dist$Distribution[i]
     model_data <- combined_results %>%
-      filter(Model == model_name) %>%
+      filter(Model == m, Distribution == d) %>%
       select(Asset, Source, MSE, MAE, AIC) %>%
-      # Aggregate duplicates by taking mean (in case of multiple variants)
       group_by(Asset, Source) %>%
-      summarise(
-        MSE = mean(MSE, na.rm = TRUE),
-        MAE = mean(MAE, na.rm = TRUE),
-        AIC = mean(AIC, na.rm = TRUE),
-        .groups = "drop"
-      ) %>%
+      summarise(MSE = mean(MSE, na.rm = TRUE), MAE = mean(MAE, na.rm = TRUE), AIC = mean(AIC, na.rm = TRUE), .groups = "drop") %>%
       pivot_wider(names_from = Source, values_from = c(MSE, MAE, AIC))
     
-    # Extract paired comparisons
     if (nrow(model_data) > 0 && "MSE_Standard" %in% names(model_data) && "MSE_NF_GARCH" %in% names(model_data)) {
       mse_standard <- as.numeric(model_data$MSE_Standard)
       mse_nf <- as.numeric(model_data$MSE_NF_GARCH)
-      
-      # Remove NAs
       valid_pairs <- !is.na(mse_standard) & !is.na(mse_nf)
       mse_standard <- mse_standard[valid_pairs]
       mse_nf <- mse_nf[valid_pairs]
       
       if (length(mse_standard) > 3) {
-        # Wilcoxon test (paired)
         wilcoxon_test <- wilcox.test(mse_nf, mse_standard, paired = TRUE, alternative = "less")
-        
-        wilcoxon_results[[model_name]] <- data.frame(
-          Model = model_name,
+        key <- paste(m, d, sep = "_")
+        wilcoxon_results[[key]] <- data.frame(
+          Model = m,
+          Distribution = d,
           Test_Type = "MSE (NF < Standard)",
           Statistic = wilcoxon_test$statistic,
           Pvalue = wilcoxon_test$p.value,

@@ -35,8 +35,13 @@ cat("1. Creating model performance plots...\n")
 results_file <- "results/consolidated/NF_GARCH_Results_manual.xlsx"
 if (file.exists(results_file)) {
   chrono_results <- read.xlsx(results_file, sheet = "Chrono_Split_NF_GARCH")
-  tscv_results <- read.xlsx(results_file, sheet = "TS_CV_NF_GARCH")
-  
+  sheets_nf <- openxlsx::getSheetNames(results_file)
+  tscv_results <- if ("TS_CV_NF_GARCH" %in% sheets_nf) {
+    read.xlsx(results_file, sheet = "TS_CV_NF_GARCH")
+  } else {
+    data.frame()
+  }
+
   # Plot 1: MSE by Model (Chrono Split)
   if (nrow(chrono_results) > 0 && "MSE" %in% names(chrono_results)) {
     p1 <- chrono_results %>%

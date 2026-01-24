@@ -259,23 +259,37 @@ cat("Loading NF residuals...\n")
 nf_residuals_map <- list()
 nf_files <- list.files("outputs/manual/nf_models", pattern = "*_synthetic_residuals.csv", full.names = TRUE, recursive = TRUE)
 
+
 if (length(nf_files) > 0) {
   for (f in nf_files) {
     fname <- basename(f)
     fname_clean <- stringr::str_replace(fname, "_synthetic_residuals\\.csv$", "")
-    
-    # Parse model and asset from filename
-    # Format: MODEL_ASSET_synthetic_residuals.csv
+    if (nchar(fname_clean) == 0) next
+
+    # Parse model and asset from filename.
+    # Formats: MODEL_ASSET (e.g. eGARCH_AMZN, TGARCH_MSFT, gjrGARCH_EURUSD)
+    #          sGARCH_norm_ASSET, sGARCH_sstd_ASSET (distribution in model name)
+    #          sGARCH_ASSET (single sGARCH variant, no distribution suffix)
     parts <- strsplit(fname_clean, "_")[[1]]
-    
-    if (length(parts) >= 2) {
+
+    if (length(parts) >= 3 && parts[1] == "sGARCH" && (parts[2] %in% c("norm", "sstd"))) {
+      model_name <- paste(parts[1], parts[2], sep = "_")
+      asset_name <- paste(parts[-(1:2)], collapse = "_")
+    } else if (length(parts) >= 2) {
       model_name <- parts[1]
       asset_name <- paste(parts[-1], collapse = "_")
+    } else {
+      next
+    }
+    
+    if (nchar(asset_name) == 0) next
       
       tryCatch({
         residuals_data <- read.csv(f)
         residual_values <- if ("residual" %in% names(residuals_data)) {
           residuals_data$residual
+        } else if ("synthetic_residuals" %in% names(residuals_data)) {
+          residuals_data$synthetic_residuals
         } else if (ncol(residuals_data) > 0) {
           residuals_data[[1]]
         } else {
@@ -293,7 +307,6 @@ if (length(nf_files) > 0) {
       }, error = function(e) {
         cat("WARNING: Failed to load NF residuals from", fname, ":", e$message, "\n")
       })
-    }
   }
 }
 
@@ -426,11 +439,14 @@ for (asset_name in names(train_returns)) {
       # First, get NF residuals for this asset/model combination
       nf_key <- paste0(model_family, "_", asset_name)
       if (!nf_key %in% names(nf_residuals_map)) {
-        # Try alternative key formats
+        # Try alternative key formats (incl. sGARCH_norm / sGARCH_sstd when dist in filename)
         alt_keys <- c(
           paste0(model_family_name, "_", asset_name),
           paste0(tolower(model_family), "_", asset_name)
         )
+        if (model_family == "sGARCH") {
+          alt_keys <- c(paste0("sGARCH_", dist, "_", asset_name), alt_keys)
+        }
         nf_key <- NULL
         for (alt_key in alt_keys) {
           if (alt_key %in% names(nf_residuals_map)) {

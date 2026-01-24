@@ -1,6 +1,12 @@
 #!/usr/bin/env Rscript
 # Comprehensive VaR Backtesting
 # Implements: Kupiec test, Christoffersen test, exceedance rates, Expected Shortfall
+#
+# NOTE (methodology): This script uses *empirical* VaR (quantile of the test returns)
+# as the VaR level for each day in the test window. That is useful for characterising
+# tail risk in the data, but it is NOT model-based VaR backtesting. Proper
+# backtesting would use one-step-ahead VaR forecasts from GARCH/NF-GARCH for each
+# test date and then apply Kupiec/Christoffersen to those model forecasts.
 
 # Load centralized seed configuration
 if (file.exists("scripts/core/config.R")) {
@@ -32,11 +38,12 @@ kupiec_test <- function(exceedances, total_obs, confidence_level = 0.95) {
   
   if (total_obs == 0) return(list(pvalue = NA, statistic = NA, reject = NA))
   
-  # Likelihood ratio test
+  # Likelihood ratio test: LR = -2*(log L(pi) - log L(p_hat)); pi = expected_rate
+  # x=0: L(pi)=(1-pi)^n, L(p_hat)=1 => LR = -2*n*log(1-pi). x=n: L(pi)=pi^n, L(p_hat)=1 => LR = -2*n*log(pi).
   if (exceedances == 0) {
-    LR_stat <- -2 * total_obs * log(expected_rate)
-  } else if (exceedances == total_obs) {
     LR_stat <- -2 * total_obs * log(1 - expected_rate)
+  } else if (exceedances == total_obs) {
+    LR_stat <- -2 * total_obs * log(expected_rate)
   } else {
     LR_stat <- -2 * (
       exceedances * log(observed_rate) + 
@@ -107,15 +114,11 @@ christoffersen_test <- function(exceedances_vec) {
 }
 
 # Calculate Expected Shortfall (Conditional VaR)
+# ES = E[returns | returns <= VaR]; use the passed var_level (VaR) for the tail.
 calculate_es <- function(returns, var_level, confidence_level = 0.95) {
-  # ES = E[returns | returns <= VaR]
-  var_value <- quantile(returns, probs = 1 - confidence_level, na.rm = TRUE)
-  exceedances <- returns[returns <= var_value]
-  
+  exceedances <- returns[returns <= var_level]
   if (length(exceedances) == 0) return(NA)
-  
-  es <- mean(exceedances, na.rm = TRUE)
-  return(es)
+  mean(exceedances, na.rm = TRUE)
 }
 
 # Calculate VaR
@@ -130,17 +133,8 @@ calculate_var <- function(returns, confidence_level = 0.95) {
 
 cat("Loading results...\n")
 
-# Load NF-GARCH results
-nf_results_file <- "results/consolidated/NF_GARCH_Results_manual.xlsx"
-if (!file.exists(nf_results_file)) {
-  cat("[WARNING] NF-GARCH results not found\n")
-  nf_results <- NULL
-} else {
-  nf_chrono <- read.xlsx(nf_results_file, sheet = "Chrono_Split_NF_GARCH")
-  cat("[OK] Loaded NF-GARCH results\n")
-}
-
-# Load actual returns for backtesting
+# Load actual returns for backtesting (VaR/ES are empirical from test returns;
+# no GARCH/NF-GARCH model outputs are used in this script)
 raw_price_data <- read.csv("./data/processed/raw (FX + EQ).csv", row.names = 1)
 raw_price_data$Date <- as.Date(rownames(raw_price_data))
 
