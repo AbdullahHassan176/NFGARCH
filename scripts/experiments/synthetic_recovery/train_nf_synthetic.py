@@ -11,6 +11,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend
+import matplotlib.pyplot as plt
+from nflows.distributions import StandardNormal
 
 # Add parent directories to path to import NF training utilities
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +36,7 @@ except ImportError:
     set_seed = manual_nf.set_seed
     MANUAL_NF_CONFIG = manual_nf.MANUAL_NF_CONFIG
 
-def train_nf_on_residuals(residuals_file, output_model_path, config=None):
+def train_nf_on_residuals(residuals_file, output_model_path, config=None, seed=None, alt_config=False):
     """
     Train normalizing flow on GARCH residuals
     
@@ -40,6 +44,8 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
         residuals_file: Path to CSV file with residuals
         output_model_path: Path to save trained NF model
         config: Training configuration (uses MANUAL_NF_CONFIG if None)
+        seed: Random seed (defaults to 123 if not provided)
+        alt_config: If True, use alternative config (layers=8, hidden=128) for architecture test
     
     Returns:
         flow: Trained flow model
@@ -47,13 +53,37 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
     """
     if config is None:
         config = MANUAL_NF_CONFIG.copy()
-        # Use lighter config for synthetic experiment
-        config["epochs"] = 50  # Reduced for speed
-        config["num_layers"] = 4
-        config["hidden_features"] = 64
+        if alt_config:
+            # D) Alternative config for architecture stability test
+            config["epochs"] = 50
+            config["num_layers"] = 8
+            config["hidden_features"] = 128
+            print("Using alternative NF config: layers=8, hidden=128")
+        else:
+            # Use lighter config for synthetic experiment
+            config["epochs"] = 50  # Reduced for speed
+            config["num_layers"] = 4
+            config["hidden_features"] = 64
     
-    # Set seed for reproducibility
-    set_seed(123)
+    # Set seed for reproducibility (use provided seed or default to 123)
+    if seed is None:
+        seed = 123
+    
+    # Enhanced seed synchronization: set all RNGs
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    
+    # CUDA deterministic settings
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    
+    # Also call the set_seed function for consistency
+    set_seed(seed)
     
     # Load residuals
     print(f"Loading residuals from: {residuals_file}")
@@ -91,11 +121,22 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
         hidden_features=config["hidden_features"]
     )
     
+    # C) NF MODEL VERIFICATION: Sample before training
+    flow.eval()
+    with torch.no_grad():
+        n_samples_before = min(1000, len(residuals))
+        samples_before = flow.sample(n_samples_before).numpy()
+    
+    samples_before_file = output_model_path.replace(".pth", "_samples_before_training.csv")
+    pd.DataFrame({"z_nf": samples_before.flatten()}).to_csv(samples_before_file, index=False)
+    print(f"Pre-training samples saved to: {samples_before_file}")
+    
     # Setup optimizer
     optimizer = torch.optim.Adam(flow.parameters(), lr=config["learning_rate"])
     
     # Training loop
     loss_history = []
+    val_loss_history = []
     best_val_loss = float('inf')
     patience_counter = 0
     
@@ -140,6 +181,7 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
                     val_batches += 1
             
             avg_val_loss = val_loss / val_batches
+            val_loss_history.append(avg_val_loss)
             
             # Early stopping
             if config["early_stopping"]:
@@ -163,6 +205,63 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
     torch.save(flow.state_dict(), output_model_path)
     print(f"Model saved to: {output_model_path}")
     
+    # C) SAVE TRAINING LOSS HISTORY
+    loss_df = pd.DataFrame({
+        'epoch': range(1, len(loss_history) + 1),
+        'train_loss': loss_history,
+        'val_loss': val_loss_history + [np.nan] * (len(loss_history) - len(val_loss_history))
+    })
+    loss_file = output_model_path.replace(".pth", "_training_loss.csv")
+    loss_df.to_csv(loss_file, index=False)
+    print(f"Training loss history saved to: {loss_file}")
+    
+    # Plot loss curve
+    plt.figure(figsize=(10, 6))
+    plt.plot(loss_df['epoch'], loss_df['train_loss'], label='Train Loss', marker='o', markersize=3)
+    if not loss_df['val_loss'].isna().all():
+        val_epochs = loss_df['epoch'][~loss_df['val_loss'].isna()]
+        val_losses = loss_df['val_loss'][~loss_df['val_loss'].isna()]
+        plt.plot(val_epochs, val_losses, label='Val Loss', marker='s', markersize=3)
+    plt.xlabel('Epoch')
+    plt.ylabel('Negative Log-Likelihood')
+    plt.title('NF Training Loss History')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    loss_plot_file = output_model_path.replace(".pth", "_training_loss.png")
+    plt.savefig(loss_plot_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"Training loss plot saved to: {loss_plot_file}")
+    
+    # C) LOG-LIKELIHOOD COMPARISON: Flow vs Base
+    flow.eval()
+    base_dist = StandardNormal([1])
+    train_tensor = torch.tensor(train_residuals, dtype=torch.float32)
+    
+    with torch.no_grad():
+        log_p_flow = flow(train_tensor).mean().item()
+        log_p_base = base_dist.log_prob(train_tensor).mean().item()
+    
+    delta = log_p_flow - log_p_base
+    margin = 0.1
+    passes_check = delta > margin
+    
+    ll_comparison = pd.DataFrame({
+        'seed': [seed],
+        'log_p_flow': [log_p_flow],
+        'log_p_base': [log_p_base],
+        'delta': [delta],
+        'passes_check': [passes_check],
+        'margin': [margin]
+    })
+    ll_file = output_model_path.replace(".pth", "_ll_comparison.csv")
+    ll_comparison.to_csv(ll_file, index=False)
+    print(f"Log-likelihood comparison saved to: {ll_file}")
+    print(f"  log_p_flow = {log_p_flow:.4f}, log_p_base = {log_p_base:.4f}, delta = {delta:.4f}")
+    if passes_check:
+        print(f"  [OK] Flow log-likelihood > base + margin ({margin})")
+    else:
+        print(f"  [WARNING] Flow log-likelihood not sufficiently better than base")
+    
     # Generate samples for evaluation
     flow.eval()
     with torch.no_grad():
@@ -174,22 +273,31 @@ def train_nf_on_residuals(residuals_file, output_model_path, config=None):
     pd.DataFrame({"z_nf": samples.flatten()}).to_csv(samples_file, index=False)
     print(f"Samples saved to: {samples_file}")
     
+    # C) VERIFY MODEL CHANGED: Compare before/after samples
+    from scipy.stats import ks_2samp
+    ks_stat_before_after = ks_2samp(samples_before.flatten(), samples.flatten()[:len(samples_before)])[0]
+    print(f"Model verification: KS(before, after) = {ks_stat_before_after:.4f}")
+    if ks_stat_before_after < 0.1:
+        print(f"  [WARNING] Model may not have changed significantly (KS < 0.1)")
+    
     return flow, samples
 
 def main():
     """Main entry point for command-line usage"""
     if len(sys.argv) < 3:
-        print("Usage: python train_nf_synthetic.py <residuals_file> <output_model_path>")
+        print("Usage: python train_nf_synthetic.py <residuals_file> <output_model_path> [seed] [--alt-config]")
         sys.exit(1)
     
     residuals_file = sys.argv[1]
     output_model_path = sys.argv[2]
+    seed = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] != '--alt-config' else 123
+    alt_config = '--alt-config' in sys.argv
     
     if not os.path.exists(residuals_file):
         print(f"ERROR: Residuals file not found: {residuals_file}")
         sys.exit(1)
     
-    flow, samples = train_nf_on_residuals(residuals_file, output_model_path)
+    flow, samples = train_nf_on_residuals(residuals_file, output_model_path, seed=seed, alt_config=alt_config)
     
     if flow is None:
         print("ERROR: NF training failed")

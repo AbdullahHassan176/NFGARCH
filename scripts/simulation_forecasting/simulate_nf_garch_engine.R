@@ -26,6 +26,7 @@ tryCatch({
   source("scripts/engines/engine_selector.R")
   source("scripts/utils/safety_functions.R")
   source("scripts/utils/standardize_residuals.R")
+  source("scripts/utils/return_forecast_evaluation.R")
 }, error = function(e) {
   cat("ERROR: Failed to load utility scripts:", e$message, "\n")
   quit(status = 1)
@@ -223,28 +224,34 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
         nf_resid_vec <- standardize_residuals(nf_resid_vec, verify = TRUE)
       }
       
-      # Use engine_path for NF-GARCH simulation
-      sim_result <- tryCatch({
-        engine_path(
-          fit, 
-          nf_resid_vec, 
-          n_sim, 
-          model_type, 
-          submodel, 
-          engine
+      # Evaluate return forecasts using multiple paths
+      eval_result <- tryCatch({
+        result <- evaluate_return_forecasts(
+          fit = fit,
+          nf_residuals = nf_resid_vec,
+          actual_returns = test_set,
+          horizon = length(test_set),
+          model_type = model_type,
+          submodel = submodel,
+          engine = engine,
+                n_paths = 1000  # Number of simulation paths for point forecast
         )
+        
+        # Log if result is invalid
+        if (is.null(result) || is.na(result$mse) || result$n_valid_paths == 0) {
+          message("WARNING: Evaluation returned invalid result at index ", start_idx, 
+                 " - MSE=", ifelse(is.null(result), "NULL", result$mse),
+                 ", NPaths=", ifelse(is.null(result), "NULL", result$n_valid_paths))
+        }
+        
+        return(result)
       }, error = function(e) {
-        message("NF-GARCH simulation error at index ", start_idx, ": ", e$message)
+        message("ERROR: NF-GARCH forecast evaluation error at index ", start_idx, ": ", e$message)
+        message("  Traceback: ", paste(capture.output(traceback()), collapse = "\n"))
         return(NULL)
       })
       
-      if (!is.null(sim_result)) {
-        sim_returns <- sim_result$returns
-        
-        # Calculate performance metrics
-        mse <- mean((test_set - sim_returns)^2, na.rm = TRUE)
-        mae <- mean(abs(test_set - sim_returns), na.rm = TRUE)
-        
+      if (!is.null(eval_result) && !is.na(eval_result$mse)) {
         # Get model information criteria
         ic <- engine_infocriteria(fit)
         
@@ -259,8 +266,10 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
           AIC = ic["AIC"],
           BIC = ic["BIC"],
           LogLikelihood = ic["LogLikelihood"],
-          MSE = mse,
-          MAE = mae,
+          MSE = eval_result$mse,
+          MAE = eval_result$mae,
+          PredictiveLogLik = eval_result$loglik,
+          NPaths = eval_result$n_valid_paths,
           SplitType = "TS_CV"
         )
       }
@@ -268,7 +277,10 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
   }
   
   if (length(results) == 0) return(NULL)
-  do.call(rbind, results)
+  # Filter out NULL entries and use bind_rows for robust combining
+  results <- results[!sapply(results, is.null)]
+  if (length(results) == 0) return(NULL)
+  bind_rows(results)
 }
 
 # GARCH Model Training
@@ -282,27 +294,37 @@ for (config_name in names(model_configs)) {
   cat("Fitting", config_name, "models...\n")
   
   # Fit models using the selected engine
+  cat("  Starting equity model fits for", config_name, "\n")
   equity_chrono_split_fit <- lapply(names(equity_train_returns), function(asset) {
+    cat("  Fitting", config_name, "for equity asset:", asset, "\n")
     tryCatch({
-      engine_fit(model = cfg$model, returns = equity_train_returns[[asset]], 
+      result <- engine_fit(model = cfg$model, returns = equity_train_returns[[asset]], 
                 dist = cfg$distribution, submodel = cfg$submodel, engine = engine)
+      cat("  Successfully fitted", config_name, "for", asset, "\n")
+      result
     }, error = function(e) {
       cat("WARNING: Failed to fit", config_name, "for", asset, ":", e$message, "\n")
       NULL
     })
   })
   names(equity_chrono_split_fit) <- names(equity_train_returns)
+  cat("  Completed equity model fits for", config_name, "\n")
   
+  cat("  Starting FX model fits for", config_name, "\n")
   fx_chrono_split_fit <- lapply(names(fx_train_returns), function(asset) {
+    cat("  Fitting", config_name, "for FX asset:", asset, "\n")
     tryCatch({
-      engine_fit(model = cfg$model, returns = fx_train_returns[[asset]], 
+      result <- engine_fit(model = cfg$model, returns = fx_train_returns[[asset]], 
                 dist = cfg$distribution, submodel = cfg$submodel, engine = engine)
+      cat("  Successfully fitted", config_name, "for", asset, "\n")
+      result
     }, error = function(e) {
       cat("WARNING: Failed to fit", config_name, "for", asset, ":", e$message, "\n")
       NULL
     })
   })
   names(fx_chrono_split_fit) <- names(fx_train_returns)
+  cat("  Completed FX model fits for", config_name, "\n")
   
   Fitted_Chrono_Split_models[[paste0("equity_", config_name)]] <- equity_chrono_split_fit
   Fitted_Chrono_Split_models[[paste0("fx_", config_name)]]     <- fx_chrono_split_fit
@@ -402,31 +424,42 @@ tryCatch({
 cat("Running NF-GARCH simulation...\n")
 
 # Define NF-GARCH fitting function with robust error handling
-fit_nf_garch <- function(asset_name, asset_returns, model_config, nf_resid) {
+# For chronological split: fit on train, evaluate on test
+fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, nf_resid) {
+  cat("  Starting fit_nf_garch for", asset_name, model_config[["model"]], "\n")
+  cat("  Train size:", length(train_returns), "Test size:", length(test_returns), "\n")
+  
   tryCatch({
-    # Use engine_fit
+    # Use engine_fit on training data
+    cat("  Calling engine_fit...\n")
     fit <- engine_fit(
       model = model_config[["model"]], 
-      returns = asset_returns, 
+      returns = train_returns, 
       dist = model_config[["distribution"]], 
       submodel = model_config[["submodel"]], 
       engine = engine
     )
+    cat("  engine_fit completed\n")
     
     if (!engine_converged(fit)) {
       cat("ERROR: Fit failed for", asset_name, model_config[["model"]], "\n")
       return(NULL)
     }
+    cat("  Model converged\n")
     
-    # Setup simulation
-    n_sim <- floor(length(asset_returns) / 2)
+    # Setup simulation - use test set length
+    cat("  Setting up simulation...\n")
+    n_sim <- length(test_returns)
+    cat("  Need", n_sim, "residuals, have", length(nf_resid), "\n")
     if (length(nf_resid) < n_sim) {
-      cat("WARNING: NF residuals too short for", asset_name, "-", model_config[["model"]], "\n")
+      cat("WARNING: NF residuals too short for", asset_name, "-", model_config[["model"]], 
+          " (need", n_sim, ", have", length(nf_resid), ")\n")
       return(NULL)
     }
     
     # Ensure NF residuals are standardized before use
     # NF residuals should already be standardized from training, but verify
+    cat("  Processing NF residuals...\n")
     nf_resid_vec <- as.numeric(head(nf_resid, n_sim))
     nf_resid_vec <- nf_resid_vec[!is.na(nf_resid_vec)]
     if (length(nf_resid_vec) < n_sim) {
@@ -439,38 +472,67 @@ fit_nf_garch <- function(asset_name, asset_returns, model_config, nf_resid) {
       cat("Standardized NF residuals for", asset_name, model_config[["model"]], 
           ": Mean =", round(mean(nf_resid_vec), 6), "SD =", round(sd(nf_resid_vec), 6), "\n")
     }
+    cat("  NF residuals ready, length:", length(nf_resid_vec), "\n")
     
-    # Use engine_path for simulation
-    sim_result <- engine_path(
-      fit, 
-      nf_resid_vec, 
-      n_sim, 
-      model_config[["model"]], 
-      model_config[["submodel"]], 
-      engine
-    )
-    sim_returns <- sim_result$returns
+    # Evaluate return forecasts using multiple paths on TEST data
+    cat("  Starting evaluate_return_forecasts (this may take a while for 1000 paths)...\n")
+    eval_result <- tryCatch({
+      result <- evaluate_return_forecasts(
+        fit = fit,
+        nf_residuals = nf_resid_vec,
+        actual_returns = test_returns,
+        horizon = length(test_returns),
+        model_type = model_config[["model"]],
+        submodel = model_config[["submodel"]],
+        engine = engine,
+        n_paths = 1000
+      )
+      cat("  evaluate_return_forecasts completed\n")
+      
+      # Log if result is invalid
+      if (is.null(result) || is.na(result$mse) || result$n_valid_paths == 0) {
+        cat("WARNING: Evaluation returned invalid result for", asset_name, model_config[["model"]], 
+            " - MSE=", ifelse(is.null(result), "NULL", result$mse),
+            ", NPaths=", ifelse(is.null(result), "NULL", result$n_valid_paths), "\n")
+      }
+      
+      result  # Return result from tryCatch (don't use return() - it exits the entire function!)
+    }, error = function(e) {
+      cat("ERROR: Evaluation failed for", asset_name, model_config[["model"]], ": ", e$message, "\n")
+      NULL  # Return NULL from error handler
+    })
     
-    fitted_values <- sim_returns
-    mse <- mean((asset_returns - fitted_values)^2, na.rm = TRUE)
-    mae <- mean(abs(asset_returns - fitted_values), na.rm = TRUE)
+    if (is.null(eval_result) || is.na(eval_result$mse)) {
+      cat("  Evaluation result is NULL or invalid\n")
+      return(NULL)
+    }
+    cat("  Evaluation result valid, MSE:", eval_result$mse, "\n")
     
     # Get model information
+    cat("  Getting information criteria...\n")
     ic <- engine_infocriteria(fit)
+    cat("  Information criteria retrieved\n")
     
-    return(data.frame(
+    cat("  Creating result data.frame...\n")
+    result_df <- data.frame(
       Model = model_config[["model"]],
       Distribution = model_config[["distribution"]],
       Asset = asset_name,
       AIC = ic["AIC"],
       BIC = ic["BIC"],
       LogLikelihood = ic["LogLikelihood"],
-      MSE = mse,
-      MAE = mae,
+      MSE = eval_result$mse,
+      MAE = eval_result$mae,
+      PredictiveLogLik = eval_result$loglik,
+      NPaths = eval_result$n_valid_paths,
       SplitType = "Chrono"
-    ))
+    )
+    cat("  fit_nf_garch completed successfully for", asset_name, model_config[["model"]], "\n")
+    return(result_df)
   }, error = function(e) {
     cat("ERROR: Error for", asset_name, model_config[["model"]], ":", conditionMessage(e), "\n")
+    cat("  Error traceback:\n")
+    print(traceback())
     return(NULL)
   })
 }
@@ -512,8 +574,13 @@ for (config_name in names(model_configs)) {
     }
     
     cat("NF-GARCH (FX):", asset, config_name, "\n")
-    r <- fit_nf_garch(asset, fx_returns[[asset]], cfg, nf_residuals_map[[key]])
-    if (!is.null(r)) nf_results_chrono[[length(nf_results_chrono) + 1]] <- r
+    r <- fit_nf_garch(asset, fx_train_returns[[asset]], fx_test_returns[[asset]], cfg, nf_residuals_map[[key]])
+    if (!is.null(r)) {
+      nf_results_chrono[[length(nf_results_chrono) + 1]] <- r
+      cat("  [OK] Result added for", asset, config_name, "\n")
+    } else {
+      cat("  [SKIP] No result for", asset, config_name, "\n")
+    }
   }
   
   # Equity
@@ -544,8 +611,13 @@ for (config_name in names(model_configs)) {
     }
     
     cat("NF-GARCH (EQ):", asset, config_name, "\n")
-    r <- fit_nf_garch(asset, equity_returns[[asset]], cfg, nf_residuals_map[[key]])
-    if (!is.null(r)) nf_results_chrono[[length(nf_results_chrono) + 1]] <- r
+    r <- fit_nf_garch(asset, equity_train_returns[[asset]], equity_test_returns[[asset]], cfg, nf_residuals_map[[key]])
+    if (!is.null(r)) {
+      nf_results_chrono[[length(nf_results_chrono) + 1]] <- r
+      cat("  [OK] Result added for", asset, config_name, "\n")
+    } else {
+      cat("  [SKIP] No result for", asset, config_name, "\n")
+    }
   }
 }
 
@@ -637,6 +709,10 @@ Fitted_EQ_NFGARCH_TS_CV_models <- run_all_nfgarch_cv_models_manual(
 # Flatten all NF-GARCH CV results into one data frame
 Fitted_NFGARCH_TS_CV_models <- data.frame()
 
+# Ensure Fitted_FX_NFGARCH_TS_CV_models and Fitted_EQ_NFGARCH_TS_CV_models are lists
+if (!exists("Fitted_FX_NFGARCH_TS_CV_models")) Fitted_FX_NFGARCH_TS_CV_models <- list()
+if (!exists("Fitted_EQ_NFGARCH_TS_CV_models")) Fitted_EQ_NFGARCH_TS_CV_models <- list()
+
 for (model_name in names(Fitted_FX_NFGARCH_TS_CV_models)) {
   # FX results - add asset name to each data frame before combining
   fx_results <- tryCatch({
@@ -647,14 +723,22 @@ for (model_name in names(Fitted_FX_NFGARCH_TS_CV_models)) {
     # Add asset name to each asset's results before combining
     fx_list_with_asset <- lapply(names(fx_list), function(asset_name) {
       df <- fx_list[[asset_name]]
-      if (!is.null(df) && nrow(df) > 0) {
-        df$Asset <- asset_name
-        df$AssetType <- "FX"
-      }
+      # Robust check: ensure df is a data.frame and has rows
+      if (is.null(df)) return(NULL)
+      if (!is.data.frame(df)) return(NULL)
+      if (any(is.na(df))) return(NULL)  # Skip if contains NA
+      if (nrow(df) == 0) return(NULL)
+      df$Asset <- asset_name
+      df$AssetType <- "FX"
       return(df)
     })
-    # Combine all FX results
-    do.call(rbind, fx_list_with_asset)
+    # Combine all FX results - filter out NULL entries first
+    fx_list_with_asset <- fx_list_with_asset[!sapply(fx_list_with_asset, is.null)]
+    if (length(fx_list_with_asset) > 0) {
+      bind_rows(fx_list_with_asset)
+    } else {
+      NULL
+    }
   }, error = function(e) {
     message("WARNING: FX NF-GARCH CV results failed for: ", model_name, " - ", e$message)
     return(NULL)
@@ -669,34 +753,88 @@ for (model_name in names(Fitted_FX_NFGARCH_TS_CV_models)) {
     # Add asset name to each asset's results before combining
     eq_list_with_asset <- lapply(names(eq_list), function(asset_name) {
       df <- eq_list[[asset_name]]
-      if (!is.null(df) && nrow(df) > 0) {
-        df$Asset <- asset_name
-        df$AssetType <- "Equity"
-      }
+      # Robust check: ensure df is a data.frame and has rows
+      if (is.null(df)) return(NULL)
+      if (!is.data.frame(df)) return(NULL)
+      if (any(is.na(df))) return(NULL)  # Skip if contains NA
+      if (nrow(df) == 0) return(NULL)
+      df$Asset <- asset_name
+      df$AssetType <- "Equity"
       return(df)
     })
-    # Combine all Equity results
-    do.call(rbind, eq_list_with_asset)
+    # Combine all Equity results - filter out NULL entries first
+    eq_list_with_asset <- eq_list_with_asset[!sapply(eq_list_with_asset, is.null)]
+    if (length(eq_list_with_asset) > 0) {
+      bind_rows(eq_list_with_asset)
+    } else {
+      NULL
+    }
   }, error = function(e) {
     message("WARNING: EQ NF-GARCH CV results failed for: ", model_name, " - ", e$message)
     return(NULL)
   })
   
-  if (!is.null(fx_results) && nrow(fx_results) > 0) {
+  if (!is.null(fx_results) && is.data.frame(fx_results) && nrow(fx_results) > 0) {
     Fitted_NFGARCH_TS_CV_models <- bind_rows(Fitted_NFGARCH_TS_CV_models, fx_results)
   }
   
-  if (!is.null(eq_results) && nrow(eq_results) > 0) {
+  if (!is.null(eq_results) && is.data.frame(eq_results) && nrow(eq_results) > 0) {
     Fitted_NFGARCH_TS_CV_models <- bind_rows(Fitted_NFGARCH_TS_CV_models, eq_results)
+  }
+}
+
+# Ensure Fitted_NFGARCH_TS_CV_models is a data.frame
+if (!is.data.frame(Fitted_NFGARCH_TS_CV_models)) {
+  if (length(Fitted_NFGARCH_TS_CV_models) > 0 && all(sapply(Fitted_NFGARCH_TS_CV_models, is.data.frame))) {
+    Fitted_NFGARCH_TS_CV_models <- bind_rows(Fitted_NFGARCH_TS_CV_models)
+  } else {
+    Fitted_NFGARCH_TS_CV_models <- data.frame()
   }
 }
 
 # Create Comparison Tables
 cat("=== CREATING COMPARISON TABLES ===\n")
 
+# Check nf_results_chrono before filtering
+cat("nf_results_chrono length before filtering:", length(nf_results_chrono), "\n")
+if (length(nf_results_chrono) > 0) {
+  cat("First few entries types:\n")
+  for (i in 1:min(3, length(nf_results_chrono))) {
+    cat("  Entry", i, ": is.null =", is.null(nf_results_chrono[[i]]), 
+        ", is.data.frame =", is.data.frame(nf_results_chrono[[i]]), 
+        ", class =", paste(class(nf_results_chrono[[i]]), collapse=", "), "\n")
+  }
+}
+
 # Combine results
 if (length(nf_results_chrono) > 0) {
-  nf_results_df <- do.call(rbind, nf_results_chrono)
+  # Filter out NULL entries and ensure all are data.frames
+  # Use more robust checking
+  valid_indices <- sapply(1:length(nf_results_chrono), function(i) {
+    x <- nf_results_chrono[[i]]
+    !is.null(x) && (is.data.frame(x) || inherits(x, "data.frame")) && nrow(x) > 0
+  })
+  cat("Valid indices:", sum(valid_indices), "out of", length(nf_results_chrono), "\n")
+  nf_results_chrono <- nf_results_chrono[valid_indices]
+  cat("nf_results_chrono length after filtering:", length(nf_results_chrono), "\n")
+  
+  if (length(nf_results_chrono) > 0) {
+    # Use bind_rows from dplyr which is more robust than rbind
+    nf_results_df <- bind_rows(nf_results_chrono)
+    
+    # Ensure it's a data.frame and has required columns
+    if (!is.data.frame(nf_results_df) || nrow(nf_results_df) == 0) {
+      cat("ERROR: Failed to create nf_results_df data.frame\n")
+      nf_results_df <- data.frame()
+    }
+  } else {
+    nf_results_df <- data.frame()
+  }
+} else {
+  nf_results_df <- data.frame()
+}
+
+if (nrow(nf_results_df) > 0) {
   
   # Create comparison tables
   comparison_tables <- list()

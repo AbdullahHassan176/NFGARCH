@@ -1,0 +1,2 @@
+seed,log_p_flow,log_p_base,delta,passes_check,margin
+123,-1.848469853401184,-2.099710702896118,0.2512408494949341,True,0.1

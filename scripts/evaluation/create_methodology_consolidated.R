@@ -32,9 +32,9 @@ files_exist <- c(
 )
 
 cat("Files found:\n")
-cat("  Stationarity:", ifelse(files_exist["stationarity"], "✓", "✗"), "\n")
-cat("  Hyperparameter:", ifelse(files_exist["hyperparameter"], "✓", "✗"), "\n")
-cat("  Heterogeneity:", ifelse(files_exist["heterogeneity"], "✓", "✗"), "\n\n")
+cat("  Stationarity:", ifelse(files_exist["stationarity"], "yes", "no"), "\n")
+cat("  Hyperparameter:", ifelse(files_exist["hyperparameter"], "yes", "no"), "\n")
+cat("  Heterogeneity:", ifelse(files_exist["heterogeneity"], "yes", "no"), "\n\n")
 
 # =============================================================================
 # CREATE METHODOLOGY TEXT FOR DISSERTATION

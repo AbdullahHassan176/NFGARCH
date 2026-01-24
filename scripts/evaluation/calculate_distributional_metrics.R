@@ -206,41 +206,53 @@ for (model_name in models) {
       Asset = asset_name,
       KS_distance = NA,
       Wasserstein_distance = NA,
-      Tail_index = NA,
-      Skewness = NA,
-      Kurtosis = NA
+      Tail_index_Std = NA,
+      Skewness_Std = NA,
+      Kurtosis_Std = NA,
+      Tail_index_NF = NA,
+      Skewness_NF = NA,
+      Kurtosis_NF = NA
     )
     
-    # Calculate metrics from standard residuals
+    # Load and process standard residuals
+    standard_residuals <- NULL
     if (file.exists(standard_residual_file)) {
-      standard_residuals <- read.csv(standard_residual_file, header = FALSE)[[1]]
-      standard_residuals <- as.numeric(standard_residuals[!is.na(standard_residuals)])
-      
-      if (length(standard_residuals) > 10) {
-        metrics$Tail_index <- calculate_tail_index(standard_residuals)
-        metrics$Skewness <- calculate_skewness(standard_residuals)
-        metrics$Kurtosis <- calculate_kurtosis(standard_residuals)
-      }
-    }
-    
-    # Compare standard vs NF residuals if both available
-    if (file.exists(standard_residual_file) && file.exists(nf_residual_file)) {
       tryCatch({
-        # Read CSV files (handle headers if present)
         standard_data <- read.csv(standard_residual_file, header = FALSE)
-        nf_data <- read.csv(nf_residual_file, header = FALSE)
-        
-        # Extract first column (handle header row if present)
         standard_residuals <- standard_data[[1]]
-        nf_residuals <- nf_data[[1]]
         
-        # Skip header row if it's character (e.g., "residual" or "synthetic_residuals")
+        # Skip header row if it's character
         if (is.character(standard_residuals[1]) && 
             (standard_residuals[1] == "residual" || 
              standard_residuals[1] == "synthetic_residuals" ||
              grepl("residual", standard_residuals[1], ignore.case = TRUE))) {
           standard_residuals <- standard_residuals[-1]
         }
+        
+        standard_residuals <- as.numeric(standard_residuals[!is.na(standard_residuals)])
+        
+        if (length(standard_residuals) > 10) {
+          # Standardize
+          standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
+          
+          # Calculate properties of standard residuals
+          metrics$Tail_index_Std <- calculate_tail_index(standard_residuals_std)
+          metrics$Skewness_Std <- calculate_skewness(standard_residuals_std)
+          metrics$Kurtosis_Std <- calculate_kurtosis(standard_residuals_std)
+        }
+      }, error = function(e) {
+        cat("  [WARNING] Error loading standard residuals:", e$message, "\n")
+      })
+    }
+    
+    # Load and process NF residuals
+    nf_residuals <- NULL
+    if (file.exists(nf_residual_file)) {
+      tryCatch({
+        nf_data <- read.csv(nf_residual_file, header = FALSE)
+        nf_residuals <- nf_data[[1]]
+        
+        # Skip header row if it's character
         if (is.character(nf_residuals[1]) && 
             (nf_residuals[1] == "residual" || 
              nf_residuals[1] == "synthetic_residuals" ||
@@ -248,28 +260,41 @@ for (model_name in models) {
           nf_residuals <- nf_residuals[-1]
         }
         
-        standard_residuals <- as.numeric(standard_residuals[!is.na(standard_residuals)])
         nf_residuals <- as.numeric(nf_residuals[!is.na(nf_residuals)])
         
-        if (length(standard_residuals) > 10 && length(nf_residuals) > 10) {
-          # Standardize both
-          standard_residuals <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
-          nf_residuals <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
+        if (length(nf_residuals) > 10) {
+          # Standardize
+          nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
           
-          metrics$KS_distance <- calculate_ks_distance(standard_residuals, nf_residuals)
-          metrics$Wasserstein_distance <- calculate_wasserstein_distance(standard_residuals, nf_residuals)
-        } else {
-          cat("  [WARNING] Insufficient data for", model_name, "-", asset_name, "\n")
+          # Calculate properties of NF residuals
+          metrics$Tail_index_NF <- calculate_tail_index(nf_residuals_std)
+          metrics$Skewness_NF <- calculate_skewness(nf_residuals_std)
+          metrics$Kurtosis_NF <- calculate_kurtosis(nf_residuals_std)
         }
+      }, error = function(e) {
+        cat("  [WARNING] Error loading NF residuals:", e$message, "\n")
+      })
+    }
+    
+    # Compare standard vs NF residuals if both available
+    if (!is.null(standard_residuals) && !is.null(nf_residuals) && 
+        length(standard_residuals) > 10 && length(nf_residuals) > 10) {
+      tryCatch({
+        # Standardize both for comparison
+        standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
+        nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
+        
+        metrics$KS_distance <- calculate_ks_distance(standard_residuals_std, nf_residuals_std)
+        metrics$Wasserstein_distance <- calculate_wasserstein_distance(standard_residuals_std, nf_residuals_std)
       }, error = function(e) {
         cat("  [WARNING] Error calculating KS/Wasserstein for", model_name, "-", asset_name, ":", e$message, "\n")
       })
     } else {
-      if (!file.exists(standard_residual_file)) {
-        cat("  [WARNING] Standard residuals missing:", standard_residual_file, "\n")
+      if (is.null(standard_residuals) || length(standard_residuals) <= 10) {
+        cat("  [WARNING] Standard residuals missing or insufficient:", standard_residual_file, "\n")
       }
-      if (!file.exists(nf_residual_file)) {
-        cat("  [WARNING] NF residuals missing:", nf_residual_file, "\n")
+      if (is.null(nf_residuals) || length(nf_residuals) <= 10) {
+        cat("  [WARNING] NF residuals missing or insufficient:", nf_residual_file, "\n")
       }
     }
     
@@ -296,9 +321,12 @@ summary_stats <- distributional_df %>%
     median_KS = median(KS_distance, na.rm = TRUE),
     mean_Wasserstein = mean(Wasserstein_distance, na.rm = TRUE),
     median_Wasserstein = median(Wasserstein_distance, na.rm = TRUE),
-    mean_Tail_index = mean(Tail_index, na.rm = TRUE),
-    mean_Skewness = mean(Skewness, na.rm = TRUE),
-    mean_Kurtosis = mean(Kurtosis, na.rm = TRUE),
+    mean_Tail_index_Std = mean(Tail_index_Std, na.rm = TRUE),
+    mean_Skewness_Std = mean(Skewness_Std, na.rm = TRUE),
+    mean_Kurtosis_Std = mean(Kurtosis_Std, na.rm = TRUE),
+    mean_Tail_index_NF = mean(Tail_index_NF, na.rm = TRUE),
+    mean_Skewness_NF = mean(Skewness_NF, na.rm = TRUE),
+    mean_Kurtosis_NF = mean(Kurtosis_NF, na.rm = TRUE),
     .groups = "drop"
   )
 

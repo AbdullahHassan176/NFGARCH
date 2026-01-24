@@ -16,6 +16,10 @@ library(stringr)
 library(openxlsx)
 library(xts)
 
+# Load return forecast evaluation utilities
+source("scripts/utils/return_forecast_evaluation.R")
+source("scripts/engines/engine_selector.R")
+
 cat("=== COMPREHENSIVE STRESS TESTING ===\n\n")
 
 # =============================================================================
@@ -299,46 +303,66 @@ for (asset_name in names(returns_data)) {
           NULL
         }
         
-        # Generate forecasts
+        # Generate forecasts using multiple paths
         if (!is.null(nf_resid) && length(nf_resid) >= length(test_returns)) {
-          # NF-GARCH forecast
-          sim_result <- engine_path(
-            fit,
-            head(nf_resid, length(test_returns)),
-            length(test_returns),
-            cfg$model,
-            cfg$submodel,
-            engine = "manual"
-          )
-          nf_forecast <- sim_result$returns
+          # NF-GARCH forecast evaluation
+          nf_eval <- tryCatch({
+            evaluate_return_forecasts(
+              fit = fit,
+              nf_residuals = nf_resid,
+              actual_returns = as.numeric(test_returns),
+              horizon = length(test_returns),
+              model_type = cfg$model,
+              submodel = cfg$submodel,
+              engine = "manual",
+              n_paths = 1000
+            )
+          }, error = function(e) NULL)
           
-          # Calculate NF-GARCH forecast accuracy
-          nf_mse <- mean((test_returns - nf_forecast)^2, na.rm = TRUE)
-          nf_mae <- mean(abs(test_returns - nf_forecast), na.rm = TRUE)
+          if (!is.null(nf_eval)) {
+            nf_mse <- nf_eval$mse
+            nf_mae <- nf_eval$mae
+            nf_loglik <- nf_eval$loglik
+          } else {
+            nf_mse <- NA
+            nf_mae <- NA
+            nf_loglik <- NA
+          }
         } else {
-          nf_forecast <- NULL
           nf_mse <- NA
           nf_mae <- NA
+          nf_loglik <- NA
         }
         
         # Standard GARCH forecast (use fitted residuals)
         standard_resid <- engine_residuals(fit, standardize = TRUE)
         if (length(standard_resid) >= length(test_returns)) {
-          sim_result_std <- engine_path(
-            fit,
-            head(standard_resid, length(test_returns)),
-            length(test_returns),
-            cfg$model,
-            cfg$submodel,
-            engine = "manual"
-          )
-          std_forecast <- sim_result_std$returns
+          std_eval <- tryCatch({
+            evaluate_return_forecasts(
+              fit = fit,
+              nf_residuals = standard_resid,
+              actual_returns = as.numeric(test_returns),
+              horizon = length(test_returns),
+              model_type = cfg$model,
+              submodel = cfg$submodel,
+              engine = "manual",
+              n_paths = 1000
+            )
+          }, error = function(e) NULL)
           
-          std_mse <- mean((test_returns - std_forecast)^2, na.rm = TRUE)
-          std_mae <- mean(abs(test_returns - std_forecast), na.rm = TRUE)
+          if (!is.null(std_eval)) {
+            std_mse <- std_eval$mse
+            std_mae <- std_eval$mae
+            std_loglik <- std_eval$loglik
+          } else {
+            std_mse <- NA
+            std_mae <- NA
+            std_loglik <- NA
+          }
         } else {
           std_mse <- NA
           std_mae <- NA
+          std_loglik <- NA
         }
         
         stress_forecast_results[[length(stress_forecast_results) + 1]] <- data.frame(
@@ -420,46 +444,66 @@ for (asset_name in names(returns_data)) {
           NULL
         }
         
-        # Generate forecasts
+        # Generate forecasts using multiple paths
         if (!is.null(nf_resid) && length(nf_resid) >= length(test_returns)) {
-          # NF-GARCH forecast
-          sim_result <- engine_path(
-            fit,
-            head(nf_resid, length(test_returns)),
-            length(test_returns),
-            cfg$model,
-            cfg$submodel,
-            engine = "manual"
-          )
-          nf_forecast <- sim_result$returns
+          # NF-GARCH forecast evaluation
+          nf_eval <- tryCatch({
+            evaluate_return_forecasts(
+              fit = fit,
+              nf_residuals = nf_resid,
+              actual_returns = as.numeric(test_returns),
+              horizon = length(test_returns),
+              model_type = cfg$model,
+              submodel = cfg$submodel,
+              engine = "manual",
+              n_paths = 1000
+            )
+          }, error = function(e) NULL)
           
-          # Calculate NF-GARCH forecast accuracy
-          nf_mse <- mean((test_returns - nf_forecast)^2, na.rm = TRUE)
-          nf_mae <- mean(abs(test_returns - nf_forecast), na.rm = TRUE)
+          if (!is.null(nf_eval)) {
+            nf_mse <- nf_eval$mse
+            nf_mae <- nf_eval$mae
+            nf_loglik <- nf_eval$loglik
+          } else {
+            nf_mse <- NA
+            nf_mae <- NA
+            nf_loglik <- NA
+          }
         } else {
-          nf_forecast <- NULL
           nf_mse <- NA
           nf_mae <- NA
+          nf_loglik <- NA
         }
         
         # Standard GARCH forecast (use fitted residuals)
         standard_resid <- engine_residuals(fit, standardize = TRUE)
         if (length(standard_resid) >= length(test_returns)) {
-          sim_result_std <- engine_path(
-            fit,
-            head(standard_resid, length(test_returns)),
-            length(test_returns),
-            cfg$model,
-            cfg$submodel,
-            engine = "manual"
-          )
-          std_forecast <- sim_result_std$returns
+          std_eval <- tryCatch({
+            evaluate_return_forecasts(
+              fit = fit,
+              nf_residuals = standard_resid,
+              actual_returns = as.numeric(test_returns),
+              horizon = length(test_returns),
+              model_type = cfg$model,
+              submodel = cfg$submodel,
+              engine = "manual",
+              n_paths = 1000
+            )
+          }, error = function(e) NULL)
           
-          std_mse <- mean((test_returns - std_forecast)^2, na.rm = TRUE)
-          std_mae <- mean(abs(test_returns - std_forecast), na.rm = TRUE)
+          if (!is.null(std_eval)) {
+            std_mse <- std_eval$mse
+            std_mae <- std_eval$mae
+            std_loglik <- std_eval$loglik
+          } else {
+            std_mse <- NA
+            std_mae <- NA
+            std_loglik <- NA
+          }
         } else {
           std_mse <- NA
           std_mae <- NA
+          std_loglik <- NA
         }
         
         # Calculate improvement

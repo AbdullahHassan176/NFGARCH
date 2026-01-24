@@ -1,0 +1,4 @@
+"Model","total_comparisons","nf_wins","win_rate"
+"TGARCH",6,6,100
+"gjrGARCH",6,6,100
+"sGARCH",6,6,100

@@ -14,12 +14,31 @@ if (file.exists("scripts/evaluation/calculate_distributional_metrics.R")) {
   source("scripts/evaluation/calculate_distributional_metrics.R")
 }
 
+# Load audit validation functions
+if (file.exists("scripts/experiments/synthetic_recovery/audit_validation.R")) {
+  source("scripts/experiments/synthetic_recovery/audit_validation.R")
+}
+
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
 
+#' Standardize a vector to mean 0, SD 1
+standardize <- function(x) {
+  if (is.null(x) || length(x) < 2) return(x)
+  x_clean <- x[!is.na(x) & is.finite(x)]
+  if (length(x_clean) < 2) return(x)
+  mean_x <- mean(x_clean)
+  sd_x <- sd(x_clean)
+  if (sd_x == 0) return(x - mean_x)
+  return((x - mean_x) / sd_x)
+}
+
 #' Calculate distributional metrics
-calculate_recovery_metrics <- function(z_true, z_hat) {
+#' @param z_true True innovations
+#' @param z_hat Recovered innovations
+#' @param standardize_mode "raw" to compare as-is, "shape" to standardize both before comparison
+calculate_recovery_metrics <- function(z_true, z_hat, standardize_mode = "raw") {
   if (is.null(z_hat) || length(z_hat) < 10) {
     return(list(
       ks_stat = NA,
@@ -37,6 +56,12 @@ calculate_recovery_metrics <- function(z_true, z_hat) {
   min_len <- min(length(z_true), length(z_hat))
   z_true_sub <- z_true[1:min_len]
   z_hat_sub <- z_hat[1:min_len]
+  
+  # Apply standardization if needed
+  if (standardize_mode == "shape") {
+    z_true_sub <- standardize(z_true_sub)
+    z_hat_sub <- standardize(z_hat_sub)
+  }
   
   # KS statistic
   ks_result <- tryCatch({
@@ -79,8 +104,17 @@ calculate_recovery_metrics <- function(z_true, z_hat) {
 }
 
 #' Generate KDE overlay plot
+#' @param standardize_mode "raw" or "shape" to control standardization
 plot_kde_overlay <- function(z_true, z_hat_gaussian, z_hat_student_t, z_nf, 
-                              output_file) {
+                              output_file, standardize_mode = "raw") {
+  
+  # Apply standardization if needed
+  if (standardize_mode == "shape") {
+    z_true <- standardize(z_true)
+    z_hat_gaussian <- if (!is.null(z_hat_gaussian)) standardize(z_hat_gaussian) else NULL
+    z_hat_student_t <- if (!is.null(z_hat_student_t)) standardize(z_hat_student_t) else NULL
+    z_nf <- if (!is.null(z_nf)) standardize(z_nf) else NULL
+  }
   
   # Prepare data
   df_list <- list()
@@ -146,9 +180,11 @@ plot_kde_overlay <- function(z_true, z_hat_gaussian, z_hat_student_t, z_nf,
       "NF-GARCH" = "longdash"
     )) +
     labs(
-      title = "Distribution Recovery: KDE Overlay",
-      subtitle = "Comparison of True vs Recovered Innovation Distributions",
-      x = "Standardized Innovation (z)",
+      title = paste("Distribution Recovery: KDE Overlay (", toupper(standardize_mode), ")", sep = ""),
+      subtitle = ifelse(standardize_mode == "raw", 
+                       "Comparison of True vs Recovered Innovation Distributions (as produced)",
+                       "Comparison of Standardized Distributions (shape only)"),
+      x = ifelse(standardize_mode == "raw", "Innovation (z)", "Standardized Innovation (z_std)"),
       y = "Density",
       color = "Method",
       linetype = "Method"
@@ -217,6 +253,106 @@ plot_qq <- function(z_true, z_hat, method_name, output_file) {
   return(p)
 }
 
+#' Evaluate NF sanity: compare NF samples to training data
+evaluate_nf_sanity <- function(z_hat_train, z_nf, output_dir) {
+  if (is.null(z_hat_train) || is.null(z_nf) || length(z_hat_train) < 10 || length(z_nf) < 10) {
+    cat("  WARNING: Insufficient data for NF sanity check\n")
+    return(NULL)
+  }
+  
+  cat("  Evaluating NF sanity check (NF samples vs training data)...\n")
+  
+  # Compute metrics in both modes
+  metrics_raw <- calculate_recovery_metrics(z_hat_train, z_nf, standardize_mode = "raw")
+  metrics_shape <- calculate_recovery_metrics(z_hat_train, z_nf, standardize_mode = "shape")
+  
+  # Create data frames
+  sanity_raw <- data.frame(
+    metric = c("ks_stat", "wasserstein", "skewness_diff", "kurtosis_diff", 
+                "q01_diff", "q05_diff", "q95_diff", "q99_diff"),
+    value = c(metrics_raw$ks_stat, metrics_raw$wasserstein, metrics_raw$skewness_diff,
+              metrics_raw$kurtosis_diff, metrics_raw$q01_diff, metrics_raw$q05_diff,
+              metrics_raw$q95_diff, metrics_raw$q99_diff)
+  )
+  
+  sanity_shape <- data.frame(
+    metric = c("ks_stat", "wasserstein", "skewness_diff", "kurtosis_diff", 
+                "q01_diff", "q05_diff", "q95_diff", "q99_diff"),
+    value = c(metrics_shape$ks_stat, metrics_shape$wasserstein, metrics_shape$skewness_diff,
+              metrics_shape$kurtosis_diff, metrics_shape$q01_diff, metrics_shape$q05_diff,
+              metrics_shape$q95_diff, metrics_shape$q99_diff)
+  )
+  
+  # Save
+  write.csv(sanity_raw, file.path(output_dir, "nf_fit_sanity_raw.csv"), row.names = FALSE)
+  write.csv(sanity_shape, file.path(output_dir, "nf_fit_sanity_shape.csv"), row.names = FALSE)
+  
+  cat("    Saved NF sanity check metrics\n")
+  
+  return(list(raw = sanity_raw, shape = sanity_shape))
+}
+
+#' Plot NF vs training data KDE
+plot_nf_vs_train_kde <- function(z_hat_train, z_nf, output_file, standardize_mode = "raw") {
+  if (is.null(z_hat_train) || is.null(z_nf)) {
+    return(NULL)
+  }
+  
+  # Apply standardization if needed
+  if (standardize_mode == "shape") {
+    z_hat_train <- standardize(z_hat_train)
+    z_nf <- standardize(z_nf)
+  }
+  
+  # Prepare data
+  df <- bind_rows(
+    data.frame(z = z_hat_train, method = "Training Data (z_hat_student_t)"),
+    data.frame(z = z_nf, method = "NF Samples (z_nf)")
+  )
+  
+  # Sample if too large
+  max_samples <- 5000
+  if (nrow(df) > max_samples) {
+    df <- df %>% 
+      group_by(method) %>%
+      sample_n(min(max_samples, n())) %>%
+      ungroup()
+  }
+  
+  # Create plot
+  p <- ggplot(df, aes(x = z, color = method, linetype = method)) +
+    geom_density(alpha = 0.6, size = 1) +
+    scale_color_manual(values = c(
+      "Training Data (z_hat_student_t)" = "blue",
+      "NF Samples (z_nf)" = "green"
+    )) +
+    scale_linetype_manual(values = c(
+      "Training Data (z_hat_student_t)" = "solid",
+      "NF Samples (z_nf)" = "dashed"
+    )) +
+    labs(
+      title = paste("NF Sanity Check: Training Data vs NF Samples (", toupper(standardize_mode), ")", sep = ""),
+      subtitle = ifelse(standardize_mode == "raw",
+                       "Comparison of NF samples to training residuals (as produced)",
+                       "Comparison of standardized distributions (shape only)"),
+      x = ifelse(standardize_mode == "raw", "Innovation (z)", "Standardized Innovation (z_std)"),
+      y = "Density",
+      color = "Method",
+      linetype = "Method"
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(size = 14, face = "bold"),
+      plot.subtitle = element_text(size = 11)
+    )
+  
+  ggsave(output_file, plot = p, width = 10, height = 6, dpi = 300)
+  cat("Saved NF sanity KDE plot:", output_file, "\n")
+  
+  return(p)
+}
+
 #' Load NF samples from Python output
 load_nf_samples <- function(nf_model_path, nf_residuals_path) {
   # Try to load pre-generated samples
@@ -261,30 +397,84 @@ evaluate_distribution_recovery <- function(z_true, z_hat_gaussian, z_hat_student
   
   cat("Evaluating distribution recovery...\n")
   
+  # Sanity check: Validate z_true properties
+  if (exists("validate_z_true")) {
+    cat("  Validating z_true properties...\n")
+    z_true_validation <- validate_z_true(z_true, dgp_config$innovation_type, dgp_config$innovation_params)
+    if (!z_true_validation$all_checks_passed) {
+      warning("z_true validation failed: mean=", z_true_validation$mean_value, 
+              ", sd=", z_true_validation$sd_value)
+    }
+  }
+  
   # Load NF samples
   z_nf <- load_nf_samples(nf_model_path, nf_residuals_path)
   
-  # Calculate metrics for each method
-  metrics_list <- list()
+  # Sanity check: Validate NF samples scale
+  if (!is.null(z_nf) && length(z_nf) > 10) {
+    nf_mean <- mean(z_nf, na.rm = TRUE)
+    nf_sd <- sd(z_nf, na.rm = TRUE)
+    cat("  NF samples: mean =", round(nf_mean, 6), ", sd =", round(nf_sd, 6), "\n")
+    if (abs(nf_mean) > 0.2 || abs(nf_sd - 1) > 0.2) {
+      warning("NF samples may not be properly standardized: mean=", nf_mean, ", sd=", nf_sd)
+    }
+  }
+  
+  # Calculate metrics for each method in both RAW and SHAPE modes
+  cat("  Computing metrics in RAW mode (pipeline output)...\n")
+  metrics_list_raw <- list()
   
   if (!is.null(z_hat_gaussian)) {
-    cat("  Computing metrics for Gaussian GARCH...\n")
-    metrics_list[["Gaussian_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_gaussian)
+    cat("    Gaussian GARCH...\n")
+    metrics_list_raw[["Gaussian_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_gaussian, "raw")
   }
   
   if (!is.null(z_hat_student_t)) {
-    cat("  Computing metrics for Student-t GARCH...\n")
-    metrics_list[["Student_t_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_student_t)
+    cat("    Student-t GARCH...\n")
+    metrics_list_raw[["Student_t_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_student_t, "raw")
   }
   
   if (!is.null(z_nf)) {
-    cat("  Computing metrics for NF-GARCH...\n")
-    metrics_list[["NF_GARCH"]] <- calculate_recovery_metrics(z_true, z_nf)
+    cat("    NF-GARCH...\n")
+    metrics_list_raw[["NF_GARCH"]] <- calculate_recovery_metrics(z_true, z_nf, "raw")
   }
   
-  # Create metrics data frame
-  metrics_df <- bind_rows(lapply(names(metrics_list), function(name) {
-    m <- metrics_list[[name]]
+  cat("  Computing metrics in SHAPE mode (standardized)...\n")
+  metrics_list_shape <- list()
+  
+  if (!is.null(z_hat_gaussian)) {
+    cat("    Gaussian GARCH...\n")
+    metrics_list_shape[["Gaussian_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_gaussian, "shape")
+  }
+  
+  if (!is.null(z_hat_student_t)) {
+    cat("    Student-t GARCH...\n")
+    metrics_list_shape[["Student_t_GARCH"]] <- calculate_recovery_metrics(z_true, z_hat_student_t, "shape")
+  }
+  
+  if (!is.null(z_nf)) {
+    cat("    NF-GARCH...\n")
+    metrics_list_shape[["NF_GARCH"]] <- calculate_recovery_metrics(z_true, z_nf, "shape")
+  }
+  
+  # Create metrics data frames
+  metrics_df_raw <- bind_rows(lapply(names(metrics_list_raw), function(name) {
+    m <- metrics_list_raw[[name]]
+    data.frame(
+      method = name,
+      ks_stat = m$ks_stat,
+      wasserstein = m$wasserstein,
+      skewness_diff = m$skewness_diff,
+      kurtosis_diff = m$kurtosis_diff,
+      q01_diff = m$q01_diff,
+      q05_diff = m$q05_diff,
+      q95_diff = m$q95_diff,
+      q99_diff = m$q99_diff
+    )
+  }))
+  
+  metrics_df_shape <- bind_rows(lapply(names(metrics_list_shape), function(name) {
+    m <- metrics_list_shape[[name]]
     data.frame(
       method = name,
       ks_stat = m$ks_stat,
@@ -299,17 +489,38 @@ evaluate_distribution_recovery <- function(z_true, z_hat_gaussian, z_hat_student
   }))
   
   # Save metrics
-  write.csv(metrics_df, 
-            file.path(output_dir, "recovery_metrics.csv"), 
+  write.csv(metrics_df_raw, 
+            file.path(output_dir, "recovery_metrics_raw.csv"), 
             row.names = FALSE)
-  cat("  Saved metrics to:", file.path(output_dir, "recovery_metrics.csv"), "\n")
+  write.csv(metrics_df_shape, 
+            file.path(output_dir, "recovery_metrics_shape.csv"), 
+            row.names = FALSE)
+  cat("  Saved RAW metrics to:", file.path(output_dir, "recovery_metrics_raw.csv"), "\n")
+  cat("  Saved SHAPE metrics to:", file.path(output_dir, "recovery_metrics_shape.csv"), "\n")
+  
+  # NF sanity check
+  if (!is.null(z_hat_student_t) && !is.null(z_nf)) {
+    nf_sanity <- evaluate_nf_sanity(z_hat_student_t, z_nf, output_dir)
+  } else {
+    nf_sanity <- NULL
+  }
   
   # Generate plots
   plots_dir <- file.path(output_dir, "plots")
   
-  # KDE overlay
+  # KDE overlay (RAW and SHAPE)
   plot_kde_overlay(z_true, z_hat_gaussian, z_hat_student_t, z_nf,
-                   file.path(plots_dir, "kde_overlay.png"))
+                   file.path(plots_dir, "kde_overlay_raw.png"), "raw")
+  plot_kde_overlay(z_true, z_hat_gaussian, z_hat_student_t, z_nf,
+                   file.path(plots_dir, "kde_overlay_shape.png"), "shape")
+  
+  # NF sanity check plots
+  if (!is.null(z_hat_student_t) && !is.null(z_nf)) {
+    plot_nf_vs_train_kde(z_hat_student_t, z_nf,
+                        file.path(plots_dir, "nf_vs_train_kde_raw.png"), "raw")
+    plot_nf_vs_train_kde(z_hat_student_t, z_nf,
+                        file.path(plots_dir, "nf_vs_train_kde_shape.png"), "shape")
+  }
   
   # QQ plots
   if (!is.null(z_hat_gaussian)) {
@@ -327,8 +538,8 @@ evaluate_distribution_recovery <- function(z_true, z_hat_gaussian, z_hat_student
             file.path(plots_dir, "qq_nf.png"))
   }
   
-  # Summary statistics table
-  summary_stats <- data.frame(
+  # Summary statistics tables (RAW and SHAPE)
+  summary_stats_raw <- data.frame(
     Method = c("True", "Gaussian GARCH", "Student-t GARCH", "NF-GARCH"),
     Mean = c(
       mean(z_true, na.rm = TRUE),
@@ -368,14 +579,66 @@ evaluate_distribution_recovery <- function(z_true, z_hat_gaussian, z_hat_student
     )
   )
   
-  write.csv(summary_stats, 
-            file.path(output_dir, "summary_statistics.csv"), 
+  # SHAPE version (standardized)
+  z_true_std <- standardize(z_true)
+  z_hat_gaussian_std <- if (!is.null(z_hat_gaussian)) standardize(z_hat_gaussian) else NULL
+  z_hat_student_t_std <- if (!is.null(z_hat_student_t)) standardize(z_hat_student_t) else NULL
+  z_nf_std <- if (!is.null(z_nf)) standardize(z_nf) else NULL
+  
+  summary_stats_shape <- data.frame(
+    Method = c("True", "Gaussian GARCH", "Student-t GARCH", "NF-GARCH"),
+    Mean = c(
+      mean(z_true_std, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), mean(z_hat_gaussian_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), mean(z_hat_student_t_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), mean(z_nf_std, na.rm = TRUE), NA)
+    ),
+    SD = c(
+      sd(z_true_std, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), sd(z_hat_gaussian_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), sd(z_hat_student_t_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), sd(z_nf_std, na.rm = TRUE), NA)
+    ),
+    Skewness = c(
+      moments::skewness(z_true_std, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), moments::skewness(z_hat_gaussian_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), moments::skewness(z_hat_student_t_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), moments::skewness(z_nf_std, na.rm = TRUE), NA)
+    ),
+    Kurtosis = c(
+      moments::kurtosis(z_true_std, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), moments::kurtosis(z_hat_gaussian_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), moments::kurtosis(z_hat_student_t_std, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), moments::kurtosis(z_nf_std, na.rm = TRUE), NA)
+    ),
+    Q01 = c(
+      quantile(z_true_std, 0.01, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), quantile(z_hat_gaussian_std, 0.01, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), quantile(z_hat_student_t_std, 0.01, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), quantile(z_nf_std, 0.01, na.rm = TRUE), NA)
+    ),
+    Q99 = c(
+      quantile(z_true_std, 0.99, na.rm = TRUE),
+      ifelse(!is.null(z_hat_gaussian_std), quantile(z_hat_gaussian_std, 0.99, na.rm = TRUE), NA),
+      ifelse(!is.null(z_hat_student_t_std), quantile(z_hat_student_t_std, 0.99, na.rm = TRUE), NA),
+      ifelse(!is.null(z_nf_std), quantile(z_nf_std, 0.99, na.rm = TRUE), NA)
+    )
+  )
+  
+  write.csv(summary_stats_raw, 
+            file.path(output_dir, "summary_statistics_raw.csv"), 
             row.names = FALSE)
-  cat("  Saved summary statistics\n")
+  write.csv(summary_stats_shape, 
+            file.path(output_dir, "summary_statistics_shape.csv"), 
+            row.names = FALSE)
+  cat("  Saved summary statistics (RAW and SHAPE)\n")
   
   return(list(
-    metrics = metrics_df,
-    summary_stats = summary_stats
+    metrics_raw = metrics_df_raw,
+    metrics_shape = metrics_df_shape,
+    summary_stats_raw = summary_stats_raw,
+    summary_stats_shape = summary_stats_shape,
+    nf_sanity = nf_sanity
   ))
 }
 

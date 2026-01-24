@@ -320,5 +320,3 @@ Focus: Financial Econometrics, Machine Learning, Time Series Analysis
 Acknowledgments
 
 This research was conducted as part of an MSc in Mathematical Statistics at the University of the Witwatersrand, exploring the intersection of traditional econometric methods and modern machine learning techniques.
-
----

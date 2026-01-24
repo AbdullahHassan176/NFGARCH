@@ -1,0 +1,9 @@
+"Model","Confidence_Level","mean_exceedance_rate","mean_expected_rate","mean_kupiec_pvalue","mean_christoffersen_pvalue","kupiec_pass_rate","christoffersen_pass_rate"
+"TGARCH",0.95,0.0506008855154965,0.05,1,1,1,1
+"TGARCH",0.99,0.0101201771030993,0.01,1,1,1,1
+"eGARCH",0.95,0.0506008855154965,0.05,1,1,1,1
+"eGARCH",0.99,0.0101201771030993,0.01,1,1,1,1
+"gjrGARCH",0.95,0.0506008855154965,0.05,1,1,1,1
+"gjrGARCH",0.99,0.0101201771030993,0.01,1,1,1,1
+"sGARCH",0.95,0.0506008855154965,0.05,1,1,1,1
+"sGARCH",0.99,0.0101201771030993,0.01,1,1,1,1

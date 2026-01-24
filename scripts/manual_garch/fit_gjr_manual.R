@@ -100,7 +100,7 @@ fit_gjr_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     par = init,
     fn = neg_ll,
     method = "BFGS",  # Use BFGS instead of L-BFGS-B for better stability
-    control = list(maxit = 1000, factr = 1e7)
+    control = list(maxit = 200, factr = 1e6, reltol = 1e-4)  # TEST MODE: Reduced iterations for speed
   )
   
   # Check convergence
