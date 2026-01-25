@@ -1,0 +1,10 @@
+NF-GARCH dissertation - Overleaf import
+======================================
+
+1. Copy the contents of  overleaf_export/tables/  into your Overleaf project
+   (e.g. a  tables/  folder). Use CSV for data; use  \input{tables/garch_order_robustness_table}  for the robustness table.
+
+2. Copy the contents of  overleaf_export/figures/  into your Overleaf project
+   (e.g. a  figures/  folder). Reference them in LaTeX with  \includegraphics[width=...]{figures/filename}.
+
+3. Re-run this batch after any pipeline or analysis changes to refresh these exports.

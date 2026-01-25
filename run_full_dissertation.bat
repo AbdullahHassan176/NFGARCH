@@ -8,6 +8,16 @@ REM ============================================================================
 
 cd /d "%~dp0"
 
+if /i "%~1"=="/OverleafOnly" (
+  set OLEAF=1
+  echo ========================================
+  echo OVERLEAF EXPORT ONLY
+  echo ========================================
+  echo Refreshing overleaf_export from existing results...
+  echo.
+  goto :overleaf_export
+)
+
 echo ========================================
 echo FULL DISSERTATION PIPELINE
 echo ========================================
@@ -37,11 +47,14 @@ if not defined RSCRIPT (
 echo Using Rscript: %RSCRIPT%
 echo.
 
-set /p confirm="Run full pipeline + additional analyses and refresh Overleaf export? (Y/N): "
-if /i not "!confirm!"=="Y" (
-  echo Cancelled.
-  pause
-  exit /b 0
+REM When called with /Y, skip confirmation (for non-interactive/automated runs)
+if /i not "%~1"=="/Y" (
+  set /p confirm="Run full pipeline + additional analyses and refresh Overleaf export? (Y/N): "
+  if /i not "!confirm!"=="Y" (
+    echo Cancelled.
+    pause
+    exit /b 0
+  )
 )
 echo.
 
@@ -83,13 +96,14 @@ echo ========================================
 if %errorlevel% neq 0 (
   echo [WARNING] complete_analysis.R had issues; continuing...
 ) else (
-  echo [OK] Complete analysis (Analysis_Summary.xlsx) updated
+  echo [OK] Complete analysis - Analysis_Summary.xlsx updated
 )
 echo.
 
 REM =============================================================================
 REM 4. OVERLEAF EXPORT
 REM =============================================================================
+:overleaf_export
 echo ========================================
 echo STEP 4: OVERLEAF EXPORT
 echo ========================================
@@ -128,7 +142,11 @@ REM Overleaf import instructions
   echo ======================================
   echo.
   echo 1. Copy the contents of  overleaf_export/tables/  into your Overleaf project
-  echo    ^(e.g. a  tables/  folder^). Use CSV for data; use  \input{tables/garch_order_robustness_table}  for the robustness table.
+  echo    ^(e.g. a  tables/  folder^). The folder contains .tex table bodies and .csv files.
+  echo    In your main .tex set  \newcommand{\tablesdir}{tables/}  then use e.g.:
+  echo      \input{\tablesdir stylized_facts_summary.tex}
+  echo      \input{\tablesdir garch_order_robustness_table.tex}
+  echo    See  results/dissertation_tables/DISSERTATION_TABLE_INPUTS.md  for the full list.
   echo.
   echo 2. Copy the contents of  overleaf_export/figures/  into your Overleaf project
   echo    ^(e.g. a  figures/  folder^). Reference them in LaTeX with  \includegraphics[width=...]{figures/filename}.
@@ -141,8 +159,9 @@ echo.
 REM =============================================================================
 REM SUMMARY
 REM =============================================================================
+:summary
 echo ========================================
-echo FULL DISSERTATION PIPELINE COMPLETED
+if defined OLEAF (echo OVERLEAF EXPORT COMPLETED) else (echo FULL DISSERTATION PIPELINE COMPLETED)
 echo ========================================
 echo.
 echo Overleaf-ready export:
