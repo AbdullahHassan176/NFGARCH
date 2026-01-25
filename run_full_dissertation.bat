@@ -146,7 +146,6 @@ REM Overleaf import instructions
   echo    In your main .tex set  \newcommand{\tablesdir}{tables/}  then use e.g.:
   echo      \input{\tablesdir stylized_facts_summary.tex}
   echo      \input{\tablesdir garch_order_robustness_table.tex}
-  echo    See  results/dissertation_tables/DISSERTATION_TABLE_INPUTS.md  for the full list.
   echo.
   echo 2. Copy the contents of  overleaf_export/figures/  into your Overleaf project
   echo    ^(e.g. a  figures/  folder^). Reference them in LaTeX with  \includegraphics[width=...]{figures/filename}.

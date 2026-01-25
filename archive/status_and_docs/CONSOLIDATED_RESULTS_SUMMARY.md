@@ -1,6 +1,6 @@
 # NF-GARCH Simulation: Consolidated Results Summary
 
-**Purpose:** One document for ChatGPT or any reader to understand what was done and what the results were.
+**Purpose:** One document for any reader to understand what was done and what the results were.
 
 ---
 
@@ -193,6 +193,6 @@
 
 ---
 
-## 9. One-Paragraph Summary for ChatGPT
+## 9. One-Paragraph Summary
 
 NF-GARCH (Normalizing Flow–GARCH) was run on 6 assets (3 FX, 3 equity) with 5 GARCH specs (sGARCH norm/sstd, gjrGARCH, eGARCH, TGARCH). Each NF-GARCH forecast used 1,000 paths; standard GARCH used one path. **Point forecasts:** NF-GARCH strongly outperforms: ~100% MSE improvement, ~99.6% MAE improvement, 18/18 wins, significant Wilcoxon tests. **Density forecasts:** Only NF-GARCH has Predictive Log-Likelihood (mean 2,338, max 6,230); standard GARCH has no density metric. **In-sample fit:** Standard GARCH has better AIC, BIC, and LogLikelihood. Five eGARCH fits failed (EURUSD, GBPUSD, USDZAR, NVDA, MSFT); 25/30 NF-GARCH models succeeded. **Bottom line:** NF-GARCH is better for out-of-sample point and density forecasting; standard GARCH fits in-sample better but forecasts worse and does not produce density forecasts.

@@ -21,7 +21,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.ai
-ai.md
 _push_tmp/
 
 # LaTeX build files (for reports or papers)
