@@ -53,11 +53,11 @@ raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 # Extract price matrix without date column
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 
-# Use full asset list from config (matching origin/main)
-all_assets <- get_manual_assets()
-# Separate into FX and Equity based on available data
-fx_names <- c("EURUSD", "GBPUSD", "GBPCNY", "USDZAR", "GBPZAR", "EURZAR")
-equity_tickers <- c("X", "NVDA", "MSFT", "PG", "CAT", "WMT", "AMZN")
+# Asset configuration: 6 assets (3 FX + 3 equity) matching dissertation
+# FX pairs: EURUSD, GBPUSD, USDZAR
+# Equities: NVDA, MSFT, AMZN
+fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
+equity_tickers <- c("NVDA", "MSFT", "AMZN")
 
 # Filter to only assets that exist in the data
 available_assets <- names(price_data_matrix)
