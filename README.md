@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository implements a two-stage Normalizing Flow-GARCH (NF-GARCH) framework that replaces parametric innovation distributions in GARCH models with learned densities. The method is evaluated on six daily financial series (three FX pairs, three equities) and demonstrates substantial improvements in forecast accuracy.
+This repository implements a two-stage Normalizing Flow-GARCH (NF-GARCH) framework that replaces parametric innovation distributions in GARCH models with learned densities. The method is evaluated on twelve daily financial series (six FX pairs, six equities) and demonstrates substantial improvements in forecast accuracy.
 
 **Key Results:**
 - Mean squared error reduction from 0.348 to 0.000358 (>99%)
@@ -101,7 +101,7 @@ Runtime: 60-90 minutes
 
 ### Data
 
-**Assets:** EURUSD, GBPUSD, USDZAR (FX); NVDA, MSFT, AMZN (equities)  
+**Assets:** EURUSD, GBPUSD, GBPCNY, USDZAR, GBPZAR, EURZAR (FX); NVDA, MSFT, PG, CAT, WMT, AMZN (equities)  
 **Split:** 65% training, 35% testing (chronological)
 
 ### Evaluation
