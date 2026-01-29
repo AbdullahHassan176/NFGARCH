@@ -360,21 +360,39 @@ tryCatch({
       }
     }
   } else {
-    # Parse model and asset from file names (format: MODEL_ASSET_synthetic_residuals.csv)
+    # Parse model and asset from file names
+    # Supports formats: MODEL_ASSET_synthetic_residuals.csv (e.g., eGARCH_AMZN)
+    #                   MODEL_DIST_ASSET_synthetic_residuals.csv (e.g., sGARCH_norm_AMZN)
     nf_residuals_map <- list()
     for (f in nf_files) {
       fname <- basename(f)
-      # Extract model and asset from filename (e.g., "eGARCH_AMZN_synthetic_residuals.csv" -> "eGARCH" and "AMZN")
+      # Extract model and asset from filename
       fname_clean <- stringr::str_replace(fname, "_synthetic_residuals\\.csv$", "")
       parts <- strsplit(fname_clean, "_")[[1]]
       
+      # Handle both 2-part (MODEL_ASSET) and 3-part (MODEL_DIST_ASSET) filenames
+      if (length(parts) == 2) {
+        # Format: MODEL_ASSET (e.g., eGARCH_AMZN)
+        model_part <- parts[1]
+        asset_part <- parts[2]
+      } else if (length(parts) >= 3) {
+        # Format: MODEL_DIST_ASSET (e.g., sGARCH_norm_AMZN)
+        # Use first two parts as model (e.g., "sGARCH_norm"), last part as asset
+        model_part <- paste(parts[1:(length(parts)-1)], collapse = "_")
+        asset_part <- parts[length(parts)]
+      } else {
+        # Invalid format, skip
+        cat("WARNING: Invalid filename format (too few parts):", fname, "\n")
+        next
+      }
+      
       # Match against possible keys
       possible_keys <- c(
-        paste0(parts[1], "_", parts[2], "_residuals_synthetic"),  # eGARCH_AMZN_residuals_synthetic
-        paste0(parts[1], "_", parts[2]),                           # eGARCH_AMZN
-        fname_clean,                                                # eGARCH_AMZN
-        paste0(parts[1], "_fx_", parts[2], "_residuals_synthetic"), # eGARCH_fx_AMZN_residuals_synthetic
-        paste0(parts[1], "_equity_", parts[2], "_residuals_synthetic") # eGARCH_equity_AMZN_residuals_synthetic
+        paste0(model_part, "_", asset_part, "_residuals_synthetic"),  # sGARCH_norm_AMZN_residuals_synthetic
+        paste0(model_part, "_", asset_part),                           # sGARCH_norm_AMZN
+        fname_clean,                                                    # sGARCH_norm_AMZN (full)
+        paste0(model_part, "_fx_", asset_part, "_residuals_synthetic"), # sGARCH_norm_fx_AMZN_residuals_synthetic
+        paste0(model_part, "_equity_", asset_part, "_residuals_synthetic") # sGARCH_norm_equity_AMZN_residuals_synthetic
       )
       
       tryCatch({
