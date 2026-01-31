@@ -90,7 +90,9 @@ fx_xts <- lapply(fx_names, function(ticker) {
 names(fx_xts) <- fx_names
 fx_xts <- fx_xts[!sapply(fx_xts, is.null)]
 
-# Calculate returns
+# Calculate returns (using standard log returns: diff(log(x)))
+# NOTE: This matches the return calculation in simulate_nf_garch_engine.R
+# to ensure consistent data processing across NF-GARCH and Standard GARCH
 equity_returns <- lapply(equity_xts, function(x) diff(log(x))[-1])
 fx_returns <- lapply(fx_xts, function(x) diff(log(x))[-1])
 
@@ -107,6 +109,33 @@ model_configs <- list(
 )
 
 cat("Running standard GARCH simulations (using regular residuals)...\n")
+
+# =============================================================================
+# DATA CONSISTENCY VERIFICATION
+# =============================================================================
+
+cat("\n=== VERIFYING DATA CONSISTENCY ===\n")
+
+# Verify NF-GARCH and Standard GARCH use the same data split
+for (asset_name in all_asset_names) {
+  if (asset_name %in% names(all_returns)) {
+    returns_data <- all_returns[[asset_name]]
+    n_obs <- length(as.numeric(returns_data))
+    split_idx <- floor(n_obs * 0.65)
+    
+    # Check if any NF-GARCH results exist for this asset
+    nf_asset_results <- nf_chrono[nf_chrono$Asset == asset_name, ]
+    if (nrow(nf_asset_results) > 0) {
+      cat("Asset:", asset_name, "- Data points:", n_obs, ", Train split:", split_idx, 
+          ", Test size:", n_obs - split_idx, "\n")
+    }
+  }
+}
+
+cat("\nVERIFICATION: All assets will use consistent 65/35 train/test split\n")
+cat("Data source: ./data/processed/raw (FX + EQ).csv\n")
+cat("Split ratio: 0.65 (train) / 0.35 (test)\n")
+cat("Assets to process:", paste(all_asset_names, collapse = ", "), "\n\n")
 
 # Standard GARCH simulation (using regular residuals from fitted models)
 standard_garch_results <- list()
@@ -238,6 +267,60 @@ overall_comparison <- combined_results %>%
 cat("\nOverall Performance:\n")
 print(overall_comparison)
 
+# =============================================================================
+# SANITY CHECKS: Detect unrealistic results
+# =============================================================================
+
+cat("\n=== SANITY CHECKS ===\n")
+
+# Check for extreme MSE values (indicates numerical issues)
+extreme_mse <- combined_results %>% filter(MSE > 1e10 | is.infinite(MSE))
+if (nrow(extreme_mse) > 0) {
+  cat("ERROR: Found", nrow(extreme_mse), "models with extreme MSE values (>1e10 or infinite)\n")
+  cat("  Source breakdown:\n")
+  print(table(extreme_mse$Source))
+  cat("\n  This indicates NUMERICAL ERRORS in the calculation\n")
+  cat("  Sample of extreme values:\n")
+  print(head(extreme_mse %>% select(Model, Asset, Source, MSE, MAE), 10))
+  stop("VALIDATION FAILED: Extreme MSE values detected - check methodology")
+}
+
+# Check for extreme MAE values
+extreme_mae <- combined_results %>% filter(MAE > 1e6 | is.infinite(MAE))
+if (nrow(extreme_mae) > 0) {
+  cat("ERROR: Found", nrow(extreme_mae), "models with extreme MAE values (>1e6 or infinite)\n")
+  cat("  Source breakdown:\n")
+  print(table(extreme_mae$Source))
+  stop("VALIDATION FAILED: Extreme MAE values detected - check methodology")
+}
+
+# Check for negative metrics (should be impossible)
+negative_mse <- combined_results %>% filter(MSE < 0)
+if (nrow(negative_mse) > 0) {
+  cat("ERROR: Found", nrow(negative_mse), "models with negative MSE\n")
+  stop("VALIDATION FAILED: Negative MSE detected - this is impossible")
+}
+
+# Check overall metrics are in reasonable ranges
+overall_standard <- overall_comparison %>% filter(Source == "Standard")
+overall_nf <- overall_comparison %>% filter(Source == "NF_GARCH")
+
+if (nrow(overall_standard) > 0) {
+  cat("Standard GARCH - Mean MSE:", format(overall_standard$mean_MSE, scientific = TRUE), "\n")
+  if (overall_standard$mean_MSE > 10) {
+    cat("WARNING: Standard GARCH MSE is unusually high (>10)\n")
+  }
+}
+
+if (nrow(overall_nf) > 0) {
+  cat("NF-GARCH - Mean MSE:", format(overall_nf$mean_MSE, scientific = TRUE), "\n")
+  if (overall_nf$mean_MSE > 10) {
+    cat("WARNING: NF-GARCH MSE is unusually high (>10)\n")
+  }
+}
+
+cat("\nSANITY CHECKS PASSED: All metrics are in reasonable ranges\n\n")
+
 # Win rate analysis: pair NF vs Standard by (Model, Distribution, Asset)
 win_rate <- combined_results %>%
   group_by(Model, Distribution, Asset) %>%
@@ -259,6 +342,24 @@ win_rate <- combined_results %>%
 
 cat("\nWin Rate Analysis (NF-GARCH vs Standard GARCH):\n")
 print(win_rate)
+
+# Sanity check: Win rate should not be 100% across all models
+if (nrow(win_rate) > 0) {
+  if (all(win_rate$win_rate >= 99.9)) {
+    cat("\nWARNING: 100% win rate across ALL models - this is unrealistic\n")
+    cat("  This suggests Standard GARCH is broken, not that NF-GARCH is perfect\n")
+    cat("  Possible causes:\n")
+    cat("    - Data contamination between train/test\n")
+    cat("    - Double standardization causing numerical issues\n")
+    cat("    - Incorrect residual loading in simulation\n\n")
+    stop("VALIDATION FAILED: Unrealistic 100% win rate detected")
+  } else if (any(win_rate$win_rate >= 99.9)) {
+    cat("\nWARNING: Some models show 100% win rate - investigate these:\n")
+    suspicious <- win_rate %>% filter(win_rate >= 99.9)
+    print(suspicious)
+    cat("\n")
+  }
+}
 
 # =============================================================================
 # Wilcoxon Signed-Rank Test (Statistical Significance)

@@ -350,10 +350,14 @@ write.csv(model_summary, "outputs/manual/garch_fitting/model_summary.csv", row.n
 saveRDS(all_results, "outputs/manual/garch_fitting/detailed_results.rds")
 
 # Extract and save residuals for NF training
+# NOTE: Residuals are extracted from a SINGLE full training set fit (65% of data)
+# This avoids data leakage from overlapping CV windows used for model selection
 residuals_dir <- "outputs/manual/residuals_by_model"
 if (!dir.exists(residuals_dir)) {
   dir.create(residuals_dir, recursive = TRUE)
 }
+
+cat("\nExtracting residuals from full training set fits (no CV overlap)...\n")
 
 # Create residuals by model
 for (model_name in manual_models) {
@@ -362,22 +366,40 @@ for (model_name in manual_models) {
     dir.create(model_dir, recursive = TRUE)
   }
   
-  for (asset_name in all_asset_names) {
+  for (asset_idx in 1:length(all_returns)) {
+    asset_name <- all_asset_names[asset_idx]
+    returns_data <- all_returns[[asset_idx]]
     result_key <- paste(asset_name, model_name, sep = "_")
-    if (result_key %in% names(all_results)) {
-      # Extract residuals from all windows
-      all_residuals <- c()
-      for (window_result in all_results[[result_key]]) {
-        if (!is.null(window_result$fit_result)) {
-          all_residuals <- c(all_residuals, as.numeric(window_result$fit_result$residuals))
-        }
-      }
+    
+    # Only process if CV results exist (indicates model converged)
+    if (result_key %in% names(all_results) && length(all_results[[result_key]]) > 0) {
       
-      if (length(all_residuals) > 0) {
-        # Save residuals
-        residuals_df <- data.frame(residuals = all_residuals)
+      # Split data: 65% training / 35% test (same as simulation pipeline)
+      n_obs <- length(returns_data)
+      train_size <- floor(n_obs * 0.65)
+      train_data <- returns_data[1:train_size]
+      
+      cat("  Fitting", model_name, "for", asset_name, "on full training set (", train_size, "obs)...\n")
+      
+      # Fit GARCH on full training set
+      fit_result <- fit_optimized_garch(train_data, asset_name, model_name)
+      
+      if (!is.null(fit_result) && !is.null(fit_result$residuals)) {
+        residuals_vec <- as.numeric(fit_result$residuals)
+        
+        # Validation: verify residual count matches training set size
+        if (length(residuals_vec) != train_size) {
+          cat("    WARNING: Residual count (", length(residuals_vec), 
+              ") does not match training size (", train_size, ")\n")
+        }
+        
+        # Save deduplicated residuals
+        residuals_df <- data.frame(residuals = residuals_vec)
         residuals_file <- file.path(model_dir, paste0(asset_name, "_Manual_Optimized_residuals.csv"))
         write.csv(residuals_df, residuals_file, row.names = FALSE)
+        cat("    Saved", length(residuals_vec), "residuals (training set only)\n")
+      } else {
+        cat("    WARNING: Failed to fit", model_name, "for", asset_name, "on full training set\n")
       }
     }
   }

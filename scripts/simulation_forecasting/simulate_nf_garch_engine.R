@@ -219,8 +219,13 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
         message("WARNING: NF residuals contain NAs for window ", start_idx)
         next
       }
-      # Verify and standardize if needed (NF residuals should already be standardized)
+      
+      # Verify standardization (should already be standardized from loading)
       if (!is_standardized(nf_resid_vec)) {
+        nf_mean <- mean(nf_resid_vec)
+        nf_sd <- sd(nf_resid_vec)
+        cat("WARNING: Re-standardizing NF residuals in TS-CV (mean =", round(nf_mean, 4), 
+            ", SD =", round(nf_sd, 4), ") - this should not happen if residuals were loaded correctly\n")
         nf_resid_vec <- standardize_residuals(nf_resid_vec, verify = TRUE)
       }
       
@@ -406,19 +411,24 @@ tryCatch({
           next
         }
         
-        # Standardize NF residuals (mean ≈ 0, SD ≈ 1)
-        # NF residuals from training should already be standardized, but ensure consistency
+        # Process NF residuals (should already be standardized from GARCH fitting)
         residual_values <- as.numeric(residual_values)
         residual_values <- residual_values[!is.na(residual_values)]
+        
         if (length(residual_values) > 0) {
-          # Use centralized standardization function
-          tryCatch({
-            residual_values <- standardize_residuals(residual_values, verify = TRUE)
-            cat("Standardized NF residuals for", fname_clean, ": Mean =", round(mean(residual_values), 6), "SD =", round(sd(residual_values), 6), "\n")
-          }, error = function(e) {
-            cat("WARNING: Failed to standardize NF residuals for", fname_clean, ":", e$message, "- skipping\n")
-            next
-          })
+          # Check properties BEFORE any standardization
+          nf_mean <- mean(residual_values)
+          nf_sd <- sd(residual_values)
+          cat("Loaded NF residuals for", fname_clean, ": n =", length(residual_values), 
+              ", Mean =", round(nf_mean, 6), ", SD =", round(nf_sd, 6), "\n")
+          
+          # VALIDATION: NF residuals should already be approximately standardized
+          # They come from GARCH standardized residuals (residuals / sigma)
+          if (!is_standardized(residual_values)) {
+            cat("WARNING: NF residuals for", fname_clean, "are NOT standardized (mean =", 
+                round(nf_mean, 4), ", SD =", round(nf_sd, 4), 
+                ") - this may indicate an issue with GARCH residual extraction\n")
+          }
         }
         
         # Store under all possible keys for flexible lookup
@@ -484,13 +494,18 @@ fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, 
       cat("WARNING: NF residuals contain NAs for", asset_name, "-", model_config[["model"]], "\n")
       return(NULL)
     }
-    # Verify and standardize if needed
+    
+    # Verify standardization (should already be standardized from loading)
     if (!is_standardized(nf_resid_vec)) {
+      nf_mean <- mean(nf_resid_vec)
+      nf_sd <- sd(nf_resid_vec)
+      cat("WARNING: Re-standardizing NF residuals for", asset_name, model_config[["model"]], 
+          " (mean =", round(nf_mean, 4), ", SD =", round(nf_sd, 4), 
+          ") - this should not happen if residuals were loaded correctly\n")
       nf_resid_vec <- standardize_residuals(nf_resid_vec, verify = TRUE)
-      cat("Standardized NF residuals for", asset_name, model_config[["model"]], 
-          ": Mean =", round(mean(nf_resid_vec), 6), "SD =", round(sd(nf_resid_vec), 6), "\n")
     }
-    cat("  NF residuals ready, length:", length(nf_resid_vec), "\n")
+    cat("  NF residuals ready, length:", length(nf_resid_vec), 
+        ", Mean =", round(mean(nf_resid_vec), 6), ", SD =", round(sd(nf_resid_vec), 6), "\n")
     
     # Evaluate return forecasts using multiple paths on TEST data
     cat("  Starting evaluate_return_forecasts (this may take a while for 1000 paths)...\n")
