@@ -173,15 +173,22 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     alpha <- fit$coef[alpha_idx[1]]
     gamma <- fit$coef[gamma_idx[1]]
     beta <- fit$coef[beta_idx[1]]
+    # eGARCH uses standardized residuals
+    # Ensure last_sigma is positive and finite to avoid log explosion
+    if (!is.finite(last_sigma) || last_sigma < 1e-10) last_sigma <- 1e-10
     z_last <- last_residual / last_sigma
-    # E|z|: use Student-t when fit has nu (std), else normal
-    if (!is.null(fit$distribution) && fit$distribution == "std" && "nu" %in% names(fit$coef)) {
+    # Clip z_last to prevent extreme values
+    z_last <- pmax(pmin(z_last, 20), -20)
+    # E|z|: use Student-t when fit has nu (sstd), else normal
+    if (!is.null(fit$distribution) && fit$distribution == "sstd" && "nu" %in% names(fit$coef)) {
       nu <- fit$coef["nu"]
       if (is.finite(nu) && nu > 2) E_z <- E_abs_t(nu) else E_z <- sqrt(2/pi)
     } else {
       E_z <- sqrt(2/pi)  # E|z| for normal
     }
     log_sigma2_next <- omega + beta * log(last_sigma^2) + alpha * (abs(z_last) - E_z) + gamma * z_last
+    # Clip log_sigma2 to prevent numerical explosion
+    log_sigma2_next <- pmax(pmin(log_sigma2_next, 20), -20)
     return(safe_sqrt(exp(log_sigma2_next)))
   } else if (model_type == "TGARCH") {
     omega_idx <- grep("omega", names(fit$coef))
@@ -194,8 +201,14 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     eta <- fit$coef[eta_idx[1]]
     beta <- fit$coef[beta_idx[1]]
     indicator <- ifelse(last_residual < 0, 1, 0)
+    # TGARCH uses raw residuals
+    # Safety check: prevent sigma explosion during long forecast horizons
+    if (!is.finite(last_sigma) || last_sigma < 1e-10) last_sigma <- 1e-10
+    if (!is.finite(last_residual)) last_residual <- 0
     sigma_next <- omega + alpha * abs(last_residual) + eta * indicator * abs(last_residual) + beta * last_sigma
-    return(pmax(sigma_next, safe_sqrt(var_floor)))
+    # Ensure sigma stays in reasonable bounds [1e-10, 10]
+    sigma_next <- pmax(pmin(sigma_next, 10), safe_sqrt(var_floor))
+    return(sigma_next)
   }
 }
 

@@ -59,7 +59,12 @@ manual_path <- function(fit, z, h, model, submodel = NULL) {
   
   # Subsequent steps
   for (i in 2:h) {
-    sigma_path[i] <- forecast_one_step(fit, sigma_path[i-1], returns_path[i-1] - mu, fit$model_type)
+    # Pass raw residual for consistency with model fitting
+    # Different models handle residuals differently:
+    #   - sGARCH, gjrGARCH, TGARCH: use raw residuals (r_t = y_t - mu)
+    #   - eGARCH: uses standardized residuals internally (z_t = r_t / sigma_t)
+    raw_residual <- returns_path[i-1] - mu
+    sigma_path[i] <- forecast_one_step(fit, sigma_path[i-1], raw_residual, fit$model_type)
     returns_path[i] <- mu + sigma_path[i] * z[i]
   }
   
