@@ -127,6 +127,14 @@ aic_bic_from_ll <- function(ll, k, n) {
 # Safe variance floor
 var_floor <- 1e-12
 
+# Asset-class specific volatility bounds (based on empirical analysis)
+# Equity: ~2.5% historical vol, allow up to 15% (6x) for extreme events  
+# FX: ~0.8% historical vol, allow up to 3% (4x) for crises
+EQUITY_VOL_MAX <- 0.15  # 15% daily volatility (extreme but possible)
+EQUITY_VOL_MIN <- 1e-4
+FX_VOL_MAX <- 0.03      # 3% daily volatility (crisis level)
+FX_VOL_MIN <- 1e-5
+
 # Safe recursion helpers
 safe_sqrt <- function(x) {
   sqrt(pmax(x, var_floor))
@@ -134,6 +142,21 @@ safe_sqrt <- function(x) {
 
 safe_log <- function(x) {
   log(pmax(x, var_floor))
+}
+
+# Get asset-specific bounds based on fitted model characteristics
+get_sigma_bounds <- function(fit) {
+  # Infer asset class from fitted volatility
+  # Equity typically has higher average volatility than FX
+  avg_sigma <- mean(fit$sigma, na.rm = TRUE)
+  
+  if (avg_sigma > 0.015) {
+    # Equity asset (high volatility)
+    return(list(min = EQUITY_VOL_MIN, max = EQUITY_VOL_MAX))
+  } else {
+    # FX asset (lower volatility)
+    return(list(min = FX_VOL_MIN, max = FX_VOL_MAX))
+  }
 }
 
 # Common forecast functions
@@ -149,7 +172,12 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     alpha <- fit$coef[alpha_idx[1]]
     beta <- fit$coef[beta_idx[1]]
     sigma2_next <- omega + alpha * last_residual^2 + beta * last_sigma^2
-    return(safe_sqrt(sigma2_next))
+    
+    # Apply asset-specific bounds to prevent explosion in long-horizon forecasts
+    bounds <- get_sigma_bounds(fit)
+    sigma_next <- safe_sqrt(sigma2_next)
+    sigma_next <- pmax(pmin(sigma_next, bounds$max), bounds$min)
+    return(sigma_next)
   } else if (model_type == "gjrGARCH") {
     omega_idx <- grep("omega", names(fit$coef))
     alpha_idx <- grep("alpha", names(fit$coef))
@@ -162,7 +190,12 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     beta <- fit$coef[beta_idx[1]]
     indicator <- ifelse(last_residual < 0, 1, 0)
     sigma2_next <- omega + alpha * last_residual^2 + gamma * indicator * last_residual^2 + beta * last_sigma^2
-    return(safe_sqrt(sigma2_next))
+    
+    # Apply asset-specific bounds (redundant for gjrGARCH but ensures consistency)
+    bounds <- get_sigma_bounds(fit)
+    sigma_next <- safe_sqrt(sigma2_next)
+    sigma_next <- pmax(pmin(sigma_next, bounds$max), bounds$min)
+    return(sigma_next)
   } else if (model_type == "eGARCH") {
     omega_idx <- grep("omega", names(fit$coef))
     alpha_idx <- grep("alpha", names(fit$coef))
@@ -178,7 +211,7 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     if (!is.finite(last_sigma) || last_sigma < 1e-10) last_sigma <- 1e-10
     z_last <- last_residual / last_sigma
     # Clip z_last to prevent extreme values
-    z_last <- pmax(pmin(z_last, 20), -20)
+    z_last <- pmax(pmin(z_last, 10), -10)
     # E|z|: use Student-t when fit has nu (sstd), else normal
     if (!is.null(fit$distribution) && fit$distribution == "sstd" && "nu" %in% names(fit$coef)) {
       nu <- fit$coef["nu"]
@@ -187,8 +220,12 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
       E_z <- sqrt(2/pi)  # E|z| for normal
     }
     log_sigma2_next <- omega + beta * log(last_sigma^2) + alpha * (abs(z_last) - E_z) + gamma * z_last
-    # Clip log_sigma2 to prevent numerical explosion
-    log_sigma2_next <- pmax(pmin(log_sigma2_next, 20), -20)
+    
+    # Apply asset-specific bounds to prevent explosion
+    bounds <- get_sigma_bounds(fit)
+    log_sigma2_max <- log(bounds$max^2)
+    log_sigma2_min <- log(bounds$min^2)
+    log_sigma2_next <- pmax(pmin(log_sigma2_next, log_sigma2_max), log_sigma2_min)
     return(safe_sqrt(exp(log_sigma2_next)))
   } else if (model_type == "TGARCH") {
     omega_idx <- grep("omega", names(fit$coef))
@@ -206,8 +243,10 @@ forecast_one_step <- function(fit, last_sigma, last_residual, model_type) {
     if (!is.finite(last_sigma) || last_sigma < 1e-10) last_sigma <- 1e-10
     if (!is.finite(last_residual)) last_residual <- 0
     sigma_next <- omega + alpha * abs(last_residual) + eta * indicator * abs(last_residual) + beta * last_sigma
-    # Ensure sigma stays in reasonable bounds [1e-10, 10]
-    sigma_next <- pmax(pmin(sigma_next, 10), safe_sqrt(var_floor))
+    
+    # Apply asset-specific bounds to prevent explosion
+    bounds <- get_sigma_bounds(fit)
+    sigma_next <- pmax(pmin(sigma_next, bounds$max), bounds$min)
     return(sigma_next)
   }
 }
