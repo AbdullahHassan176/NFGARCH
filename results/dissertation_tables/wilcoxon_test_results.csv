@@ -1,4 +1,5 @@
-Model,Distribution,Test_Type,Statistic,Pvalue,Significant,Alternative
-gjrGARCH,sstd,MSE (NF < Standard),1.0,0.03125,True,less
-sGARCH,norm,MSE (NF < Standard),0.0,0.0625,False,less
-sGARCH,sstd,MSE (NF < Standard),0.0,0.03125,True,less
+"Model","Distribution","Test_Type","Statistic","Pvalue","Significant","Alternative"
+"sGARCH","norm","MSE (NF < Standard)",15,0.84375,FALSE,"less"
+"sGARCH","sstd","MSE (NF < Standard)",0,0.015625,TRUE,"less"
+"TGARCH","sstd","MSE (NF < Standard)",7,0.28125,FALSE,"less"
+"gjrGARCH","sstd","MSE (NF < Standard)",0,0.015625,TRUE,"less"

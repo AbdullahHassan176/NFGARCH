@@ -1,6 +1,6 @@
 "Model","Distribution","total_comparisons","nf_wins","win_rate"
-"TGARCH","sstd",6,6,100
+"TGARCH","sstd",6,4,66.6666666666667
 "eGARCH","sstd",1,1,100
-"gjrGARCH","sstd",6,5,83.3333333333333
-"sGARCH","norm",6,6,100
+"gjrGARCH","sstd",6,6,100
+"sGARCH","norm",6,2,33.3333333333333
 "sGARCH","sstd",6,6,100

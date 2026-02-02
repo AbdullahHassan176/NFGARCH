@@ -1,8 +1,8 @@
 {
-  "execution_time": 923.3658711910248,
-  "models_trained": 64,
-  "total_files": 65,
-  "success_rate": 0.9846153846153847,
+  "execution_time": 195.37733006477356,
+  "models_trained": 25,
+  "total_files": 25,
+  "success_rate": 1.0,
   "config": {
     "epochs": 75,
     "batch_size": 512,
