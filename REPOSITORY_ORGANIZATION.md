@@ -1,54 +1,54 @@
 # Repository Organization - Clean Structure
 
-**Last Updated:** February 2, 2026  
-**Branch:** additional_investigation  
-**Status:** ✅ Clean and dissertation-ready
+**Last Updated:** February 2, 2026 
+**Branch:** additional_investigation 
+**Status:** Clean and dissertation-ready
 
 ---
 
-## 📁 **Main Repository Structure**
+## Main Repository Structure
 
 ### **Core Dissertation Files:**
 
 ```
 c:\Experimentation\NFGARCH\
-├── data/                           # Datasets
-│   └── processed/                  # Combined FX + Equity data
+├── data/ # Datasets
+│ └── processed/ # Combined FX + Equity data
 │
-├── scripts/                        # Main analysis scripts
-│   ├── core/                       # Core utilities and config
-│   ├── engines/                    # Engine selector
-│   ├── manual/                     # Manual GARCH pipeline (PRIMARY)
-│   ├── manual_garch/               # Custom GARCH implementations
-│   ├── simulation_forecasting/     # NF-GARCH simulation
-│   ├── evaluation/                 # Comparison and metrics
-│   ├── experiments/                # Robustness experiments
-│   │   └── robustness_garch_order.R
-│   └── utils/                      # Utility functions
+├── scripts/ # Main analysis scripts
+│ ├── core/ # Core utilities and config
+│ ├── engines/ # Engine selector
+│ ├── manual/ # Manual GARCH pipeline (PRIMARY)
+│ ├── manual_garch/ # Custom GARCH implementations
+│ ├── simulation_forecasting/ # NF-GARCH simulation
+│ ├── evaluation/ # Comparison and metrics
+│ ├── experiments/ # Robustness experiments
+│ │ └── robustness_garch_order.R
+│ └── utils/ # Utility functions
 │
-├── results/                        # Dissertation outputs
-│   ├── consolidated/               # Excel dashboards
-│   ├── dissertation_tables/        # CSV tables for LaTeX
-│   ├── figures/                    # PNG figures (Fig-R1 through Fig-R8)
-│   └── methodology/                # Methodology documentation
+├── results/ # Dissertation outputs
+│ ├── consolidated/ # Excel dashboards
+│ ├── dissertation_tables/ # CSV tables for LaTeX
+│ ├── figures/ # PNG figures (Fig-R1 through Fig-R8)
+│ └── methodology/ # Methodology documentation
 │
-├── outputs/                        # Model outputs
-│   └── manual/                     # Manual pipeline outputs
-│       ├── garch_fitting/          # Fitted GARCH models
-│       ├── nf_models/              # Trained NF models
-│       └── residuals_by_model/     # Extracted residuals
+├── outputs/ # Model outputs
+│ └── manual/ # Manual pipeline outputs
+│ ├── garch_fitting/ # Fitted GARCH models
+│ ├── nf_models/ # Trained NF models
+│ └── residuals_by_model/ # Extracted residuals
 │
-├── overleaf_export/                # LaTeX-ready exports
-│   ├── tables/                     # CSV tables
-│   └── figures/                    # Figures
+├── overleaf_export/ # LaTeX-ready exports
+│ ├── tables/ # CSV tables
+│ └── figures/ # Figures
 │
-├── environment/                    # Dependencies
-│   ├── requirements.txt            # Python packages
-│   └── renv.lock                   # R packages
+├── environment/ # Dependencies
+│ ├── requirements.txt # Python packages
+│ └── renv.lock # R packages
 │
 └── Main batch files:
-    ├── run_robustness_garch_order.bat  # GARCH order robustness
-    └── start_research_dashboard.bat    # Dashboard launcher
+ ├── run_robustness_garch_order.bat # GARCH order robustness
+ └── start_research_dashboard.bat # Dashboard launcher
 ```
 
 **Note:** Main dissertation pipeline batch files moved to `archive/deprecated_pipelines/` 
@@ -56,7 +56,7 @@ as the manual pipeline (`scripts/manual/`) is the current approach.
 
 ---
 
-## 🗂️ **Additional Analysis (Validation Experiments)**
+## Additional Analysis (Validation Experiments)
 
 **Location:** `additional_analysis/`
 
@@ -64,36 +64,36 @@ as the manual pipeline (`scripts/manual/`) is the current approach.
 
 ```
 additional_analysis/
-├── README.md                       # Comprehensive guide
-├── find_r_executable.bat           # Utility
+├── README.md # Comprehensive guide
+├── find_r_executable.bat # Utility
 │
 ├── Validation Experiments:
-│   ├── run_synthetic_recovery.bat  # Tests NF on synthetic data
-│   └── run_audit_experiment.bat    # Full validation audit
+│ ├── run_synthetic_recovery.bat # Tests NF on synthetic data
+│ └── run_audit_experiment.bat # Full validation audit
 │
 ├── Alternative Pipelines:
-│   ├── run_chronological.bat       # Pure chronological split
-│   ├── run_tscv.bat                # Time-series cross-validation
-│   └── run_both_pipelines.bat      # Run both for comparison
+│ ├── run_chronological.bat # Pure chronological split
+│ ├── run_tscv.bat # Time-series cross-validation
+│ └── run_both_pipelines.bat # Run both for comparison
 │
 └── scripts/
-    ├── synthetic_recovery/         # Synthetic experiment scripts (8 files)
-    ├── chronological/              # Chronological pipeline (2 files)
-    ├── tscv/                       # TS-CV pipeline (2 files)
-    └── *.R config files            # Pipeline configurations
+ ├── synthetic_recovery/ # Synthetic experiment scripts (8 files)
+ ├── chronological/ # Chronological pipeline (2 files)
+ ├── tscv/ # TS-CV pipeline (2 files)
+ └── *.R config files # Pipeline configurations
 ```
 
 **When to use:**
-- ❌ Not required for dissertation
-- ✅ Useful for methodology defense
-- ✅ Recommended for journal publication
-- ✅ Shows robustness across validation methods
+- Not required for dissertation
+- Useful for methodology defense
+- Recommended for journal publication
+- Shows robustness across validation methods
 
 **Outputs:** All experiments save to parent repo's `outputs/` and `results/` folders
 
 ---
 
-## 📚 **Archive Folders**
+## Archive Folders
 
 ### **archive/investigation_jan2026/**
 **Contains:** January 2026 investigation of NF-GARCH failure mechanisms
@@ -127,7 +127,7 @@ additional_analysis/
 
 ---
 
-## 🎯 **What to Use for Dissertation**
+## What to Use for Dissertation
 
 ### **Primary Workflow:**
 
@@ -135,16 +135,16 @@ Currently, the manual pipeline is the primary approach. Run via:
 
 ```r
 # From R console or Rscript:
-source("scripts/manual/manual_garch_fitting.R")      # Fit GARCH models
+source("scripts/manual/manual_garch_fitting.R") # Fit GARCH models
 # Then run Python NF training
 # Then:
-source("scripts/simulation_forecasting/simulate_nf_garch_engine.R")  # Simulate
-source("scripts/evaluation/compare_nf_vs_standard_garch.R")          # Compare
+source("scripts/simulation_forecasting/simulate_nf_garch_engine.R") # Simulate
+source("scripts/evaluation/compare_nf_vs_standard_garch.R") # Compare
 ```
 
 **OR** use individual experiment batch files:
 ```batch
-run_robustness_garch_order.bat     # GARCH order robustness (part of dissertation)
+run_robustness_garch_order.bat # GARCH order robustness (part of dissertation)
 ```
 
 **For complete pipeline:** See `archive/deprecated_pipelines/run_full_dissertation.bat` 
@@ -164,12 +164,12 @@ run_synthetic_recovery.bat
 run_chronological.bat
 
 # Comprehensive robustness:
-run_both_pipelines.bat  (8-10 hours)
+run_both_pipelines.bat (8-10 hours)
 ```
 
 ---
 
-## 📊 **Results Location**
+## Results Location
 
 All results centralized in:
 - **Tables:** `results/dissertation_tables/*.csv`
@@ -179,28 +179,28 @@ All results centralized in:
 
 ---
 
-## 🧹 **Repository Quality**
+## Repository Quality
 
-### **Code Cleanliness:**
-✅ No AI-generated markers or patterns  
-✅ No "cursor" author references  
-✅ Professional research code style  
-✅ Only legitimate WARNING/NOTE comments  
+### Code Cleanliness:
+- No AI-generated markers or patterns
+- No AI tool author references
+- Professional research code style
+- Only legitimate WARNING/NOTE comments
 
-### **Organization:**
-✅ Main pipeline scripts in `scripts/`  
-✅ Validation experiments in `additional_analysis/`  
-✅ Historical materials in `archive/`  
-✅ Results centralized and organized  
+### Organization:
+- Main pipeline scripts in `scripts/`
+- Validation experiments in `additional_analysis/`
+- Historical materials in `archive/`
+- Results centralized and organized
 
-### **Git History:**
-✅ All commits properly attributed  
-✅ Clear, descriptive commit messages  
-✅ No cleanup artifacts in history  
+### Git History:
+- All commits properly attributed
+- Clear, descriptive commit messages
+- No cleanup artifacts in history 
 
 ---
 
-## 🎓 **Summary**
+## Summary
 
 ### **For Dissertation Submission:**
 **Use:**
@@ -230,15 +230,15 @@ All results centralized in:
 
 ---
 
-## ✅ **Current Status**
+## Current Status
 
-**Branch:** additional_investigation (8 commits)  
-**Working Tree:** Clean  
-**Organization:** Professional and tidy  
-**Ready for:** Dissertation submission  
+**Branch:** additional_investigation (8 commits) 
+**Working Tree:** Clean 
+**Organization:** Professional and tidy 
+**Ready for:** Dissertation submission 
 
 ---
 
-**All optional/validation experiments organized in `additional_analysis/`**  
-**All investigation materials preserved in `archive/investigation_jan2026/`**  
+**All optional/validation experiments organized in `additional_analysis/`** 
+**All investigation materials preserved in `archive/investigation_jan2026/`** 
 **Main repository clean and focused on core dissertation work**

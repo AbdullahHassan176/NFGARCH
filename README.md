@@ -36,14 +36,14 @@ setup.bat
 1. Install R from https://cran.r-project.org/
 2. Install Python from https://python.org/
 3. Install R packages:
-   ```r
-   install.packages("renv")
-   renv::restore()
-   ```
+ ```r
+ install.packages("renv")
+ renv::restore()
+ ```
 4. Install Python packages:
-   ```bash
-   pip install -r environment/requirements.txt
-   ```
+ ```bash
+ pip install -r environment/requirements.txt
+ ```
 
 ## Usage
 
@@ -101,7 +101,7 @@ Runtime: 60-90 minutes
 
 ### Data
 
-**Assets:** EURUSD, GBPUSD, USDZAR (FX); NVDA, MSFT, AMZN (equities)  
+**Assets:** EURUSD, GBPUSD, USDZAR (FX); NVDA, MSFT, AMZN (equities) 
 **Split:** 65% training, 35% testing (chronological)
 
 ### Evaluation
@@ -120,21 +120,21 @@ All results use fixed random seed (123). Dependencies are version-locked in `env
 
 ```
 NFGARCH/
-├── data/processed/              # Price data (FX + equities)
-├── environment/                 # Dependency specifications
+├── data/processed/ # Price data (FX + equities)
+├── environment/ # Dependency specifications
 ├── scripts/
-│   ├── core/                    # Configuration and utilities
-│   ├── model_fitting/           # GARCH estimation
-│   ├── manual/                  # Optimized pipeline
-│   ├── simulation_forecasting/  # NF-GARCH forecasting
-│   ├── evaluation/              # Analysis and metrics
-│   └── experiments/             # Robustness tests
+│ ├── core/ # Configuration and utilities
+│ ├── model_fitting/ # GARCH estimation
+│ ├── manual/ # Optimized pipeline
+│ ├── simulation_forecasting/ # NF-GARCH forecasting
+│ ├── evaluation/ # Analysis and metrics
+│ └── experiments/ # Robustness tests
 ├── results/
-│   ├── dissertation_tables/     # LaTeX-ready tables
-│   ├── figures/                 # Publication figures
-│   └── consolidated/            # Excel dashboards
-├── outputs/manual/              # Model outputs and diagnostics
-└── overleaf_export/             # Ready for LaTeX import
+│ ├── dissertation_tables/ # LaTeX-ready tables
+│ ├── figures/ # Publication figures
+│ └── consolidated/ # Excel dashboards
+├── outputs/manual/ # Model outputs and diagnostics
+└── overleaf_export/ # Ready for LaTeX import
 ```
 
 ## Troubleshooting

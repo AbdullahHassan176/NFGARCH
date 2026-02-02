@@ -108,13 +108,15 @@ fx_returns <- lapply(fx_xts, function(x) diff(log(x))[-1])
 all_returns <- c(equity_returns, fx_returns)
 all_asset_names <- c(equity_tickers, fx_names)
 
-# Model configurations - align with NF-GARCH: sGARCH_norm, sGARCH_sstd, eGARCH, TGARCH, gjrGARCH
+# Model configurations - align with NF-GARCH
+# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
+# Student-t (std) is appropriate as NF learns the actual innovation distribution
 model_configs <- list(
   sGARCH_norm = list(model = "sGARCH", distribution = "norm", submodel = NULL),
-  sGARCH_sstd = list(model = "sGARCH", distribution = "sstd", submodel = NULL),
-  eGARCH      = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH      = list(model = "TGARCH", distribution = "sstd", submodel = NULL),
-  gjrGARCH    = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL)
+  sGARCH_std  = list(model = "sGARCH", distribution = "std", submodel = NULL),
+  eGARCH      = list(model = "eGARCH", distribution = "std", submodel = NULL),
+  TGARCH      = list(model = "TGARCH", distribution = "std", submodel = NULL),
+  gjrGARCH    = list(model = "gjrGARCH", distribution = "std", submodel = NULL)
 )
 
 cat("Running standard GARCH simulations (using regular residuals)...\n")

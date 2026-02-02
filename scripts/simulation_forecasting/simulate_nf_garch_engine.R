@@ -178,12 +178,14 @@ fx_returns     <- lapply(fx_xts,     function(x) diff(log(x))[-1, ])
 cat("Setting up model configurations...\n")
 
 # Model configurations - manual engine only
+# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
+# Student-t (std) provides heavy tails; NF then learns residual skewness/shape
 model_configs <- list(
   sGARCH_norm  = list(model = "sGARCH", distribution = "norm", submodel = NULL),
-  sGARCH_sstd  = list(model = "sGARCH", distribution = "sstd", submodel = NULL),
-  gjrGARCH     = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL),
-  eGARCH       = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH       = list(model = "TGARCH", distribution = "sstd", submodel = NULL)
+  sGARCH_std   = list(model = "sGARCH", distribution = "std", submodel = NULL),
+  gjrGARCH     = list(model = "gjrGARCH", distribution = "std", submodel = NULL),
+  eGARCH       = list(model = "eGARCH", distribution = "std", submodel = NULL),
+  TGARCH       = list(model = "TGARCH", distribution = "std", submodel = NULL)
 )
 
 # Data Splitting for Model Training and Evaluation

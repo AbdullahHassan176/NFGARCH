@@ -6,13 +6,13 @@
 
 1. Open `scripts/core/config.R`
 2. Change line 30 from:
-   ```r
-   PIPELINE_MODE <- "optimized"
-   ```
-   to:
-   ```r
-   PIPELINE_MODE <- "full"
-   ```
+ ```r
+ PIPELINE_MODE <- "optimized"
+ ```
+ to:
+ ```r
+ PIPELINE_MODE <- "full"
+ ```
 3. Save and re-run: `run_all.bat` or `run_full_dissertation.bat`
 
 That's it! All scripts automatically adapt.
@@ -53,18 +53,18 @@ When you switch `PIPELINE_MODE`, the following automatically update:
 ### 2. **Cross-Validation**
 - **Scripts affected:** `manual_garch_fitting.R`, TSCV modules
 - **Changes:**
-  - Window count: 3 → 8-10 windows
-  - Step size: 15% → 5% (more overlapping validation)
-  - Forecast horizon: 20 → 40 steps
+ - Window count: 3 → 8-10 windows
+ - Step size: 15% → 5% (more overlapping validation)
+ - Forecast horizon: 20 → 40 steps
 - **Impact:** More robust model selection, better out-of-sample validation
 
 ### 3. **NF Architecture**
 - **Scripts affected:** `manual_nf_training.py`
 - **Changes:**
-  - Layers: 4 → 8 (deeper network)
-  - Hidden features: 64 → 256 (4x capacity)
-  - Epochs: 75 → 150 (more training)
-  - Additional features: dropout, batch norm, residual connections
+ - Layers: 4 → 8 (deeper network)
+ - Hidden features: 64 → 256 (4x capacity)
+ - Epochs: 75 → 150 (more training)
+ - Additional features: dropout, batch norm, residual connections
 - **Impact:** Better capacity to learn complex distributions
 
 ### 4. **Training Hyperparameters**
@@ -83,13 +83,13 @@ When running in FULL mode, you also get:
 ### **Enhanced NF Architecture:**
 ```python
 # Automatically enabled in FULL mode:
-dropout = 0.1                    # Regularization
-batch_norm = TRUE                # Batch normalization
-residual_connections = TRUE      # Skip connections
-gradient_clipping = 1.0          # Gradient stability
-weight_decay = 1e-5              # L2 regularization
-lr_scheduler = "cosine"          # Cosine annealing
-warmup_epochs = 10               # Learning rate warmup
+dropout = 0.1 # Regularization
+batch_norm = TRUE # Batch normalization
+residual_connections = TRUE # Skip connections
+gradient_clipping = 1.0 # Gradient stability
+weight_decay = 1e-5 # L2 regularization
+lr_scheduler = "cosine" # Cosine annealing
+warmup_epochs = 10 # Learning rate warmup
 ```
 
 ### **Resource Requirements:**
@@ -103,33 +103,33 @@ warmup_epochs = 10               # Learning rate warmup
 ## Use Cases
 
 ### When to Use OPTIMIZED Mode:
-✅ **Development & Testing**
+ **Development & Testing**
 - Iterating on code changes
 - Debugging pipeline issues
 - Quick sanity checks
 
-✅ **Dissertation Main Results**
+ **Dissertation Main Results**
 - Main empirical findings
 - Core performance comparisons
 - Standard tables and figures
 
-✅ **Limited Resources**
+ **Limited Resources**
 - Running on laptop
 - No GPU available
 - Time constraints
 
 ### When to Use FULL Mode:
-✅ **Robustness Checks**
+ **Robustness Checks**
 - Sensitivity to asset selection
 - Cross-sectional stability
 - Comprehensive validation
 
-✅ **Appendix & Supplementary**
+ **Appendix & Supplementary**
 - Additional asset coverage
 - Deep architecture comparison
 - Extended training results
 
-✅ **Publication Requirements**
+ **Publication Requirements**
 - Journal submission
 - Comprehensive robustness
 - Peer review preparation
@@ -139,18 +139,18 @@ warmup_epochs = 10               # Learning rate warmup
 ## Configuration File Structure
 
 ```
-scripts/core/config.R           ← MASTER CONFIG (edit this!)
+scripts/core/config.R ← MASTER CONFIG (edit this!)
 │
-├─ PIPELINE_MODE                ← Change this line (line 30)
-├─ OPTIMIZED_ASSETS            ← 6 assets
-├─ FULL_ASSETS                 ← 13 assets
-├─ TSCV_OPTIMIZED              ← Fast CV
-├─ TSCV_FULL                   ← Comprehensive CV
-├─ NF_OPTIMIZED                ← Shallow network
-├─ NF_FULL                     ← Deep network
-└─ Helper functions            ← Auto-select based on mode
+├─ PIPELINE_MODE ← Change this line (line 30)
+├─ OPTIMIZED_ASSETS ← 6 assets
+├─ FULL_ASSETS ← 13 assets
+├─ TSCV_OPTIMIZED ← Fast CV
+├─ TSCV_FULL ← Comprehensive CV
+├─ NF_OPTIMIZED ← Shallow network
+├─ NF_FULL ← Deep network
+└─ Helper functions ← Auto-select based on mode
 
-scripts/manual/manual_optimized_config.R  ← Wrapper (backward compatible)
+scripts/manual/manual_optimized_config.R ← Wrapper (backward compatible)
 ```
 
 ---
@@ -164,16 +164,16 @@ All scripts should use these functions (they automatically respect PIPELINE_MODE
 source("scripts/core/config.R")
 
 # Get assets
-assets <- get_pipeline_assets()      # All assets
-fx <- get_fx_assets()                # FX only
-equity <- get_equity_assets()        # Equity only
+assets <- get_pipeline_assets() # All assets
+fx <- get_fx_assets() # FX only
+equity <- get_equity_assets() # Equity only
 
 # Get configurations
-nf_config <- get_nf_config()         # NF parameters
-cv_config <- get_cv_config()         # CV parameters
+nf_config <- get_nf_config() # NF parameters
+cv_config <- get_cv_config() # CV parameters
 
 # Print current setup
-print_config_summary()               # Shows active mode
+print_config_summary() # Shows active mode
 ```
 
 ---
@@ -212,7 +212,7 @@ After switching modes, verify:
 
 ## Academic Rigour Notes
 
-### Why Two Modes?
+### Why Two Modes 
 
 **OPTIMIZED Mode:**
 - Sufficient for establishing main empirical findings
@@ -238,22 +238,22 @@ After switching modes, verify:
 
 ---
 
-## Questions?
+## Questions 
 
-**Where is mode set?**
+**Where is mode set **
 → `scripts/core/config.R`, line 30
 
-**What changes automatically?**
+**What changes automatically **
 → Assets, CV windows, NF architecture, training params
 
-**Do I need to change anything else?**
+**Do I need to change anything else **
 → No! All scripts auto-adapt via helper functions
 
-**Can I mix modes?**
+**Can I mix modes **
 → No, mode applies globally. Use one mode per run.
 
-**Which mode for dissertation?**
+**Which mode for dissertation **
 → OPTIMIZED for main results, FULL for appendix
 
-**Which mode for publication?**
+**Which mode for publication **
 → Both - show consistency across modes

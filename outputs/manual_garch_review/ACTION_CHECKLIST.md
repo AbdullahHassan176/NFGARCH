@@ -1,7 +1,7 @@
-# ✅ ACTION CHECKLIST: Critical Fixes for Dissertation
+# ACTION CHECKLIST: Critical Fixes for Dissertation
 
-**Priority:** HIGH - Complete before submission  
-**Time Required:** 2-4 hours  
+**Priority:** HIGH - Complete before submission 
+**Time Required:** 2-4 hours 
 **Difficulty:** Easy (mostly documentation)
 
 ---
@@ -12,16 +12,16 @@
 
 **Why:** Results labeled "sstd" are actually "std" - data integrity issue
 
-**File:** `scripts/core/config.R`  
-**Lines:** 72-76  
+**File:** `scripts/core/config.R` 
+**Lines:** 72-76 
 **Action:**
 
 ```r
 # REMOVE or COMMENT OUT these lines:
 # sGARCH_sstd = list(
-#   model = "sGARCH", 
-#   distribution = "sstd",
-#   description = "Standard GARCH with Skewed Student-t Distribution"
+# model = "sGARCH", 
+# distribution = "sstd",
+# description = "Standard GARCH with Skewed Student-t Distribution"
 # ),
 ```
 
@@ -36,8 +36,8 @@
 
 **Why:** Prevent future silent downgrades
 
-**File:** `scripts/engines/engine_selector.R`  
-**Lines:** 19-21  
+**File:** `scripts/engines/engine_selector.R` 
+**Lines:** 19-21 
 **Action:**
 
 ```r
@@ -48,9 +48,9 @@ manual_dist <- if (dist == "sstd") "std" else dist
 # WITH this:
 # Check if skewed Student-t is requested
 if (dist == "sstd") {
-  stop("Skewed Student-t distribution (sstd) is not implemented in manual engine.\n",
-       "Please use 'std' (symmetric Student-t) or 'norm' (Normal) instead.\n",
-       "Note: sGARCH_sstd results in outputs actually used 'std' distribution.")
+ stop("Skewed Student-t distribution (sstd) is not implemented in manual engine.\n",
+ "Please use 'std' (symmetric Student-t) or 'norm' (Normal) instead.\n",
+ "Note: sGARCH_sstd results in outputs actually used 'std' distribution.")
 }
 manual_dist <- dist
 ```
@@ -66,8 +66,8 @@ manual_dist <- dist
 
 **Why:** eGARCH forecasts check wrong distribution name
 
-**File:** `scripts/manual_garch/manual_garch_core.R`  
-**Line:** 216  
+**File:** `scripts/manual_garch/manual_garch_core.R` 
+**Line:** 216 
 **Action:**
 
 ```r
@@ -89,7 +89,7 @@ if (!is.null(fit$distribution) && fit$distribution == "std" && "nu" %in% names(f
 
 **Why:** Document all implementation differences from rugarch
 
-**File:** Your dissertation (Methodology chapter)  
+**File:** Your dissertation (Methodology chapter) 
 **Action:** Add new subsection "4.5 Manual GARCH Implementation Details"
 
 **Copy this text:**
@@ -155,7 +155,7 @@ adjustments as noted above.
 
 ---
 
-## 🔍 OPTIONAL ENHANCEMENTS
+## OPTIONAL ENHANCEMENTS
 
 ### [ ] Enhancement 1: Verify No "sstd" in Outputs (30 min)
 
@@ -167,12 +167,12 @@ library(tools)
 output_files <- list.files("outputs", pattern = "\\.csv$", recursive = TRUE, full.names = TRUE)
 
 for (f in output_files) {
-  if (file.size(f) < 1e6) {  # Skip large files
-    content <- readLines(f, warn = FALSE)
-    if (any(grepl("sstd", content, ignore.case = TRUE))) {
-      cat("Found 'sstd' in:", f, "\n")
-    }
-  }
+ if (file.size(f) < 1e6) { # Skip large files
+ content <- readLines(f, warn = FALSE)
+ if (any(grepl("sstd", content, ignore.case = TRUE))) {
+ cat("Found 'sstd' in:", f, "\n")
+ }
+ }
 }
 ```
 
@@ -198,13 +198,13 @@ for (f in output_files) {
 
 ```markdown
 † Student-t parameter estimates use unrescaled parameterization (Var(z)=ν/(ν-2)). 
-  For comparison to rugarch, multiply σ estimates by √((ν-2)/ν).
+ For comparison to rugarch, multiply σ estimates by √((ν-2)/ν).
 
 ‡ Multi-step forecasts use simulation-based methodology, converging to ω/(1-β). 
-  rugarch analytical forecasts converge to ω/(1-α-β).
+ rugarch analytical forecasts converge to ω/(1-α-β).
 
 § TGARCH implements Zakoian (1994) specification with absolute residuals, not 
-  the fGARCH-TGARCH submodel. Parameters not directly comparable to rugarch.
+ the fGARCH-TGARCH submodel. Parameters not directly comparable to rugarch.
 ```
 
 **Verification:**
@@ -216,7 +216,7 @@ for (f in output_files) {
 
 ### [ ] Enhancement 3: Update README.md (30 min)
 
-**File:** Repository root `README.md`  
+**File:** Repository root `README.md` 
 **Action:** Add note about manual implementation differences
 
 ```markdown
@@ -239,7 +239,7 @@ For detailed comparison to rugarch, see: `outputs/manual_garch_review/REVIEWER_2
 
 ---
 
-## 📝 VERIFICATION CHECKLIST
+## VERIFICATION CHECKLIST
 
 ### Code Changes Verification
 
@@ -285,15 +285,15 @@ After adding methodology section:
 
 ---
 
-## 🎯 SUCCESS CRITERIA
+## SUCCESS CRITERIA
 
 ### Minimum Acceptable (Required for Submission)
 
-- [x] Fix #1: sstd removed from config ✅
-- [x] Fix #2: Error check added ✅
-- [x] Fix #3: eGARCH bug fixed ✅
-- [x] Fix #4: Methodology section added ✅
-- [x] All critical issues documented ✅
+- [x] Fix #1: sstd removed from config 
+- [x] Fix #2: Error check added 
+- [x] Fix #3: eGARCH bug fixed 
+- [x] Fix #4: Methodology section added 
+- [x] All critical issues documented 
 
 ### Ideal (Recommended)
 
@@ -305,7 +305,7 @@ After adding methodology section:
 
 ---
 
-## ⏱️ TIME TRACKING
+## ⏱ TIME TRACKING
 
 | Task | Estimated | Actual | Status |
 |------|-----------|--------|--------|
@@ -331,13 +331,13 @@ Complete this checklist when all actions are done:
 - [ ] Advisor reviewed changes
 - [ ] Ready for dissertation submission
 
-**Completed by:** ________________  
-**Date:** ________________  
+**Completed by:** ________________ 
+**Date:** ________________ 
 **Verified by:** ________________
 
 ---
 
-## 🎓 REVIEWER NOTES
+## REVIEWER NOTES
 
 This review was conducted with academic rigor following journal referee standards. 
 All findings are based on:
@@ -351,8 +351,8 @@ identified are about comparability and documentation, not fundamental correctnes
 
 **Recommended disposition:** ACCEPT after implementing critical fixes and documentation.
 
-**Reviewer:** Reviewer #2  
-**Review Date:** February 2, 2026  
+**Reviewer:** Reviewer #2 
+**Review Date:** February 2, 2026 
 **Review Status:** COMPLETE
 
 ---

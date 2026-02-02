@@ -248,11 +248,12 @@ if (length(nf_files) > 0) {
 cat("[OK] Loaded", length(nf_residuals_map), "NF residual files for stress testing\n")
 
 # Model configurations
+# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
 model_configs <- list(
-  sGARCH = list(model = "sGARCH", distribution = "sstd", submodel = NULL),
-  eGARCH = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH = list(model = "TGARCH", distribution = "sstd", submodel = NULL),
-  gjrGARCH = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL)
+  sGARCH = list(model = "sGARCH", distribution = "std", submodel = NULL),
+  eGARCH = list(model = "eGARCH", distribution = "std", submodel = NULL),
+  TGARCH = list(model = "TGARCH", distribution = "std", submodel = NULL),
+  gjrGARCH = list(model = "gjrGARCH", distribution = "std", submodel = NULL)
 )
 
 # Evaluate forecast accuracy during stress periods

@@ -128,13 +128,15 @@ fit_models <- function(returns_list, model_type, dist_type = "sstd", submodel = 
 #### Set the GARCH Model Configs ####
 
 # List of Different model configurations
+# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
+# Student-t (std) is appropriate; NF learns actual residual distribution in NF-GARCH
 model_configs <- list(
   sGARCH_norm  = list(model = "sGARCH", distribution = "norm", submodel = NULL),
-  sGARCH_sstd  = list(model = "sGARCH", distribution = "sstd", submodel = NULL),
-  gjrGARCH     = list(model = "gjrGARCH", distribution = "sstd", submodel = NULL),
-  eGARCH       = list(model = "eGARCH", distribution = "sstd", submodel = NULL),
-  TGARCH       = list(model = "TGARCH", distribution = "sstd", submodel = NULL)
-)  # Change the distributional assumptions of the ARCH and GARCH parameters here
+  sGARCH_std   = list(model = "sGARCH", distribution = "std", submodel = NULL),
+  gjrGARCH     = list(model = "gjrGARCH", distribution = "std", submodel = NULL),
+  eGARCH       = list(model = "eGARCH", distribution = "std", submodel = NULL),
+  TGARCH       = list(model = "TGARCH", distribution = "std", submodel = NULL)
+)
 
 
 #### Data Splitting ####

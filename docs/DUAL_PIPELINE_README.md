@@ -5,21 +5,21 @@
 This implementation provides **two independent validation pipelines** for robust NF-GARCH evaluation:
 
 1. **Chronological Split Pipeline** (`run_chronological.bat`)
-   - Pure 65/35 chronological split
-   - Single train/test division
-   - ~2 hours execution time
+ - Pure 65/35 chronological split
+ - Single train/test division
+ - ~2 hours execution time
 
 2. **Time-Series Cross-Validation Pipeline** (`run_tscv.bat`)
-   - Rolling window TS CV with 5 folds
-   - Multiple temporal windows
-   - ~6-8 hours execution time
+ - Rolling window TS CV with 5 folds
+ - Multiple temporal windows
+ - ~6-8 hours execution time
 
 3. **Combined Execution** (`run_both_pipelines.bat`)
-   - Runs both pipelines sequentially
-   - Generates comparative analysis
-   - ~8-10 hours total execution time
+ - Runs both pipelines sequentially
+ - Generates comparative analysis
+ - ~8-10 hours total execution time
 
-## Why Two Pipelines?
+## Why Two Pipelines 
 
 ### Academic Benefits
 - **Robustness Validation**: Results consistent across methods = strong evidence
@@ -37,42 +37,42 @@ This implementation provides **two independent validation pipelines** for robust
 
 ```
 outputs/
-  chronological/           # Chronological split outputs
-    garch_fitting/
-    residuals_by_model/
-    nf_models/
-    evaluation/
-  
-  tscv/                    # TS CV outputs
-    garch_fitting/
-      window_1/
-      window_2/
-      ...
-    residuals_by_model/
-      window_1/
-      window_2/
-      ...
-    nf_models/
-      window_1/
-      window_2/
-      ...
-    evaluation/
+ chronological/ # Chronological split outputs
+ garch_fitting/
+ residuals_by_model/
+ nf_models/
+ evaluation/
+
+ tscv/ # TS CV outputs
+ garch_fitting/
+ window_1/
+ window_2/
+ ...
+ residuals_by_model/
+ window_1/
+ window_2/
+ ...
+ nf_models/
+ window_1/
+ window_2/
+ ...
+ evaluation/
 
 results/
-  chronological/           # Chronological results
-    consolidated/
-    dissertation_tables/
-    figures/
-    diagnostics/
-  
-  tscv/                    # TS CV results
-    consolidated/
-    dissertation_tables/
-    figures/
-    diagnostics/
-  
-  comparison/              # Meta-analysis
-    Chronological_vs_TSCV_Analysis.xlsx
+ chronological/ # Chronological results
+ consolidated/
+ dissertation_tables/
+ figures/
+ diagnostics/
+
+ tscv/ # TS CV results
+ consolidated/
+ dissertation_tables/
+ figures/
+ diagnostics/
+
+ comparison/ # Meta-analysis
+ Chronological_vs_TSCV_Analysis.xlsx
 ```
 
 ## Data Flow
@@ -80,17 +80,17 @@ results/
 ### Chronological Pipeline
 ```
 Raw Data (100%)
-    ↓
+ ↓
 65/35 Split (train/test)
-    ↓
+ ↓
 GARCH Fit (65% only)
-    ↓
+ ↓
 Extract Residuals (65%)
-    ↓
+ ↓
 Train NF (100% of residuals, NO validation)
-    ↓
+ ↓
 Simulate (test on 35%)
-    ↓
+ ↓
 Evaluate
 ```
 
@@ -99,17 +99,17 @@ Evaluate
 ### TS CV Pipeline
 ```
 Raw Data (100%)
-    ↓
+ ↓
 Calculate CV Windows (5 folds)
-    ↓
+ ↓
 For Each Window:
-    ├─ GARCH Fit (window training set)
-    ├─ Extract Residuals (window)
-    ├─ Train NF (window residuals)
-    └─ Simulate (window test set)
-    ↓
+ ├─ GARCH Fit (window training set)
+ ├─ Extract Residuals (window)
+ ├─ Train NF (window residuals)
+ └─ Simulate (window test set)
+ ↓
 Aggregate Results
-    ↓
+ ↓
 Evaluate
 ```
 
@@ -152,14 +152,14 @@ run_both_pipelines.bat
 # Chronological
 TRAIN_RATIO <- 0.65
 TEST_RATIO <- 0.35
-NF_VALIDATION_SPLIT <- 0.0  # No validation
+NF_VALIDATION_SPLIT <- 0.0 # No validation
 
 # TS CV
 TSCV_CONFIG <- list(
-  n_folds = 5,
-  window_size = 0.65,
-  step_size = 0.1,
-  max_windows = NULL
+ n_folds = 5,
+ window_size = 0.65,
+ step_size = 0.1,
+ max_windows = NULL
 )
 ```
 
@@ -203,13 +203,13 @@ TSCV_CONFIG <- list(
 ## Expected Results
 
 ### If Both Methods Agree
-- **Strong validation** of NF-GARCH approach
+- Strong validation of NF-GARCH approach
 - Emphasize robustness in dissertation
 - Recommend model for practical use
 - Claim generalizability across time periods
 
 ### If Methods Disagree
-- **Important finding** about temporal instability
+- Important finding about temporal instability
 - Discuss regime-dependent performance
 - Investigate market conditions
 - Provide nuanced recommendations
@@ -236,8 +236,8 @@ TSCV_CONFIG <- list(
 ### Comparison Script Fails
 1. Verify both pipelines completed
 2. Check result files exist:
-   - `results/chronological/consolidated/NF_GARCH_Results_chronological.xlsx`
-   - `results/tscv/consolidated/NF_GARCH_Results_tscv.xlsx`
+ - `results/chronological/consolidated/NF_GARCH_Results_chronological.xlsx`
+ - `results/tscv/consolidated/NF_GARCH_Results_tscv.xlsx`
 3. Review comparison script output
 
 ## Dissertation Integration
@@ -269,7 +269,7 @@ TSCV_CONFIG <- list(
 - Evaluation: ~30 minutes
 - **Total: ~2 hours**
 
-### TS CV Pipeline  
+### TS CV Pipeline 
 - GARCH Fitting: ~2 hours (5 windows)
 - NF Training: ~1.5 hours (5 windows)
 - Simulation: ~1 hour
@@ -291,17 +291,17 @@ Implementation: Independent pipelines with consistent data splitting
 
 For issues or questions:
 1. Check this README
-2. Review plan file: `.cursor/plans/dual_pipeline_setup_*.plan.md`
-3. Examine configuration files in `scripts/config/`
-4. Review batch file comments
+2. Examine configuration files in `scripts/config/`
+3. Review batch file comments
+4. Check documentation in `docs/` folder
 
 ## Version History
 
 - v1.0 (2026-02-02): Initial dual pipeline implementation
-  - Chronological split pipeline
-  - TS CV pipeline
-  - Comparative analysis
-  - Complete documentation
+ - Chronological split pipeline
+ - TS CV pipeline
+ - Comparative analysis
+ - Complete documentation
 
 ---
 

@@ -4,14 +4,14 @@ This folder contains alternative pipelines and validation experiments that are *
 
 ---
 
-## 📁 **Contents**
+## **Contents**
 
 ### **Validation Experiments:**
 
 #### 1. **Synthetic Recovery Experiment**
 **Purpose:** Validates that NF-GARCH can correctly recover known distributions
 
-**Run:** `run_synthetic_recovery.bat`  
+**Run:** `run_synthetic_recovery.bat` 
 **Script:** `scripts/synthetic_recovery/run_synthetic_recovery.R`
 
 **What it does:**
@@ -27,7 +27,7 @@ This folder contains alternative pipelines and validation experiments that are *
 #### 2. **Audit Experiment**
 **Purpose:** Comprehensive audit of the synthetic recovery experiment
 
-**Run:** `run_audit_experiment.bat`  
+**Run:** `run_audit_experiment.bat` 
 **Script:** `scripts/synthetic_recovery/run_full_audit.R`
 
 **What it does:**
@@ -45,7 +45,7 @@ This folder contains alternative pipelines and validation experiments that are *
 #### 3. **Chronological Split Pipeline**
 **Purpose:** Alternative to main pipeline using pure chronological split (no CV)
 
-**Run:** `run_chronological.bat`  
+**Run:** `run_chronological.bat` 
 **Scripts:** `scripts/chronological/`
 
 **What it does:**
@@ -63,7 +63,7 @@ This folder contains alternative pipelines and validation experiments that are *
 #### 4. **Time-Series Cross-Validation Pipeline**
 **Purpose:** Alternative pipeline using rolling window TS-CV
 
-**Run:** `run_tscv.bat`  
+**Run:** `run_tscv.bat` 
 **Scripts:** `scripts/tscv/`
 
 **What it does:**
@@ -93,23 +93,23 @@ This folder contains alternative pipelines and validation experiments that are *
 
 ---
 
-## 🎯 **When to Use These**
+## **When to Use These**
 
 ### **For Dissertation:**
-❌ **Not required** - Main pipeline (`../run_full_dissertation.bat`) is sufficient
+ **Not required** - Main pipeline (`../run_full_dissertation.bat`) is sufficient
 
 ### **For Journal Publication:**
-✅ **Recommended** - Shows robustness across validation methods
+ **Recommended** - Shows robustness across validation methods
 
 ### **For Methodology Defense:**
-✅ **Useful** - Synthetic recovery proves NF-GARCH works correctly
+ **Useful** - Synthetic recovery proves NF-GARCH works correctly
 
 ### **For Reviewers' Requests:**
-✅ **Ready** - Alternative validation approaches already implemented
+ **Ready** - Alternative validation approaches already implemented
 
 ---
 
-## 🚀 **How to Run**
+## **How to Run**
 
 ### **From this folder:**
 
@@ -140,7 +140,7 @@ This keeps the main repo clean while maintaining full functionality.
 
 ---
 
-## 📊 **Outputs**
+## **Outputs**
 
 All outputs are saved to the **parent repository** to maintain centralized results:
 
@@ -160,7 +160,7 @@ All outputs are saved to the **parent repository** to maintain centralized resul
 
 ---
 
-## 🔧 **Technical Details**
+## **Technical Details**
 
 ### **Dependencies:**
 - Same as main pipeline (R packages, Python packages)
@@ -186,25 +186,25 @@ All outputs are saved to the **parent repository** to maintain centralized resul
 Located in parent repo: `../run_full_dissertation.bat`
 
 **Includes:**
-1. ✅ GARCH model fitting
-2. ✅ NF training
-3. ✅ NF-GARCH simulation
-4. ✅ Comparison analysis
-5. ✅ GARCH order robustness
-6. ✅ Dissertation tables and figures
+1. GARCH model fitting
+2. NF training
+3. NF-GARCH simulation
+4. Comparison analysis
+5. GARCH order robustness
+6. Dissertation tables and figures
 
 ### **This Folder (Additional Analysis):**
 **Provides:**
-- ✅ Methodological validation (synthetic recovery)
-- ✅ Alternative validation approaches (chronological, TS-CV)
-- ✅ Robustness checks
-- ✅ Publication-ready extensions
+- Methodological validation (synthetic recovery)
+- Alternative validation approaches (chronological, TS-CV)
+- Robustness checks
+- Publication-ready extensions
 
 **Not required for dissertation submission** but strengthens overall research quality.
 
 ---
 
-## ✅ **Status**
+## **Status**
 
 - **All experiments:** Fully functional
 - **Scripts:** Self-contained in this folder
@@ -214,28 +214,28 @@ Located in parent repo: `../run_full_dissertation.bat`
 
 ---
 
-## 🎓 **Usage Recommendations**
+## **Usage Recommendations**
 
 ### **Before Dissertation Submission:**
-- ❌ Don't need to run these
+- Don't need to run these
 - Main pipeline results are sufficient
 
 ### **After Positive Feedback:**
-- ✅ Run synthetic recovery for defense preparation
+- Run synthetic recovery for defense preparation
 - Shows methodological rigor
 
 ### **If Reviewers Ask for Robustness:**
-- ✅ Run chronological pipeline
-- ✅ Run TS-CV pipeline
+- Run chronological pipeline
+- Run TS-CV pipeline
 - Shows results hold across validation methods
 
 ### **For Journal Publication:**
-- ✅ Run all analyses
+- Run all analyses
 - Include in supplementary materials
 - Demonstrates comprehensive validation
 
 ---
 
-**Folder Created:** February 2, 2026  
-**Purpose:** Keep main repo tidy while preserving validation experiments  
+**Folder Created:** February 2, 2026 
+**Purpose:** Keep main repo tidy while preserving validation experiments 
 **Status:** All scripts functional and self-contained

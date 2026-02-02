@@ -4,11 +4,11 @@
 
 A complete dual validation system for your NF-GARCH dissertation with:
 
-✅ **Chronological Split Pipeline** - Pure 65/35 split with NO data leakage  
-✅ **Time-Series CV Pipeline** - Rolling window validation with 5 folds  
-✅ **Comparative Analysis** - Meta-analysis comparing both methods  
-✅ **Batch Files** - Ready-to-run Windows scripts  
-✅ **Documentation** - Complete README and this quick start guide
+- **Chronological Split Pipeline** - Pure 65/35 split with NO data leakage
+- **Time-Series CV Pipeline** - Rolling window validation with 5 folds
+- **Comparative Analysis** - Meta-analysis comparing both methods
+- **Batch Files** - Ready-to-run Windows scripts
+- **Documentation** - Complete README and this quick start guide
 
 ## Quick Start (Choose One)
 
@@ -101,7 +101,7 @@ This ensures **NO data leakage** and **valid evaluation**.
 ```
 results/chronological/
 ├── consolidated/
-│   └── NF_GARCH_Results_chronological.xlsx
+│ └── NF_GARCH_Results_chronological.xlsx
 ├── dissertation_tables/
 ├── figures/
 └── diagnostics/
@@ -111,7 +111,7 @@ results/chronological/
 ```
 results/tscv/
 ├── consolidated/
-│   └── NF_GARCH_Results_tscv.xlsx
+│ └── NF_GARCH_Results_tscv.xlsx
 ├── dissertation_tables/
 ├── figures/
 └── diagnostics/
@@ -126,13 +126,13 @@ results/comparison/
 ## Interpreting Results
 
 ### If Both Methods Agree on Best Model
-✅ **Strong Validation**
+ **Strong Validation**
 - Model is robust across validation strategies
 - Safe to recommend for practical use
 - Emphasize in dissertation: "Consistent across temporal conditions"
 
 ### If Methods Disagree
-⚠️ **Important Finding**
+**Important Finding**
 - Model performance varies with market conditions
 - Discuss temporal instability in dissertation
 - Provide nuanced recommendations
@@ -162,29 +162,29 @@ results/comparison/
 ## Next Steps
 
 1. **Run Chronological First** (test the system)
-   ```batch
-   run_chronological.bat
-   ```
+ ```batch
+ run_chronological.bat
+ ```
 
 2. **Review Results** (check outputs)
-   ```
-   results/chronological/consolidated/
-   ```
+ ```
+ results/chronological/consolidated/
+ ```
 
 3. **If Successful, Run Both** (full validation)
-   ```batch
-   run_both_pipelines.bat
-   ```
+ ```batch
+ run_both_pipelines.bat
+ ```
 
 4. **Analyze Comparison** (meta-analysis)
-   ```
-   results/comparison/Chronological_vs_TSCV_Analysis.xlsx
-   ```
+ ```
+ results/comparison/Chronological_vs_TSCV_Analysis.xlsx
+ ```
 
 5. **Update Dissertation** (integrate findings)
-   - Chapter 3: Methodology
-   - Chapter 4: Results
-   - Chapter 5: Discussion
+ - Chapter 3: Methodology
+ - Chapter 4: Results
+ - Chapter 5: Discussion
 
 ## Time Estimates
 
@@ -197,24 +197,24 @@ results/comparison/
 ## Getting Help
 
 1. Check `DUAL_PIPELINE_README.md` for details
-2. Review plan file in `.cursor/plans/`
+2. Review documentation in `docs/` folder
 3. Examine batch file outputs for error messages
 4. Check log files in `outputs/*/`
 
 ## Academic Impact
 
 This dual pipeline approach:
-- ✅ Addresses reviewer concerns about overfitting
-- ✅ Demonstrates methodological rigor
-- ✅ Provides robust validation
-- ✅ Enables temporal stability analysis
-- ✅ Strengthens publication chances
+- Addresses reviewer concerns about overfitting
+- Demonstrates methodological rigor
+- Provides robust validation
+- Enables temporal stability analysis
+- Strengthens publication chances
 
 **Result**: A dissertation-quality validation strategy that goes beyond typical single-split approaches.
 
 ---
 
-**Ready to start?**
+**Ready to start **
 
 ```batch
 # Test first with chronological (fastest)
@@ -224,4 +224,4 @@ run_chronological.bat
 run_both_pipelines.bat
 ```
 
-Good luck with your dissertation! 🎓
+Good luck with your dissertation!

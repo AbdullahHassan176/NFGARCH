@@ -128,11 +128,12 @@ fit_models <- function(returns_list, model_type, dist_type = "sstd", submodel = 
 
 # Model Configuration Definitions
 # Define specifications for various GARCH-family models to capture different volatility dynamics
+# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
 
 model_configs <- list(
-  sGARCH  = list(model = "sGARCH", distribution = "sstd", submodel = NULL),    # Standard GARCH with skewed Student-t
-  eGARCH  = list(model = "eGARCH", distribution = "sstd", submodel = NULL),   # Exponential GARCH for asymmetric effects
-  TGARCH  = list(model = "TGARCH", distribution = "sstd", submodel = NULL)     # Threshold GARCH for regime-dependent effects
+  sGARCH  = list(model = "sGARCH", distribution = "std", submodel = NULL),    # Standard GARCH with Student-t
+  eGARCH  = list(model = "eGARCH", distribution = "std", submodel = NULL),   # Exponential GARCH for asymmetric effects
+  TGARCH  = list(model = "TGARCH", distribution = "std", submodel = NULL)     # Threshold GARCH (Zakoian 1994)
 )
 
 # No parallel processing - model_configs available in main process

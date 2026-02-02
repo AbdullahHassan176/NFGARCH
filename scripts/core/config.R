@@ -564,3 +564,125 @@ load_config <- function() {
   invisible(NULL)
 }
 
+# =============================================================================
+# JSON EXPORT FOR PYTHON INTEGRATION
+# =============================================================================
+
+export_config_to_json <- function(output_file = "scripts/core/nf_config.json") {
+  #' Export NF Configuration to JSON for Python Scripts
+  #'
+  #' @description
+  #' Exports the active NF_CONFIG and related settings to a JSON file that
+  #' Python scripts can read. This ensures Python and R use the same configuration
+  #' based on PIPELINE_MODE.
+  #'
+  #' @param output_file Path to JSON output file
+  #'
+  #' @return Invisible NULL (side effect: writes JSON file)
+  #'
+  #' @examples
+  #' export_config_to_json()
+  #' # Python can now read: scripts/core/nf_config.json
+  
+  # Create config object for export
+  config_export <- list(
+    # Pipeline metadata
+    pipeline_mode = PIPELINE_MODE,
+    reproducibility_seed = REPRODUCIBILITY_SEED,
+    
+    # Asset configuration
+    assets = list(
+      fx = ASSETS$fx,
+      equity = ASSETS$equity,
+      all_assets = ALL_ASSETS
+    ),
+    
+    # NF training parameters
+    nf_config = list(
+      # Training
+      epochs = as.integer(NF_CONFIG$epochs),
+      batch_size = as.integer(NF_CONFIG$batch_size),
+      learning_rate = NF_CONFIG$learning_rate,
+      
+      # Early stopping
+      early_stopping = NF_CONFIG$early_stopping,
+      patience = as.integer(NF_CONFIG$patience),
+      min_delta = NF_CONFIG$min_delta,
+      
+      # Validation
+      validation_split = NF_CONFIG$validation_split,
+      validation_frequency = as.integer(NF_CONFIG$validation_frequency),
+      
+      # Model architecture
+      num_layers = as.integer(NF_CONFIG$num_layers),
+      hidden_features = as.integer(NF_CONFIG$hidden_features),
+      
+      # Advanced features (if present in full mode)
+      dropout = if(!is.null(NF_CONFIG$dropout)) NF_CONFIG$dropout else NULL,
+      batch_norm = if(!is.null(NF_CONFIG$batch_norm)) NF_CONFIG$batch_norm else NULL,
+      residual_connections = if(!is.null(NF_CONFIG$residual_connections)) NF_CONFIG$residual_connections else NULL,
+      
+      # Optimization
+      gradient_checkpointing = NF_CONFIG$gradient_checkpointing,
+      mixed_precision = NF_CONFIG$mixed_precision,
+      gradient_clipping = if(!is.null(NF_CONFIG$gradient_clipping)) NF_CONFIG$gradient_clipping else NULL,
+      weight_decay = if(!is.null(NF_CONFIG$weight_decay)) NF_CONFIG$weight_decay else NULL,
+      clear_cache = NF_CONFIG$clear_cache,
+      
+      # Learning rate schedule (if present)
+      lr_scheduler = if(!is.null(NF_CONFIG$lr_scheduler)) NF_CONFIG$lr_scheduler else NULL,
+      warmup_epochs = if(!is.null(NF_CONFIG$warmup_epochs)) as.integer(NF_CONFIG$warmup_epochs) else NULL
+    ),
+    
+    # Output directories
+    output_paths = list(
+      nf_models = "outputs/manual/nf_models",
+      residuals = "outputs/manual/residuals_by_model",
+      garch_fitting = "outputs/manual/garch_fitting"
+    )
+  )
+  
+  # Try to use jsonlite if available, otherwise use base R
+  if (requireNamespace("jsonlite", quietly = TRUE)) {
+    # Use jsonlite for pretty JSON
+    json_string <- jsonlite::toJSON(config_export, 
+                                     pretty = TRUE, 
+                                     auto_unbox = TRUE,
+                                     null = "null")
+    writeLines(json_string, output_file)
+  } else {
+    # Fallback: manual JSON construction
+    # This is a simplified version that handles the essential types
+    json_lines <- c(
+      "{",
+      sprintf('  "pipeline_mode": "%s",', PIPELINE_MODE),
+      sprintf('  "reproducibility_seed": %d,', REPRODUCIBILITY_SEED),
+      '  "nf_config": {',
+      sprintf('    "epochs": %d,', NF_CONFIG$epochs),
+      sprintf('    "batch_size": %d,', NF_CONFIG$batch_size),
+      sprintf('    "learning_rate": %g,', NF_CONFIG$learning_rate),
+      sprintf('    "num_layers": %d,', NF_CONFIG$num_layers),
+      sprintf('    "hidden_features": %d', NF_CONFIG$hidden_features),
+      '  }',
+      '}'
+    )
+    writeLines(json_lines, output_file)
+    warning("jsonlite package not available. Using simplified JSON export.")
+  }
+  
+  cat("✓ Config exported to:", output_file, "\n")
+  cat("  Mode:", PIPELINE_MODE, "\n")
+  cat("  NF Layers:", NF_CONFIG$num_layers, "\n")
+  cat("  NF Hidden Features:", NF_CONFIG$hidden_features, "\n")
+  cat("  NF Epochs:", NF_CONFIG$epochs, "\n")
+  
+  invisible(NULL)
+}
+
+# Auto-export config when this file is sourced
+# This ensures Python scripts always have access to current config
+if (!exists(".config_exported") || !.config_exported) {
+  export_config_to_json()
+  .config_exported <- TRUE
+}
+
