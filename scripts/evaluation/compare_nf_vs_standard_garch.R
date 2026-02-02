@@ -10,16 +10,24 @@ if (file.exists("scripts/core/config.R")) {
   set.seed(123)  # Fallback if config not available
 }
 
+# Load split-specific configuration for evaluation
+source("scripts/evaluation/evaluation_split_config.R")
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(xts)
 
-cat("=== NF-GARCH vs STANDARD GARCH COMPARISON ===\n\n")
+cat("=== NF-GARCH vs STANDARD GARCH COMPARISON ===\n")
+cat("Split Mode:", EVAL_SPLIT_MODE, "\n\n")
 
-# Load NF-GARCH results
-nf_results_file <- "results/consolidated/NF_GARCH_Results_manual.xlsx"
+# Load NF-GARCH results from split-specific location
+nf_results_file <- EVAL_PATHS$nf_garch_results
+if (!file.exists(nf_results_file)) {
+  # Try alternative path
+  nf_results_file <- file.path(RESULTS_BASE, "consolidated", "NF_GARCH_Results_manual.xlsx")
+}
 if (!file.exists(nf_results_file)) {
   stop("NF-GARCH results file not found: ", nf_results_file)
 }
@@ -51,7 +59,8 @@ if (file.exists("outputs/manual/garch_fitting/model_summary.csv")) {
   cat("GARCH fitting summary not found (optional).\n")
 }
 
-# Load engine utilities and return forecast evaluation (must match NF-GARCH: 1000-path point forecast)
+# Load configuration and utilities
+source("scripts/manual/manual_optimized_config.R")
 source("scripts/engines/engine_selector.R")
 source("scripts/utils/safety_functions.R")
 source("scripts/utils/return_forecast_evaluation.R")
@@ -62,9 +71,9 @@ raw_price_data$Date <- as.Date(rownames(raw_price_data))
 rownames(raw_price_data) <- NULL
 raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 
-# Extract optimized assets
-equity_tickers <- c("NVDA", "MSFT", "AMZN")
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
+# Extract optimized assets from centralized config
+equity_tickers <- get_manual_equity_assets()
+fx_names <- get_manual_fx_assets()
 
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 date_index <- raw_price_data$Date
@@ -422,9 +431,9 @@ if (nrow(combined_results) > 0) {
 
 cat("\n=== ASSET-CLASS ANALYSIS ===\n")
 
-# Define asset classes
-fx_assets <- c("EURUSD", "GBPUSD", "USDZAR")
-equity_assets <- c("NVDA", "MSFT", "AMZN")
+# Define asset classes from centralized config
+fx_assets <- get_manual_fx_assets()
+equity_assets <- get_manual_equity_assets()
 
 if (nrow(combined_results) > 0) {
   # Add asset class

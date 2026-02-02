@@ -22,6 +22,9 @@ library(stringr)
 library(openxlsx)
 library(xts)
 
+# Load manual config for asset lists
+source("scripts/manual/manual_optimized_config.R")
+
 cat("=== COMPREHENSIVE VaR BACKTESTING ===\n\n")
 
 # =============================================================================
@@ -138,7 +141,8 @@ cat("Loading results...\n")
 raw_price_data <- read.csv("./data/processed/raw (FX + EQ).csv", row.names = 1)
 raw_price_data$Date <- as.Date(rownames(raw_price_data))
 
-assets <- c("EURUSD", "GBPUSD", "USDZAR", "NVDA", "MSFT", "AMZN")
+# Get assets from centralized config
+assets <- get_manual_assets()
 
 # Calculate actual returns
 actual_returns <- list()

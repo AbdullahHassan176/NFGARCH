@@ -16,6 +16,9 @@ library(tidyr)
 library(stringr)
 library(openxlsx)
 
+# Load manual config for asset lists
+source("scripts/manual/manual_optimized_config.R")
+
 # Optional packages
 if (!requireNamespace("forecast", quietly = TRUE)) {
   cat("[WARNING] forecast package not found. Some features may be limited.\n")
@@ -177,9 +180,9 @@ raw_price_data$Date <- as.Date(rownames(raw_price_data))
 rownames(raw_price_data) <- NULL
 raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 
-# Extract assets
-equity_tickers <- c("NVDA", "MSFT", "AMZN")
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
+# Extract assets from centralized config
+equity_tickers <- get_manual_equity_assets()
+fx_names <- get_manual_fx_assets()
 
 # Calculate returns
 all_returns <- list()

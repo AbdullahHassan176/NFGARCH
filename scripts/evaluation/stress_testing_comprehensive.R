@@ -16,7 +16,8 @@ library(stringr)
 library(openxlsx)
 library(xts)
 
-# Load return forecast evaluation utilities
+# Load configuration and utilities
+source("scripts/manual/manual_optimized_config.R")
 source("scripts/utils/return_forecast_evaluation.R")
 source("scripts/engines/engine_selector.R")
 
@@ -31,7 +32,8 @@ cat("Loading data...\n")
 raw_price_data <- read.csv("./data/processed/raw (FX + EQ).csv", row.names = 1)
 raw_price_data$Date <- as.Date(rownames(raw_price_data))
 
-assets <- c("EURUSD", "GBPUSD", "USDZAR", "NVDA", "MSFT", "AMZN")
+# Get assets from centralized config
+assets <- get_manual_assets()
 
 # Calculate returns
 returns_data <- list()

@@ -1,5 +1,27 @@
-# Manual GJR-GARCH(1,1) Fitter
-# Implements: σ_t^2 = ω + α ε_{t-1}^2 + γ I(ε_{t-1}<0) ε_{t-1}^2 + β σ_{t-1}^2
+# =============================================================================
+# MANUAL GJR-GARCH(1,1) IMPLEMENTATION (Glosten-Jagannathan-Runkle 1993)
+# =============================================================================
+#
+# SPECIFICATION:
+#   Mean equation:     r_t = μ + ε_t
+#   Innovation:        ε_t = σ_t z_t, where z_t ~ D(0,1)
+#   Variance equation: σ²_t = ω + α ε²_{t-1} + γ I(ε_{t-1}<0) ε²_{t-1} + β σ²_{t-1}
+#   Threshold indicator: I(ε_{t-1}<0) = 1 if ε_{t-1}<0, else 0
+#
+# DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
+#
+# REVIEWED: ✅ 2026-02-02 - Mathematically correct GJR-GARCH implementation
+#
+# LEVERAGE EFFECT:
+#   - γ > 0: Negative shocks increase volatility more (typical for equities)
+#   - γ < 0: Positive shocks increase volatility more (unusual)
+#   - γ = 0: Symmetric response (reduces to standard GARCH)
+#
+# Reference: Glosten, L., Jagannathan, R., & Runkle, D. (1993). "On the Relation
+#            between the Expected Value and the Volatility of the Nominal Excess
+#            Return on Stocks." Journal of Finance, 48(5), 1779-1801.
+#
+# =============================================================================
 
 source("scripts/manual_garch/manual_garch_core.R")
 

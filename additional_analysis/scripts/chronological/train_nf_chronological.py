@@ -1,0 +1,357 @@
+"""
+Chronological Split Normalizing Flow Training
+Trains NF on 100% of training set residuals (from 65% chronological split)
+NO validation split to avoid data leakage
+"""
+
+import os
+import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+import matplotlib.pyplot as plt
+import pandas as pd
+from glob import glob
+from scipy.stats import ks_2samp, wasserstein_distance, skew, kurtosis
+from nflows.distributions import StandardNormal
+from nflows.transforms import CompositeTransform, MaskedAffineAutoregressiveTransform
+from nflows.flows import Flow
+import time
+import gc
+from pathlib import Path
+
+# =============================================================================
+# CHRONOLOGICAL SPLIT CONFIGURATION
+# =============================================================================
+
+# Chronological NF training parameters
+CHRONO_NF_CONFIG = {
+    # Training parameters
+    "epochs": 75,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    
+    # NO validation split - train on full training set
+    "validation_split": 0.0,
+    "early_stopping": False,  # Disabled since no validation
+    
+    # Model architecture
+    "num_layers": 4,
+    "hidden_features": 64,
+    
+    # Memory optimization
+    "clear_cache": True,
+    
+    # Output
+    "save_models": True,
+    "output_dir": "outputs/chronological/nf_models"
+}
+
+# Performance monitoring
+PERFORMANCE_CONFIG = {
+    "enable_timing": True,
+    "progress_frequency": 10,
+    "memory_monitoring": False,  # Disabled for speed
+    "log_file": "outputs/chronological/nf_training.log"
+}
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
+def set_seed(seed=123):
+    """Set random seeds for reproducibility"""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
+def clear_memory():
+    """Clear GPU and CPU memory"""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
+def print_chrono_nf_summary():
+    """Print configuration summary"""
+    print("=== CHRONOLOGICAL NF TRAINING CONFIGURATION ===")
+    print(f"Epochs: {CHRONO_NF_CONFIG['epochs']}")
+    print(f"Batch size: {CHRONO_NF_CONFIG['batch_size']}")
+    print(f"Model layers: {CHRONO_NF_CONFIG['num_layers']}")
+    print(f"Hidden features: {CHRONO_NF_CONFIG['hidden_features']}")
+    print(f"Validation split: {CHRONO_NF_CONFIG['validation_split']} (NO validation)")
+    print(f"Early stopping: {CHRONO_NF_CONFIG['early_stopping']}")
+    print(f"Output dir: {CHRONO_NF_CONFIG['output_dir']}")
+    print("===============================================")
+
+# =============================================================================
+# OPTIMIZED NF MODEL CLASS
+# =============================================================================
+
+class OptimizedFlow(nn.Module):
+    """Optimized Normalizing Flow"""
+    
+    def __init__(self, num_layers=4, hidden_features=64):
+        super().__init__()
+        
+        # Create transforms
+        transforms = []
+        for _ in range(num_layers):
+            transforms.append(
+                MaskedAffineAutoregressiveTransform(
+                    features=1, 
+                    hidden_features=hidden_features
+                )
+            )
+        
+        self.transform = CompositeTransform(transforms)
+        self.base_dist = StandardNormal([1])
+        self.flow = Flow(self.transform, self.base_dist)
+    
+    def forward(self, x):
+        return self.flow.log_prob(x)
+    
+    def sample(self, n_samples):
+        return self.flow.sample(n_samples)
+    
+    def parameters(self):
+        return self.flow.parameters()
+
+# =============================================================================
+# TRAINING FUNCTION (NO VALIDATION)
+# =============================================================================
+
+def train_chronological_nf(file_path, model_key, output_dir, config):
+    """
+    Train Normalizing Flow on full training set (no validation split)
+    """
+    print(f"\nTraining NF for {model_key} (Chronological - No Validation)...")
+    
+    # Load residuals
+    residuals = pd.read_csv(file_path).values.astype(np.float32)
+    residuals = residuals[~np.isnan(residuals)].flatten().reshape(-1, 1)
+    
+    print(f"  Loaded {len(residuals)} residuals")
+    print(f"  Training on 100% of residuals (no validation split)")
+    
+    # Use ALL residuals for training (no validation split)
+    train_residuals = residuals
+    
+    # Create dataset
+    train_dataset = TensorDataset(torch.tensor(train_residuals, dtype=torch.float32))
+    
+    # Create data loader
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
+    
+    # Create model
+    flow = OptimizedFlow(
+        num_layers=config["num_layers"],
+        hidden_features=config["hidden_features"]
+    )
+    
+    # Setup optimizer
+    optimizer = torch.optim.Adam(flow.parameters(), lr=config["learning_rate"])
+    
+    # Training loop (no validation)
+    loss_history = []
+    best_loss = float('inf')
+    
+    start_time = time.time()
+    
+    for epoch in range(config["epochs"]):
+        # Training phase
+        flow.train()
+        total_loss = 0.0
+        num_batches = 0
+        
+        for batch in train_loader:
+            x = batch[0]
+            
+            # Forward pass
+            loss = -flow(x).mean()
+            
+            # Check for NaN
+            if torch.isnan(loss):
+                print(f"[ERROR] NaN loss encountered at epoch {epoch+1} for {model_key}")
+                return None, [], residuals, None
+            
+            # Backward pass
+            optimizer.zero_grad()
+            loss.backward()
+            
+            # Gradient clipping for stability
+            torch.nn.utils.clip_grad_norm_(flow.parameters(), max_norm=1.0)
+            
+            optimizer.step()
+            
+            total_loss += loss.item()
+            num_batches += 1
+        
+        avg_train_loss = total_loss / num_batches
+        loss_history.append(avg_train_loss)
+        
+        # Track best loss (for monitoring, not early stopping)
+        if avg_train_loss < best_loss:
+            best_loss = avg_train_loss
+        
+        # Progress reporting
+        if (epoch + 1) % PERFORMANCE_CONFIG["progress_frequency"] == 0 or epoch == 0:
+            elapsed_time = time.time() - start_time
+            print(
+                f"  [{model_key}] Epoch {epoch+1}/{config['epochs']}: "
+                f"Train Loss = {avg_train_loss:.4f}, "
+                f"Best Loss = {best_loss:.4f}, "
+                f"Time = {elapsed_time:.1f}s"
+            )
+        
+        # Memory management
+        if config["clear_cache"] and (epoch + 1) % 10 == 0:
+            clear_memory()
+    
+    # Save model and results
+    if config["save_models"]:
+        model_dir = Path(output_dir) / model_key
+        model_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save model state
+        torch.save(flow.state_dict(), model_dir / "nf_model.pth")
+        
+        # Save training history
+        history_df = pd.DataFrame({
+            'epoch': range(1, len(loss_history) + 1),
+            'train_loss': loss_history
+        })
+        history_df.to_csv(model_dir / "training_history.csv", index=False)
+    
+    # Generate samples
+    flow.eval()
+    with torch.no_grad():
+        samples = flow.sample(len(residuals)).numpy()
+    
+    # Calculate evaluation metrics
+    ks_stat, ks_pvalue = ks_2samp(residuals.flatten(), samples.flatten())
+    wass_dist = wasserstein_distance(residuals.flatten(), samples.flatten())
+    
+    print(f"  [OK] {model_key} training completed:")
+    print(f"     Final train loss: {loss_history[-1]:.4f}")
+    print(f"     Best train loss: {best_loss:.4f}")
+    print(f"     KS statistic: {ks_stat:.4f} (p-value: {ks_pvalue:.4f})")
+    print(f"     Wasserstein distance: {wass_dist:.4f}")
+    
+    return flow, loss_history, residuals, samples
+
+# =============================================================================
+# MAIN TRAINING PIPELINE
+# =============================================================================
+
+def main():
+    """Main training pipeline for chronological split"""
+    
+    # Set reproducibility
+    set_seed(123)
+    
+    # Print configuration summary
+    print_chrono_nf_summary()
+    
+    # Create output directory
+    output_dir = Path(CHRONO_NF_CONFIG["output_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Discover residual files from chronological GARCH fitting
+    residuals_dir = "outputs/chronological/residuals_by_model"
+    
+    if not os.path.exists(residuals_dir):
+        print(f"[ERROR] Residuals directory not found: {residuals_dir}")
+        print("Please run fit_garch_chronological.R first to generate residuals")
+        return
+    
+    residual_files = glob(os.path.join(residuals_dir, "*", "*_Chronological_residuals.csv"))
+    
+    if not residual_files:
+        print("[ERROR] No residual files found in", residuals_dir)
+        print("Please run fit_garch_chronological.R first to generate residuals")
+        return
+    
+    print(f"\nFound {len(residual_files)} residual files")
+    
+    # Training results storage
+    training_results = {}
+    all_samples = {}
+    
+    # Train NF on each model's residuals
+    start_time = time.time()
+    
+    for file_path in residual_files:
+        # Extract model and asset info from file path
+        path_parts = file_path.split(os.sep)
+        model_name = path_parts[-2]  # residuals_by_model/model_name/asset.csv
+        asset_name = path_parts[-1].replace("_Chronological_residuals.csv", "")
+        model_key = f"{model_name}_{asset_name}"
+        
+        try:
+            # Train NF (no validation)
+            flow, loss_history, residuals, samples = train_chronological_nf(
+                file_path, model_key, str(output_dir), CHRONO_NF_CONFIG
+            )
+            
+            if flow is not None:
+                training_results[model_key] = {
+                    'flow': flow,
+                    'loss_history': loss_history,
+                    'residuals': residuals,
+                    'samples': samples
+                }
+                all_samples[model_key] = samples
+                
+                # Save samples
+                samples_df = pd.DataFrame({'synthetic_residuals': samples.flatten()})
+                samples_file = output_dir / f"{model_key}_synthetic_residuals.csv"
+                samples_df.to_csv(samples_file, index=False)
+            
+        except Exception as e:
+            print(f"[ERROR] Error training {model_key}: {str(e)}")
+            continue
+        
+        # Memory management
+        clear_memory()
+    
+    # Generate summary report
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    print(f"\n=== CHRONOLOGICAL NF TRAINING SUMMARY ===")
+    print(f"Total execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
+    print(f"Models trained successfully: {len(training_results)}")
+    print(f"Total residual files processed: {len(residual_files)}")
+    print(f"Success rate: {len(training_results)/len(residual_files)*100:.1f}%")
+    print(f"Validation split: {CHRONO_NF_CONFIG['validation_split']} (NO validation)")
+    print(f"Training data usage: 100% of residuals (from 65% chronological split)")
+    
+    # Save comprehensive results
+    results_summary = {
+        'execution_time': execution_time,
+        'models_trained': len(training_results),
+        'total_files': len(residual_files),
+        'success_rate': len(training_results)/len(residual_files),
+        'config': CHRONO_NF_CONFIG
+    }
+    
+    import json
+    with open(output_dir / "training_summary.json", 'w') as f:
+        json.dump(results_summary, f, indent=2)
+    
+    print(f"\n[OK] Chronological NF training completed.")
+    print(f"Results saved to: {output_dir}")
+    print(f"Generated {len(all_samples)} synthetic residual files")
+    print("==========================================")
+    
+    return training_results, all_samples
+
+# =============================================================================
+# EXECUTION
+# =============================================================================
+
+if __name__ == "__main__":
+    # Run main training pipeline
+    training_results, all_samples = main()

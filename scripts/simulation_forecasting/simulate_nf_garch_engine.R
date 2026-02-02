@@ -22,6 +22,7 @@ options(error = function() {
 
 # Load configuration and engine selection utilities
 tryCatch({
+  source("scripts/manual/manual_optimized_config.R")
   source("scripts/utils/cli_parser.R")
   source("scripts/engines/engine_selector.R")
   source("scripts/utils/safety_functions.R")
@@ -48,6 +49,51 @@ if (file.exists("scripts/core/config.R")) {
   set.seed(123)  # Fallback if config not available
   cat("Using fallback seed: 123\n")
 }
+
+# =============================================================================
+# LOAD SPLIT-SPECIFIC CONFIGURATION
+# =============================================================================
+
+# Get split mode from command line
+SPLIT_MODE <- get_split_mode()
+cat("\n=== SPLIT MODE: ", toupper(SPLIT_MODE), " ===\n")
+
+# Load split-specific configuration
+if (SPLIT_MODE == "chronological") {
+  if (file.exists("scripts/config/chrono_split_config.R")) {
+    source("scripts/config/chrono_split_config.R")
+    cat("Loaded chronological split configuration\n")
+  } else {
+    cat("WARNING: Chronological config not found, using defaults\n")
+    OUTPUT_BASE <- "outputs/chronological"
+    RESULTS_BASE <- "results/chronological"
+  }
+} else if (SPLIT_MODE == "tscv") {
+  if (file.exists("scripts/config/tscv_split_config.R")) {
+    source("scripts/config/tscv_split_config.R")
+    cat("Loaded TS CV configuration\n")
+  } else {
+    cat("WARNING: TS CV config not found, using defaults\n")
+    OUTPUT_BASE <- "outputs/tscv"
+    RESULTS_BASE <- "results/tscv"
+  }
+} else {
+  stop("Invalid split mode: ", SPLIT_MODE, ". Must be 'chronological' or 'tscv'")
+}
+
+# Override output paths based on split mode
+NF_RESIDUALS_DIR <- file.path(OUTPUT_BASE, "nf_models")
+RESULTS_OUTPUT_DIR <- file.path(RESULTS_BASE, "consolidated")
+
+# Create output directories if they don't exist
+if (!dir.exists(RESULTS_OUTPUT_DIR)) {
+  dir.create(RESULTS_OUTPUT_DIR, recursive = TRUE)
+  cat("Created results directory:", RESULTS_OUTPUT_DIR, "\n")
+}
+
+cat("NF residuals directory:", NF_RESIDUALS_DIR, "\n")
+cat("Results output directory:", RESULTS_OUTPUT_DIR, "\n")
+cat("===============================\n\n")
 
 # Initialize pipeline
 tryCatch({
@@ -85,8 +131,9 @@ date_index <- raw_price_data$Date
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 
 # Define asset tickers for equity and foreign exchange instruments
-equity_tickers <- c("NVDA", "MSFT", "AMZN")
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
+# Get from centralized config to ensure consistency across all scripts
+equity_tickers <- get_manual_equity_assets()
+fx_names <- get_manual_fx_assets()
 
 # Convert price series to XTS objects for time series analysis
 equity_xts <- lapply(equity_tickers, function(ticker) {

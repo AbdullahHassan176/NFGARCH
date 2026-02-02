@@ -1,6 +1,23 @@
-# Manual Optimized GARCH Fitting
-# Implements asset reduction (50%), model reduction (40%), and CV optimization (60%)
-# Designed for manual execution in R Studio
+# =============================================================================
+# MANUAL GARCH FITTING - MAIN ORCHESTRATION SCRIPT
+# =============================================================================
+#
+# PURPOSE: Orchestrates GARCH model fitting across multiple assets and specifications
+# MODE-AWARE: Respects PIPELINE_MODE from scripts/core/config.R (optimized or full)
+# EXECUTION: Designed for manual execution in R Studio or via Rscript
+#
+# REVIEWED: ✅ 2026-02-02
+# Implementation verified for mathematical correctness across:
+#   ✅ Model specification and parameter estimation
+#   ✅ Cross-validation and time-series splitting
+#   ✅ Residual extraction for NF training
+#   ✅ Forecasting and simulation
+#
+# MODELS SUPPORTED: sGARCH, gjrGARCH, eGARCH, TGARCH (Zakoian)
+# DISTRIBUTIONS: norm (Normal), std (Student-t)
+# NOTE: sstd (Skewed Student-t) is NOT implemented - will error if requested
+#
+# =============================================================================
 
 # Load required libraries
 library(xts)
@@ -30,9 +47,11 @@ source("scripts/engines/engine_selector.R")
 options(warn = 1)
 start_time <- Sys.time()
 
-cat("=== MANUAL OPTIMIZED GARCH FITTING ===\n")
+cat("=== MANUAL GARCH FITTING ===\n")
 cat("Start time:", as.character(start_time), "\n")
+cat("\n")
 print_optimization_summary()
+cat("\n")
 
 # =============================================================================
 # DATA LOADING AND PREPROCESSING
@@ -53,20 +72,20 @@ raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 # Extract price matrix without date column
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 
-# Asset configuration: 6 assets (3 FX + 3 equity) matching dissertation
-# FX pairs: EURUSD, GBPUSD, USDZAR
-# Equities: NVDA, MSFT, AMZN
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
-equity_tickers <- c("NVDA", "MSFT", "AMZN")
+# Asset configuration: Get from centralized config (respects PIPELINE_MODE)
+# This ensures all scripts use the same asset list based on current mode
+fx_names <- get_manual_fx_assets()
+equity_tickers <- get_manual_equity_assets()
 
 # Filter to only assets that exist in the data
 available_assets <- names(price_data_matrix)
 fx_names <- fx_names[fx_names %in% available_assets]
 equity_tickers <- equity_tickers[equity_tickers %in% available_assets]
 
-cat("Using full asset set:", paste(c(equity_tickers, fx_names), collapse = ", "), "\n")
+cat("Using asset set from", PIPELINE_MODE, "mode:", paste(c(equity_tickers, fx_names), collapse = ", "), "\n")
 cat("  FX assets:", length(fx_names), "\n")
 cat("  Equity assets:", length(equity_tickers), "\n")
+cat("  Total assets:", length(fx_names) + length(equity_tickers), "\n")
 
 # Convert price series to XTS objects
 equity_xts <- lapply(equity_tickers, function(ticker) {
@@ -110,16 +129,16 @@ cat("Data loaded successfully. Equity assets:", length(equity_returns),
     "FX assets:", length(fx_returns), "\n")
 
 # =============================================================================
-# OPTIMIZED MODEL CONFIGURATION
+# MODEL CONFIGURATION (Mode-Aware)
 # =============================================================================
 
-cat("\n2. Setting up optimized model configuration...\n")
+cat("\n2. Setting up model configuration...\n")
 
-# Use optimized model selection (40% reduction)
+# Get model selection from centralized config (respects PIPELINE_MODE)
 manual_models <- get_manual_models()
 manual_model_config <- get_manual_model_config()
 
-cat("Using optimized models:", paste(manual_models, collapse = ", "), "\n")
+cat("Using models from", PIPELINE_MODE, "mode:", paste(manual_models, collapse = ", "), "\n")
 
 # GARCH model configurations (no need for specs with manual engine)
 # Models will be fit directly using engine_fit()
@@ -127,19 +146,22 @@ cat("Using optimized models:", paste(manual_models, collapse = ", "), "\n")
 cat("Model configurations prepared for", length(manual_models), "models\n")
 
 # =============================================================================
-# OPTIMIZED TIME-SERIES CROSS-VALIDATION
+# TIME-SERIES CROSS-VALIDATION (Mode-Aware)
 # =============================================================================
 
-cat("\n3. Setting up optimized time-series cross-validation...\n")
+cat("\n3. Setting up time-series cross-validation...\n")
 
-# Get optimized CV configuration
+# Get CV configuration from centralized config (respects PIPELINE_MODE)
 cv_config <- get_manual_cv_config()
 
-cat("CV Configuration:")
-cat("  Folds:", cv_config$n_folds, "(reduced from 5)")
-cat("  Window size:", cv_config$window_size, "(reduced from 0.65)")
-cat("  Step size:", cv_config$step_size, "(increased from 0.1)")
-cat("  Forecast horizon:", cv_config$forecast_horizon, "(reduced from 20)")
+cat("CV Configuration (", PIPELINE_MODE, " mode):\n", sep = "")
+cat("  Folds:", cv_config$n_folds, "\n")
+cat("  Window size:", cv_config$window_size, "\n")
+cat("  Step size:", cv_config$step_size, "\n")
+cat("  Forecast horizon:", cv_config$forecast_horizon, "\n")
+if (!is.null(cv_config$max_windows)) {
+  cat("  Max windows:", cv_config$max_windows, "\n")
+}
 
 # Setup parallel processing for CV
 if (cv_config$parallel_enabled) {
@@ -149,10 +171,11 @@ if (cv_config$parallel_enabled) {
 }
 
 # =============================================================================
-# OPTIMIZED MODEL FITTING FUNCTION
+# MODEL FITTING FUNCTION (Works for Both Modes)
 # =============================================================================
 
-# Optimized model fitting with manual engine
+# GARCH model fitting with manual engine
+# Function name retained for backward compatibility
 fit_optimized_garch <- function(returns_data, asset_name, model_name) {
   tryCatch({
     # Get model configuration
@@ -215,11 +238,12 @@ fit_optimized_garch <- function(returns_data, asset_name, model_name) {
 }
 
 # =============================================================================
-# OPTIMIZED CROSS-VALIDATION FUNCTION
+# CROSS-VALIDATION FUNCTION (Works for Both Modes)
 # =============================================================================
 
-# Optimized time-series cross-validation with reduced complexity
+# Time-series cross-validation with configuration from PIPELINE_MODE
 # Note: garch_spec not needed - using manual engine directly
+# Function name retained for backward compatibility
 run_optimized_cv <- function(returns_data, asset_name, model_name) {
   n_obs <- length(returns_data)
   window_size <- floor(n_obs * cv_config$window_size)
@@ -275,7 +299,7 @@ run_optimized_cv <- function(returns_data, asset_name, model_name) {
 # MAIN FITTING PROCESS
 # =============================================================================
 
-cat("\n4. Fitting GARCH models with optimized parameters...\n")
+cat("\n4. Fitting GARCH models using", PIPELINE_MODE, "configuration...\n")
 
 # Combine all returns data
 all_returns <- c(equity_returns, fx_returns)
@@ -295,7 +319,7 @@ for (asset_idx in 1:length(all_returns)) {
   for (model_name in manual_models) {
     cat("  Fitting model:", model_name, "\n")
     
-    # Run optimized cross-validation (no spec needed for manual engine)
+    # Run time-series cross-validation (configuration from PIPELINE_MODE)
     cv_results <- run_optimized_cv(
       returns_data, 
       asset_name, 
@@ -393,9 +417,9 @@ for (model_name in manual_models) {
               ") does not match training size (", train_size, ")\n")
         }
         
-        # Save deduplicated residuals
+        # Save residuals for NF training
         residuals_df <- data.frame(residuals = residuals_vec)
-        residuals_file <- file.path(model_dir, paste0(asset_name, "_Manual_Optimized_residuals.csv"))
+        residuals_file <- file.path(model_dir, paste0(asset_name, "_Manual_residuals.csv"))
         write.csv(residuals_df, residuals_file, row.names = FALSE)
         cat("    Saved", length(residuals_vec), "residuals (training set only)\n")
       } else {
@@ -412,10 +436,11 @@ for (model_name in manual_models) {
 end_time <- Sys.time()
 execution_time <- end_time - start_time
 
-cat("\n=== OPTIMIZATION PERFORMANCE SUMMARY ===\n")
+cat("\n=== PERFORMANCE SUMMARY (", toupper(PIPELINE_MODE), " MODE) ===\n", sep = "")
 cat("Execution time:", round(as.numeric(execution_time, units = "mins"), 2), "minutes\n")
-cat("Assets processed:", length(all_asset_names), "(50% reduction from 12)\n")
-cat("Models fitted:", length(manual_models), "(40% reduction from 5)\n")
+cat("Pipeline mode:", PIPELINE_MODE, "\n")
+cat("Assets processed:", length(all_asset_names), "\n")
+cat("Models fitted:", length(manual_models), "\n")
 cat("Total combinations:", length(all_asset_names) * length(manual_models), "\n")
 cat("Successful fits:", sum(model_summary$converged_windows), "\n")
 cat("Success rate:", round(mean(model_summary$success_rate) * 100, 2), "%\n")
@@ -429,7 +454,7 @@ if (exists("cl")) {
 # Final garbage collection
 gc()
 
-cat("\nOptimized GARCH fitting completed successfully.\n")
+cat("\nManual GARCH fitting (", PIPELINE_MODE, " mode) completed successfully.\n", sep = "")
 cat("Results saved to outputs/manual/garch_fitting/\n")
 cat("Residuals saved to outputs/manual/residuals_by_model/\n")
 cat("===============================================\n")

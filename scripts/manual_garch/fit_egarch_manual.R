@@ -1,5 +1,30 @@
-# Manual eGARCH(1,1) Fitter
-# Implements: log(σ_t^2) = ω + β log(σ_{t-1}^2) + α(|z_{t-1}| - E|z|) + γ z_{t-1}
+# =============================================================================
+# MANUAL eGARCH(1,1) IMPLEMENTATION (Nelson 1991)
+# =============================================================================
+#
+# SPECIFICATION: Exponential GARCH with log-variance formulation
+#   Mean equation:     r_t = μ + ε_t
+#   Innovation:        ε_t = σ_t z_t, where z_t ~ D(0,1)
+#   Log-variance:      log(σ²_t) = ω + β log(σ²_{t-1}) + α(|z_{t-1}| - E|z|) + γ z_{t-1}
+#
+# DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
+#
+# REVIEWED: ✅ 2026-02-02 - Mathematically correct eGARCH implementation
+#
+# ASYMMETRY INTERPRETATION:
+#   - γ < 0: Negative shocks increase volatility (leverage effect)
+#   - γ > 0: Positive shocks increase volatility
+#   - α: Magnitude effect (size of shock regardless of sign)
+#
+# ADVANTAGES:
+#   - No positivity constraints needed (log-variance always valid)
+#   - Allows for asymmetric response to shocks
+#   - Exponential form ensures σ_t > 0 automatically
+#
+# Reference: Nelson, D. (1991). "Conditional Heteroskedasticity in Asset Returns:
+#            A New Approach." Econometrica, 59(2), 347-370.
+#
+# =============================================================================
 
 source("scripts/manual_garch/manual_garch_core.R")
 

@@ -21,6 +21,9 @@ if (!require(transport)) {
   library(transport)
 }
 
+# Load manual config for asset lists
+source("scripts/manual/manual_optimized_config.R")
+
 cat("=== CALCULATING DISTRIBUTIONAL METRICS ===\n\n")
 
 # =============================================================================
@@ -192,7 +195,8 @@ distributional_results <- list()
 
 # Process each model and asset combination
 models <- c("sGARCH", "eGARCH", "TGARCH", "gjrGARCH")
-assets <- c("EURUSD", "GBPUSD", "USDZAR", "NVDA", "MSFT", "AMZN")
+# Get assets from centralized config
+assets <- get_manual_assets()
 
 for (model_name in models) {
   for (asset_name in assets) {

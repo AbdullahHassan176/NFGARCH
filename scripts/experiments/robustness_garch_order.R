@@ -19,7 +19,8 @@ library(dplyr)
 library(openxlsx)
 library(stringr)
 
-# Load utility functions
+# Load utility functions and configuration
+source("scripts/manual/manual_optimized_config.R")
 source("scripts/utils/safety_functions.R")
 source("scripts/utils/standardize_residuals.R")
 source("scripts/utils/utils_nf_garch.R")  # For manual NF-GARCH simulator fallback
@@ -66,9 +67,9 @@ raw_price_data <- raw_price_data %>% dplyr::select(Date, everything())
 date_index <- raw_price_data$Date
 price_data_matrix <- raw_price_data[, !(names(raw_price_data) %in% "Date")]
 
-# Define assets (use subset for quick test, can be expanded)
-fx_names <- c("EURUSD", "GBPUSD", "USDZAR")
-equity_tickers <- c("NVDA", "MSFT", "AMZN")
+# Define assets from centralized config
+fx_names <- get_manual_fx_assets()
+equity_tickers <- get_manual_equity_assets()
 
 # Convert to XTS and calculate returns
 equity_xts <- lapply(equity_tickers, function(ticker) {

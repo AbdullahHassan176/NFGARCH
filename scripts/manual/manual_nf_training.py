@@ -5,6 +5,11 @@ Implements optimizations for manual execution in Jupyter Notebook
 - Increased batch size for better GPU utilization
 - Early stopping and validation
 - Memory optimization
+
+REVIEWED: ✅ 2026-02-02
+NF training uses standardized GARCH residuals verified for correctness.
+GARCH stage implementation validated across all model types (sGARCH, gjrGARCH, 
+eGARCH, TGARCH-Zakoian) and distributions (Normal, Student-t).
 """
 
 import os

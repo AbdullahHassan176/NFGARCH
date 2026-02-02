@@ -1,5 +1,6 @@
 # CLI Argument Parser for Engine Selection
 # Manual engine only - simplified parser
+# Supports split mode parameter for chronological vs TS CV pipelines
 
 parse_cli_args <- function() {
   # Parse command line arguments
@@ -8,7 +9,8 @@ parse_cli_args <- function() {
   # Default values - always use manual engine
   config <- list(
     engine = "manual",
-    config_file = NULL
+    config_file = NULL,
+    split = "chronological"  # Default to chronological split
   )
   
   # Parse arguments
@@ -34,15 +36,30 @@ parse_cli_args <- function() {
       } else {
         stop("--config requires a file path")
       }
+    } else if (args[i] == "--split") {
+      if (i + 1 <= length(args)) {
+        split_mode <- args[i + 1]
+        if (split_mode %in% c("chronological", "tscv")) {
+          config$split <- split_mode
+        } else {
+          warning("Invalid split mode: ", split_mode, ". Using 'chronological'.")
+          config$split <- "chronological"
+        }
+        i <- i + 2
+      } else {
+        stop("--split requires a value (chronological or tscv)")
+      }
     } else if (args[i] == "--help" || args[i] == "-h") {
       cat("Usage: Rscript script.R [options]\n")
       cat("Options:\n")
       cat("  --engine ENGINE     GARCH engine to use (manual only) [default: manual]\n")
+      cat("  --split SPLIT       Data split mode: chronological or tscv [default: chronological]\n")
       cat("  --config FILE       Configuration file path\n")
       cat("  --help, -h          Show this help message\n")
       cat("\n")
       cat("Examples:\n")
-      cat("  Rscript simulate_nf_garch.R --engine manual\n")
+      cat("  Rscript simulate_nf_garch.R --engine manual --split chronological\n")
+      cat("  Rscript simulate_nf_garch.R --engine manual --split tscv\n")
       cat("  Rscript simulate_nf_garch.R --config config.yaml\n")
       quit(status = 0)
     } else {
@@ -89,13 +106,20 @@ get_engine <- function() {
   return(config$engine)
 }
 
+# Function to get current split mode
+get_split_mode <- function() {
+  config <- parse_cli_args()
+  return(config$split)
+}
+
 # Function to print current configuration
 print_config <- function() {
   config <- parse_cli_args()
-  cat("=== Engine Configuration ===\n")
+  cat("=== Pipeline Configuration ===\n")
   cat("Engine:", config$engine, "\n")
+  cat("Split mode:", config$split, "\n")
   if (!is.null(config$config_file)) {
     cat("Config file:", config$config_file, "\n")
   }
-  cat("===========================\n\n")
+  cat("==============================\n\n")
 }
