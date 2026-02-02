@@ -236,6 +236,18 @@ def train_tscv_nf(file_path, model_key, window_id, output_dir, config):
     with torch.no_grad():
         samples = flow.sample(len(residuals)).numpy()
     
+    # CRITICAL: Force standardization of NF samples
+    # NF samples may not be exactly standardized after transformations
+    # Must ensure mean=0, SD=1 for proper use in simulation (σ_t * ε_t)
+    samples_mean = samples.mean()
+    samples_std = samples.std()
+    if abs(samples_mean) > 0.01 or abs(samples_std - 1) > 0.01:
+        print(f"  Standardizing NF samples: mean={samples_mean:.6f}, std={samples_std:.6f}")
+        samples = (samples - samples_mean) / samples_std
+        print(f"  After standardization: mean={samples.mean():.6f}, std={samples.std():.6f}")
+    else:
+        print(f"  NF samples already standardized: mean={samples_mean:.6f}, std={samples_std:.6f}")
+    
     # Calculate evaluation metrics
     ks_stat, ks_pvalue = ks_2samp(residuals.flatten(), samples.flatten())
     wass_dist = wasserstein_distance(residuals.flatten(), samples.flatten())
