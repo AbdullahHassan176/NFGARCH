@@ -1,0 +1,3 @@
+"Model","n_assets","std_mean_acf1","std_pct_white","std_pct_no_arch","nf_mean_acf1","nf_pct_white","nf_pct_no_arch","nf_worse_acf","nf_worse_white","nf_worse_arch"
+"sGARCH_norm",6,0.0119742012578678,83.3333333333333,33.3333333333333,0.0112863426033295,100,83.3333333333333,FALSE,FALSE,FALSE
+"sGARCH_sstd",6,0.00413906594407747,100,33.3333333333333,0.0104123402714727,100,100,TRUE,FALSE,FALSE
