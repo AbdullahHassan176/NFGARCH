@@ -264,10 +264,29 @@ for (asset_idx in 1:length(all_returns)) {
 
 cat("\n4. Extracting residuals from training set fits...\n")
 
-# Create residuals directory structure
-residuals_dir <- OUTPUT_PATHS$residuals
+# Create residuals directory structure - construct directly
+if (exists("OUTPUT_BASE") && !is.null(OUTPUT_BASE) && OUTPUT_BASE != "") {
+  residuals_dir <- paste0(OUTPUT_BASE, "/residuals_by_model")
+} else {
+  residuals_dir <- "outputs/chronological/residuals_by_model"
+}
+
+cat("Residuals directory:", residuals_dir, "\n")
+cat("Models to extract:", paste(manual_models, collapse=", "), "\n")
+
+# Create directory if it doesn't exist
+if (!dir.exists(residuals_dir)) {
+  dir.create(residuals_dir, recursive = TRUE)
+  cat("Created residuals directory\n")
+}
 
 for (model_name in manual_models) {
+  # Skip if model_name is empty or NULL
+  if (is.null(model_name) || is.na(model_name) || model_name == "") {
+    cat("Skipping empty model name\n")
+    next
+  }
+  
   model_dir <- file.path(residuals_dir, model_name)
   if (!dir.exists(model_dir)) {
     dir.create(model_dir, recursive = TRUE)
@@ -301,13 +320,25 @@ for (model_name in manual_models) {
 
 cat("\n5. Saving results...\n")
 
+# Construct paths directly
+if (exists("OUTPUT_BASE") && !is.null(OUTPUT_BASE) && OUTPUT_BASE != "") {
+  garch_fitting_dir <- paste0(OUTPUT_BASE, "/garch_fitting")
+} else {
+  garch_fitting_dir <- "outputs/chronological/garch_fitting"
+}
+
+# Create directory if needed
+if (!dir.exists(garch_fitting_dir)) {
+  dir.create(garch_fitting_dir, recursive = TRUE)
+}
+
 # Save model summary
-summary_file <- file.path(OUTPUT_PATHS$garch_fitting, "model_summary.csv")
+summary_file <- paste0(garch_fitting_dir, "/model_summary.csv")
 write.csv(model_summary, summary_file, row.names = FALSE)
 cat("Model summary saved to:", summary_file, "\n")
 
 # Save detailed results
-detailed_file <- file.path(OUTPUT_PATHS$garch_fitting, "detailed_results.rds")
+detailed_file <- paste0(garch_fitting_dir, "/detailed_results.rds")
 saveRDS(all_results, detailed_file)
 cat("Detailed results saved to:", detailed_file, "\n")
 

@@ -1,11 +1,11 @@
 === NF-GARCH SIMULATION ANALYSIS COMPLETE ===
 
-Date: 2026-02-01 22:55:41
+Date: 2026-02-04 10:41:47
 
 RESULTS SUMMARY:
   - Total Models Attempted: 30 (5 models × 6 assets)
-  - Successful Fits: 25
-  - Success Rate: 83.3%
+  - Successful Fits: 19
+  - Success Rate: 63.3%
   - Failed Models: 5 (all eGARCH - convergence issues)
 
 OUTPUT FILES:

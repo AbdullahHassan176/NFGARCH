@@ -21,6 +21,9 @@ if (!require(transport)) {
   library(transport)
 }
 
+# Load split-specific configuration (handles --split parameter)
+source("scripts/evaluation/evaluation_split_config.R")
+
 # Load manual config for asset lists
 source("scripts/manual/manual_optimized_config.R")
 
@@ -157,7 +160,7 @@ calculate_kurtosis <- function(data) {
 cat("Loading results...\n")
 
 # Load NF-GARCH results
-nf_results_file <- "results/consolidated/NF_GARCH_Results_manual.xlsx"
+nf_results_file <- file.path(RESULTS_BASE, "consolidated", paste0("NF_GARCH_Results_", EVAL_SPLIT_MODE, ".xlsx"))
 if (!file.exists(nf_results_file)) {
   cat("[WARNING] NF-GARCH results not found. Calculating metrics from available data.\n")
   nf_results <- NULL
@@ -173,7 +176,7 @@ if (!file.exists(nf_results_file)) {
 }
 
 # Load standard GARCH results (if available)
-standard_results_file <- "results/consolidated/NF_vs_Standard_GARCH_Comparison.xlsx"
+standard_results_file <- file.path(RESULTS_BASE, "consolidated", "NF_vs_Standard_GARCH_Comparison.xlsx")
 if (file.exists(standard_results_file)) {
   standard_results <- read.xlsx(standard_results_file, sheet = "Combined_Results")
   cat("[OK] Loaded standard GARCH results\n")
@@ -181,9 +184,9 @@ if (file.exists(standard_results_file)) {
   standard_results <- NULL
 }
 
-# Load residuals for distributional analysis
-residuals_dir <- "outputs/manual/residuals_by_model"
-nf_residuals_dir <- "outputs/manual/nf_models"
+# Load residuals for distributional analysis - use split-aware paths
+residuals_dir <- EVAL_PATHS$residuals
+nf_residuals_dir <- EVAL_PATHS$nf_models
 
 # =============================================================================
 # Calculate Distributional Metrics
@@ -347,7 +350,7 @@ print(summary_stats)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- "results/consolidated/Distributional_Metrics.xlsx"
+output_file <- file.path(RESULTS_BASE, "consolidated", "Distributional_Metrics.xlsx")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Distributional_Metrics")

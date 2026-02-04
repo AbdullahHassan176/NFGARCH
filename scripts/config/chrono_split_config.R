@@ -50,20 +50,20 @@ NF_TRAINING_CONFIG <- list(
 OUTPUT_BASE <- "outputs/chronological"
 RESULTS_BASE <- "results/chronological"
 
-# Specific output paths
+# Specific output paths - use paste instead of file.path for compatibility
 OUTPUT_PATHS <- list(
-  garch_fitting = file.path(OUTPUT_BASE, "garch_fitting"),
-  residuals = file.path(OUTPUT_BASE, "residuals_by_model"),
-  nf_models = file.path(OUTPUT_BASE, "nf_models"),
-  evaluation = file.path(OUTPUT_BASE, "evaluation")
+  garch_fitting = paste(OUTPUT_BASE, "garch_fitting", sep="/"),
+  residuals = paste(OUTPUT_BASE, "residuals_by_model", sep="/"),
+  nf_models = paste(OUTPUT_BASE, "nf_models", sep="/"),
+  evaluation = paste(OUTPUT_BASE, "evaluation", sep="/")
 )
 
-# Specific result paths
+# Specific result paths - use paste instead of file.path for compatibility
 RESULTS_PATHS <- list(
-  consolidated = file.path(RESULTS_BASE, "consolidated"),
-  tables = file.path(RESULTS_BASE, "dissertation_tables"),
-  figures = file.path(RESULTS_BASE, "figures"),
-  diagnostics = file.path(RESULTS_BASE, "diagnostics")
+  consolidated = paste(RESULTS_BASE, "consolidated", sep="/"),
+  tables = paste(RESULTS_BASE, "dissertation_tables", sep="/"),
+  figures = paste(RESULTS_BASE, "figures", sep="/"),
+  diagnostics = paste(RESULTS_BASE, "diagnostics", sep="/")
 )
 
 # =============================================================================

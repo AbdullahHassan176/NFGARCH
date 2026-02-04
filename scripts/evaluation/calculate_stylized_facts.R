@@ -16,6 +16,9 @@ library(tidyr)
 library(stringr)
 library(openxlsx)
 
+# Load split-specific configuration (handles --split parameter)
+source("scripts/evaluation/evaluation_split_config.R")
+
 # Load manual config for asset lists
 source("scripts/manual/manual_optimized_config.R")
 
@@ -278,7 +281,7 @@ print(summary_by_class)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- "results/consolidated/Stylized_Facts.xlsx"
+output_file <- file.path(RESULTS_BASE, "consolidated", "Stylized_Facts.xlsx")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Stylized_Facts")

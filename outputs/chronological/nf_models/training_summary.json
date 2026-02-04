@@ -1,0 +1,18 @@
+{
+  "execution_time": 110.57919573783875,
+  "models_trained": 20,
+  "total_files": 20,
+  "success_rate": 1.0,
+  "config": {
+    "epochs": 75,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "validation_split": 0.0,
+    "early_stopping": false,
+    "num_layers": 4,
+    "hidden_features": 64,
+    "clear_cache": true,
+    "save_models": true,
+    "output_dir": "outputs/chronological/nf_models"
+  }
+}

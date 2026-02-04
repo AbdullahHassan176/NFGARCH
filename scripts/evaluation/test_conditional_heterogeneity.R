@@ -11,6 +11,9 @@ if (file.exists("scripts/core/config.R")) {
   set.seed(123)  # Fallback if config not available
 }
 
+# Load split-specific configuration (handles --split parameter)
+source("scripts/evaluation/evaluation_split_config.R")
+
 # Load required libraries
 library(openxlsx)
 library(dplyr)
@@ -324,7 +327,7 @@ cat("=== CONDITIONAL HETEROGENEITY ANALYSIS ===\n")
 cat("Testing GARCH residuals for conditional heterogeneity\n\n")
 
 # Find all residual files
-residuals_dir <- "outputs/manual/residuals_by_model"
+residuals_dir <- EVAL_PATHS$residuals
 model_dirs <- list.dirs(residuals_dir, recursive = FALSE)
 
 all_results <- list()
@@ -399,11 +402,10 @@ if (length(all_results) > 0) {
   cat("\n=== SAVING RESULTS ===\n")
   
   # Create output directory
-  if (!dir.exists("results/consolidated")) {
-    dir.create("results/consolidated", recursive = TRUE, showWarnings = FALSE)
+  output_file <- file.path(RESULTS_BASE, "consolidated", "Methodology_Conditional_Heterogeneity.xlsx")
+  if (!dir.exists(dirname(output_file))) {
+    dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
   }
-  
-  output_file <- "results/consolidated/Methodology_Conditional_Heterogeneity.xlsx"
   wb <- createWorkbook()
   
   # Add main results sheet

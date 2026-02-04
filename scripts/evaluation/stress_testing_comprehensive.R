@@ -10,6 +10,9 @@ if (file.exists("scripts/core/config.R")) {
   set.seed(123)  # Fallback if config not available
 }
 
+# Load split-specific configuration (handles --split parameter)
+source("scripts/evaluation/evaluation_split_config.R")
+
 library(dplyr)
 library(tidyr)
 library(stringr)
@@ -206,7 +209,7 @@ source("scripts/utils/safety_functions.R")
 
 # Load NF residuals for NF-GARCH evaluation
 nf_residuals_map <- list()
-nf_files <- list.files("outputs/manual/nf_models", pattern = "*_synthetic_residuals.csv", full.names = TRUE)
+nf_files <- list.files(EVAL_PATHS$nf_models, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
 
 if (length(nf_files) > 0) {
   for (f in nf_files) {
@@ -262,11 +265,21 @@ stress_forecast_results <- list()
 for (asset_name in names(returns_data)) {
   cat("\nEvaluating forecast accuracy for:", asset_name, "\n")
   
+  # #region agent log
+  log_entry <- list(location="stress_testing_comprehensive.R:266",message="Start asset forecast eval",data=list(asset=asset_name),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1")
+  tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+  # #endregion
+  
   returns <- returns_data[[asset_name]]
   returns_vec <- as.numeric(returns)
   
   # Historical crisis evaluation
   for (crisis_name in names(crisis_periods)) {
+    # #region agent log
+    log_entry <- list(location="stress_testing_comprehensive.R:272",message="Start crisis eval",data=list(asset=asset_name,crisis=crisis_name),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H2")
+    tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+    # #endregion
+    
     crisis <- crisis_periods[[crisis_name]]
     
     # Extract pre-crisis (training) and crisis (testing) periods
@@ -286,6 +299,11 @@ for (asset_name in names(returns_data)) {
     for (model_name in names(model_configs)) {
       cfg <- model_configs[[model_name]]
       
+      # #region agent log
+      log_entry <- list(location="stress_testing_comprehensive.R:290",message="Before model fit",data=list(asset=asset_name,crisis=crisis_name,model=model_name,train_len=length(train_returns),test_len=length(test_returns)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H5")
+      tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+      # #endregion
+      
       tryCatch({
         # Fit model on pre-crisis data
         fit <- engine_fit(
@@ -295,6 +313,11 @@ for (asset_name in names(returns_data)) {
           submodel = cfg$submodel,
           engine = "manual"
         )
+        
+        # #region agent log
+        log_entry <- list(location="stress_testing_comprehensive.R:302",message="After model fit",data=list(asset=asset_name,crisis=crisis_name,model=model_name,converged=engine_converged(fit)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H5")
+        tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+        # #endregion
         
         if (!engine_converged(fit)) next
         
@@ -306,8 +329,18 @@ for (asset_name in names(returns_data)) {
           NULL
         }
         
+        # #region agent log
+        log_entry <- list(location="stress_testing_comprehensive.R:325",message="NF residuals loaded",data=list(asset=asset_name,crisis=crisis_name,model=model_name,nf_key=nf_key,has_nf=!is.null(nf_resid),nf_len=ifelse(!is.null(nf_resid),length(nf_resid),0)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H4")
+        tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+        # #endregion
+        
         # Generate forecasts using multiple paths
         if (!is.null(nf_resid) && length(nf_resid) >= length(test_returns)) {
+          # #region agent log
+          log_entry <- list(location="stress_testing_comprehensive.R:333",message="Before NF forecast eval CRISIS",data=list(asset=asset_name,crisis=crisis_name,model=model_name,nf_resid_len=length(nf_resid),test_len=length(test_returns)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1")
+          tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+          # #endregion
+          
           # NF-GARCH forecast evaluation
           nf_eval <- tryCatch({
             evaluate_return_forecasts(
@@ -318,9 +351,14 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 1000
+              n_paths = 100
             )
           }, error = function(e) NULL)
+          
+          # #region agent log
+          log_entry <- list(location="stress_testing_comprehensive.R:346",message="After NF forecast eval CRISIS",data=list(asset=asset_name,crisis=crisis_name,model=model_name,eval_success=!is.null(nf_eval)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1")
+          tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
+          # #endregion
           
           if (!is.null(nf_eval)) {
             nf_mse <- nf_eval$mse
@@ -349,7 +387,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 1000
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -459,7 +497,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 1000
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -490,7 +528,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 1000
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -571,7 +609,7 @@ print(summary_stats)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- "results/consolidated/Stress_Testing.xlsx"
+output_file <- file.path(RESULTS_BASE, "consolidated", "Stress_Testing.xlsx")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Stress_Test_Results")

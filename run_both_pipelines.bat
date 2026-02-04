@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 REM Run Both Comprehensive Validation Pipelines - Wrapper
 REM Executes chronological and TS CV pipelines sequentially
 REM Both pipelines now include FULL NF training, evaluation, and dissertation outputs
@@ -39,18 +40,16 @@ echo These are ALTERNATIVE validation approaches to the main pipeline.
 echo They provide robustness checks using different data splitting strategies.
 echo ==========================================
 echo.
-
-set /p confirm="Run BOTH pipelines? (Y/N): "
-if /i not "%confirm%"=="Y" (
-    echo Cancelled.
-    exit /b 0
-)
-
+echo Starting pipelines automatically...
 echo.
 echo Starting pipeline 1 of 2...
 echo.
+echo [TRACE] Current directory: %cd%
+echo [TRACE] About to call %~dp0run_chronological.bat
 
-call run_chronological.bat /Y
+call "%~dp0run_chronological.bat"
+
+echo [TRACE] Returned from run_chronological.bat with errorlevel=%errorlevel%
 
 if %errorlevel% neq 0 (
     echo.
@@ -62,8 +61,11 @@ if %errorlevel% neq 0 (
 echo.
 echo Starting pipeline 2 of 2...
 echo.
+echo [TRACE] About to call %~dp0run_tscv.bat
 
-call run_tscv.bat /Y
+call "%~dp0run_tscv.bat"
+
+echo [TRACE] Returned from run_tscv.bat with errorlevel=%errorlevel%
 
 if %errorlevel% neq 0 (
     echo.

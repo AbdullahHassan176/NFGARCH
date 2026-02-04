@@ -69,27 +69,27 @@ if not defined RSCRIPT (
 echo Using Rscript: %RSCRIPT%
 echo.
 
-REM Handle special flags
-if /i "%~1"=="/OverleafOnly" (
-  set OLEAF=1
-  echo ========================================
-  echo OVERLEAF EXPORT ONLY (TS-CV)
-  echo ========================================
-  echo Refreshing overleaf_export from existing TS-CV results...
-  echo.
-  goto :overleaf_export
-)
+echo [TRACE] Parameter check - param1=[%~1]
+REM Handle special flags - avoid nested blocks
+if "%~1"=="/OverleafOnly" goto :do_overleaf_only
+if "%~1"=="/overleafonly" goto :do_overleaf_only
 
-REM When called with /Y, skip confirmation
-if /i not "%~1"=="/Y" (
-  set /p confirm="Run full TS-CV pipeline? (Y/N): "
-  if /i not "!confirm!"=="Y" (
-    echo Cancelled.
-    pause
-    exit /b 0
-  )
-)
+echo [TRACE] Did NOT match /OverleafOnly - continuing to main pipeline
+echo Starting TS-CV pipeline...
 echo.
+goto :run_main_pipeline
+
+:do_overleaf_only
+echo [TRACE] Matched /OverleafOnly condition - jumping to overleaf_export
+set OLEAF=1
+echo ========================================
+echo OVERLEAF EXPORT ONLY (TS-CV)
+echo ========================================
+echo Refreshing overleaf_export from existing TS-CV results...
+echo.
+goto :overleaf_export
+
+:run_main_pipeline
 
 REM =============================================================================
 REM STEP 1: CLEAR PREVIOUS OUTPUTS
@@ -614,7 +614,9 @@ REM ============================================================================
 
 :LOG
 REM Log message to both console and file
-echo %~1 >> "%LOG_FILE%"
+if defined LOG_FILE (
+  echo %~1 >> "%LOG_FILE%" 2>nul
+)
 goto :EOF
 
 :START_STEP
@@ -634,10 +636,10 @@ goto :EOF
 :END_STEP
 REM End timing a step
 set STEP_END[%STEP_COUNT%]=%time%
-call :CALCULATE_DURATION !STEP_START[%STEP_COUNT%]! !STEP_END[%STEP_COUNT%]!
-set STEP_DURATION[%STEP_COUNT%]=!DURATION!
+REM Calculate duration (simplified to avoid operand errors)
+set "STEP_DURATION[%STEP_COUNT%]=completed"
 call :LOG "Step End Time: %time%"
-call :LOG "Step Duration: !DURATION!"
+call :LOG "Step completed"
 call :LOG ""
 goto :EOF
 
@@ -646,45 +648,67 @@ REM Calculate duration between two times
 set start_time=%~1
 set end_time=%~2
 
-REM Parse start time
+REM Parse start time - strip leading zeros to avoid octal interpretation
 for /f "tokens=1-4 delims=:.," %%a in ("%start_time%") do (
-    set /a start_h=%%a
-    set /a start_m=%%b
-    set /a start_s=%%c
-    set /a start_ms=%%d
+    set start_h=%%a
+    set start_m=%%b
+    set start_s=%%c
+    set start_ms=%%d
 )
 
-REM Parse end time
+REM Remove leading zeros
+set start_h=%start_h: =%
+set start_m=%start_m: =%
+set start_s=%start_s: =%
+if "%start_h:~0,1%"=="0" set start_h=%start_h:~1%
+if "%start_m:~0,1%"=="0" set start_m=%start_m:~1%
+if "%start_s:~0,1%"=="0" set start_s=%start_s:~1%
+if "%start_h%"=="" set start_h=0
+if "%start_m%"=="" set start_m=0
+if "%start_s%"=="" set start_s=0
+
+REM Parse end time - strip leading zeros
 for /f "tokens=1-4 delims=:.," %%a in ("%end_time%") do (
-    set /a end_h=%%a
-    set /a end_m=%%b
-    set /a end_s=%%c
-    set /a end_ms=%%d
+    set end_h=%%a
+    set end_m=%%b
+    set end_s=%%c
+    set end_ms=%%d
 )
+
+REM Remove leading zeros
+set end_h=%end_h: =%
+set end_m=%end_m: =%
+set end_s=%end_s: =%
+if "%end_h:~0,1%"=="0" set end_h=%end_h:~1%
+if "%end_m:~0,1%"=="0" set end_m=%end_m:~1%
+if "%end_s:~0,1%"=="0" set end_s=%end_s:~1%
+if "%end_h%"=="" set end_h=0
+if "%end_m%"=="" set end_m=0
+if "%end_s%"=="" set end_s=0
 
 REM Convert to total seconds
-set /a start_total=(start_h*3600)+(start_m*60)+start_s
-set /a end_total=(end_h*3600)+(end_m*60)+end_s
+set /a start_total=(%start_h%*3600)+(%start_m%*60)+%start_s%
+set /a end_total=(%end_h%*3600)+(%end_m%*60)+%end_s%
 
 REM Calculate difference
-set /a diff_seconds=end_total-start_total
+set /a diff_seconds=%end_total%-%start_total%
 
 REM Handle day rollover
-if !diff_seconds! lss 0 set /a diff_seconds+=86400
+if %diff_seconds% lss 0 set /a diff_seconds+=86400
 
 REM Convert back to hours, minutes, seconds
-set /a hours=diff_seconds/3600
-set /a remainder=diff_seconds%%3600
-set /a minutes=remainder/60
-set /a seconds=remainder%%60
+set /a hours=%diff_seconds%/3600
+set /a remainder=%diff_seconds%%%3600
+set /a minutes=%remainder%/60
+set /a seconds=%remainder%%%60
 
 REM Format duration
-if !hours! gtr 0 (
-    set DURATION=!hours!h !minutes!m !seconds!s
-) else if !minutes! gtr 0 (
-    set DURATION=!minutes!m !seconds!s
+if %hours% gtr 0 (
+    set DURATION=%hours%h %minutes%m %seconds%s
+) else if %minutes% gtr 0 (
+    set DURATION=%minutes%m %seconds%s
 ) else (
-    set DURATION=!seconds!s
+    set DURATION=%seconds%s
 )
 goto :EOF
 
@@ -692,16 +716,14 @@ goto :EOF
 REM Generate timing summary
 call :LOG ""
 call :LOG "=========================================="
-call :LOG "PIPELINE TIMING SUMMARY"
+call :LOG "PIPELINE SUMMARY"
 call :LOG "=========================================="
 echo.
 echo ========================================
-echo PIPELINE TIMING SUMMARY
+echo PIPELINE SUMMARY
 echo ========================================
-for /l %%i in (1,1,%STEP_COUNT%) do (
-    echo %%i. !STEP_NAME[%%i]!: !STEP_DURATION[%%i]!
-    call :LOG "%%i. !STEP_NAME[%%i]!: !STEP_DURATION[%%i]!"
-)
+echo Total steps completed: %STEP_COUNT%
+call :LOG "Total steps completed: %STEP_COUNT%"
 call :LOG "=========================================="
 call :LOG "Pipeline End Time: %date% %time%"
 call :LOG "Log file saved to: %LOG_FILE%"
