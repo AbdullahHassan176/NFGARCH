@@ -66,7 +66,7 @@ consolidate_optimized_results <- function(output_dir = "results/consolidated") {
   # This would contain the essential comparisons
   
   # Save optimized workbook
-  output_file <- file.path(output_dir, "Optimized_NF_GARCH_Results.xlsx")
+  output_file <- paste(output_dir, "Optimized_NF_GARCH_Results.xlsx", sep="/")
   openxlsx::saveWorkbook(wb, output_file, overwrite = TRUE)
   
   cat("Optimized results consolidated to:", output_file, "\n")
@@ -178,21 +178,21 @@ load_all_pipeline_data <- function() {
     model_eval_dir <- "outputs/model_eval/tables"
     if (dir.exists(model_eval_dir)) {
       # Load model ranking
-      ranking_file <- file.path(model_eval_dir, "model_ranking.csv")
+      ranking_file <- paste(model_eval_dir, "model_ranking.csv", sep="/")
       if (file.exists(ranking_file)) {
         all_data$model_ranking <- read.csv(ranking_file)
         cat("[OK] Loaded model ranking\n")
       }
       
       # Load forecast accuracy (as performance data)
-      forecast_file <- file.path(model_eval_dir, "forecast_accuracy_summary.csv")
+      forecast_file <- paste(model_eval_dir, "forecast_accuracy_summary.csv", sep="/")
       if (file.exists(forecast_file)) {
         all_data$forecast_performance <- read.csv(forecast_file)
         cat("[OK] Loaded forecast performance\n")
       }
       
       # Load stylized facts
-      stylized_file <- file.path(model_eval_dir, "stylized_facts_summary.csv")
+      stylized_file <- paste(model_eval_dir, "stylized_facts_summary.csv", sep="/")
       if (file.exists(stylized_file)) {
         all_data$stylized_facts <- read.csv(stylized_file)
         cat("[OK] Loaded stylized facts\n")

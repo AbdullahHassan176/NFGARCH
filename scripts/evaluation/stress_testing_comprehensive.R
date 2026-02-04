@@ -609,7 +609,7 @@ print(summary_stats)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- file.path(RESULTS_BASE, "consolidated", "Stress_Testing.xlsx")
+output_file <- paste(RESULTS_BASE, "consolidated", "Stress_Testing.xlsx", sep="/")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Stress_Test_Results")

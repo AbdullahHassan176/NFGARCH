@@ -402,7 +402,7 @@ if (length(all_results) > 0) {
   cat("\n=== SAVING RESULTS ===\n")
   
   # Create output directory
-  output_file <- file.path(RESULTS_BASE, "consolidated", "Methodology_Conditional_Heterogeneity.xlsx")
+  output_file <- paste(RESULTS_BASE, "consolidated", "Methodology_Conditional_Heterogeneity.xlsx", sep="/")
   if (!dir.exists(dirname(output_file))) {
     dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
   }

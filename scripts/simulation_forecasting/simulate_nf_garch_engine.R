@@ -3,6 +3,14 @@
 # This script implements Normalizing Flow-enhanced GARCH models for financial time series
 # Uses manual engine implementation
 
+# Check for required packages before loading
+required_packages <- c("xts", "zoo", "dplyr", "tidyr", "stringr", "lubridate", "openxlsx")
+missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+if (length(missing_packages) > 0) {
+  stop("ERROR: Missing required packages: ", paste(missing_packages, collapse = ", "), 
+       "\nPlease install them with: install.packages(c('", paste(missing_packages, collapse = "', '"), "'))")
+}
+
 # Load required libraries
 library(xts)
 library(zoo)
@@ -82,8 +90,8 @@ if (SPLIT_MODE == "chronological") {
 }
 
 # Override output paths based on split mode
-NF_RESIDUALS_DIR <- file.path(OUTPUT_BASE, "nf_models")
-RESULTS_OUTPUT_DIR <- file.path(RESULTS_BASE, "consolidated")
+NF_RESIDUALS_DIR <- paste(OUTPUT_BASE, "nf_models", sep="/")
+RESULTS_OUTPUT_DIR <- paste(RESULTS_BASE, "consolidated", sep="/")
 
 # Create output directories if they don't exist
 if (!dir.exists(RESULTS_OUTPUT_DIR)) {
@@ -288,7 +296,7 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
           model_type = model_type,
           submodel = submodel,
           engine = engine,
-                n_paths = 1000  # Number of simulation paths for point forecast
+                n_paths = 100  # Number of simulation paths for point forecast (reduced from 1000 for efficiency)
         )
         
         # Log if result is invalid
@@ -388,12 +396,17 @@ for (config_name in names(model_configs)) {
 cat("Loading NF residuals...\n")
 
 tryCatch({
-  # Check both manual output directory and default directory
-  nf_dirs <- c("outputs/manual/nf_models", "nf_generated_residuals")
+  # Check split-aware NF models directory and fallback directories
+  nf_dirs <- c(NF_RESIDUALS_DIR, "outputs/manual/nf_models", "nf_generated_residuals")
+  cat("Checking for NF residuals in:", paste(nf_dirs, collapse=", "), "\n")
   nf_files <- c()
   for (dir in nf_dirs) {
     if (dir.exists(dir)) {
-      nf_files <- c(nf_files, list.files(dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE))
+      found_files <- list.files(dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
+      if (length(found_files) > 0) {
+        cat("  Found", length(found_files), "files in:", dir, "\n")
+        nf_files <- c(nf_files, found_files)
+      }
     }
   }
   
@@ -567,7 +580,7 @@ fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, 
         model_type = model_config[["model"]],
         submodel = model_config[["submodel"]],
         engine = engine,
-        n_paths = 1000
+        n_paths = 100  # Reduced from 1000 for computational efficiency
       )
       cat("  evaluate_return_forecasts completed\n")
       
@@ -1008,11 +1021,12 @@ if (nrow(nf_results_df) > 0) {
   }
   
           # Save results with comprehensive comparison
-          # Create consolidated directory if it doesn't exist
-          if (!dir.exists("results/consolidated")) {
-            dir.create("results/consolidated", recursive = TRUE, showWarnings = FALSE)
+          # Create consolidated directory if it doesn't exist (using split-aware path)
+          if (!dir.exists(RESULTS_OUTPUT_DIR)) {
+            dir.create(RESULTS_OUTPUT_DIR, recursive = TRUE, showWarnings = FALSE)
           }
-          output_file <- paste0("results/consolidated/NF_GARCH_Results_", engine, ".xlsx")
+          # Use split mode for filename instead of engine
+          output_file <- paste(RESULTS_OUTPUT_DIR, paste0("NF_GARCH_Results_", SPLIT_MODE, ".xlsx"), sep="/")
   
   tryCatch({
     wb <- createWorkbook()

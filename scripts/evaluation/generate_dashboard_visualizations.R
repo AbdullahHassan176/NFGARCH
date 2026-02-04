@@ -60,7 +60,7 @@ if (file.exists(results_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "mse_by_model_chrono.png"), p1, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "mse_by_model_chrono.png", sep="/"), p1, width = 10, height = 6, dpi = 300)
     
     # Plot 2: AIC by Model
     if ("AIC" %in% names(chrono_results)) {
@@ -79,7 +79,7 @@ if (file.exists(results_file)) {
         theme_minimal() +
         theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
       
-      ggsave(file.path(plots_dir, "aic_by_model.png"), p2, width = 10, height = 6, dpi = 300)
+      ggsave(paste(plots_dir, "aic_by_model.png", sep="/"), p2, width = 10, height = 6, dpi = 300)
     }
   }
 }
@@ -112,7 +112,7 @@ if (file.exists(dist_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "ks_distance_by_model.png"), p3, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "ks_distance_by_model.png", sep="/"), p3, width = 10, height = 6, dpi = 300)
   }
   
   # Plot 4: Wasserstein Distance by Model
@@ -133,7 +133,7 @@ if (file.exists(dist_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "wasserstein_distance_by_model.png"), p4, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "wasserstein_distance_by_model.png", sep="/"), p4, width = 10, height = 6, dpi = 300)
   }
   
   # Plot 5: Tail Index by Model
@@ -153,7 +153,7 @@ if (file.exists(dist_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "tail_index_by_model.png"), p5, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "tail_index_by_model.png", sep="/"), p5, width = 10, height = 6, dpi = 300)
   }
 }
 
@@ -181,7 +181,7 @@ if (file.exists(stylized_file)) {
       theme_minimal() +
       theme(legend.position = "none")
     
-    ggsave(file.path(plots_dir, "volatility_clustering_by_class.png"), p6, width = 8, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "volatility_clustering_by_class.png", sep="/"), p6, width = 8, height = 6, dpi = 300)
   }
   
   # Plot 7: Leverage Effect by Asset Class
@@ -198,7 +198,7 @@ if (file.exists(stylized_file)) {
       theme_minimal() +
       theme(legend.position = "none")
     
-    ggsave(file.path(plots_dir, "leverage_effect_by_class.png"), p7, width = 8, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "leverage_effect_by_class.png", sep="/"), p7, width = 8, height = 6, dpi = 300)
   }
 }
 
@@ -232,7 +232,7 @@ if (file.exists(var_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "var_exceedance_rates.png"), p8, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "var_exceedance_rates.png", sep="/"), p8, width = 10, height = 6, dpi = 300)
   }
   
   # Plot 9: Kupiec Test P-values
@@ -248,7 +248,7 @@ if (file.exists(var_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "kupiec_pvalues.png"), p9, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "kupiec_pvalues.png", sep="/"), p9, width = 10, height = 6, dpi = 300)
   }
 }
 
@@ -275,7 +275,7 @@ if (file.exists(stress_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "historical_crisis_volatility.png"), p10, width = 8, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "historical_crisis_volatility.png", sep="/"), p10, width = 8, height = 6, dpi = 300)
   }
   
   # Plot 11: Hypothetical Shock Impact
@@ -290,7 +290,7 @@ if (file.exists(stress_file)) {
       theme_minimal() +
       theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
     
-    ggsave(file.path(plots_dir, "hypothetical_shock_impact.png"), p11, width = 10, height = 6, dpi = 300)
+    ggsave(paste(plots_dir, "hypothetical_shock_impact.png", sep="/"), p11, width = 10, height = 6, dpi = 300)
   }
 }
 
@@ -322,7 +322,7 @@ if (file.exists(comparison_file)) {
         theme_minimal() +
         theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
       
-      ggsave(file.path(plots_dir, "nf_vs_standard_mse.png"), p12, width = 10, height = 6, dpi = 300)
+      ggsave(paste(plots_dir, "nf_vs_standard_mse.png", sep="/"), p12, width = 10, height = 6, dpi = 300)
     }
     
     # Plot 13: Asset Class Comparison
@@ -341,7 +341,7 @@ if (file.exists(comparison_file)) {
           theme_minimal() +
           theme(legend.position = "bottom")
         
-        ggsave(file.path(plots_dir, "nf_vs_standard_by_class.png"), p13, width = 8, height = 6, dpi = 300)
+        ggsave(paste(plots_dir, "nf_vs_standard_by_class.png", sep="/"), p13, width = 8, height = 6, dpi = 300)
       }
     }, error = function(e) {
       cat("[WARNING] Asset class comparison sheet not available\n")

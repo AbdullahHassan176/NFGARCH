@@ -94,437 +94,362 @@ goto :overleaf_export
 REM =============================================================================
 REM STEP 1: CLEAR PREVIOUS OUTPUTS
 REM =============================================================================
-call :START_STEP "STEP 1: CLEARING TS-CV OUTPUTS"
-call :LOG "=========================================="
-call :LOG "COMPREHENSIVE TS-CV PIPELINE"
-call :LOG "=========================================="
-call :LOG "Pipeline Start Time: %date% %time%"
-call :LOG "Working Directory: %cd%"
-call :LOG ""
-call :LOG "Clearing previous outputs and recreating directory structure"
+echo ========================================
+echo STEP 1: CLEARING TS-CV OUTPUTS
+echo ========================================
+echo.
 
 if exist "outputs\tscv" (
-    call :LOG "  - Removing outputs\tscv\"
     echo Clearing outputs\tscv...
     rd /s /q "outputs\tscv" 2>nul
 )
 
 REM Recreate directory structure
-call :LOG "  - Creating outputs\tscv\ directory structure"
 if not exist "outputs\tscv" mkdir "outputs\tscv"
 if not exist "outputs\tscv\garch_fitting" mkdir "outputs\tscv\garch_fitting"
 if not exist "outputs\tscv\residuals_by_model" mkdir "outputs\tscv\residuals_by_model"
 if not exist "outputs\tscv\nf_models" mkdir "outputs\tscv\nf_models"
 if not exist "outputs\tscv\evaluation" mkdir "outputs\tscv\evaluation"
 
-call :LOG "  - Creating results\tscv\ directory structure"
 if not exist "results\tscv" mkdir "results\tscv"
 if not exist "results\tscv\dissertation_tables" mkdir "results\tscv\dissertation_tables"
 if not exist "results\tscv\figures" mkdir "results\tscv\figures"
 
 echo [OK] TS-CV outputs cleared and directories created
-call :LOG "[OK] Directories cleared and recreated"
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 2: GARCH FITTING (TS-CV)
 REM =============================================================================
-call :START_STEP "STEP 2: GARCH FITTING (TS-CV)"
-call :LOG "Running TS-CV GARCH fitting with rolling windows"
-call :LOG "Script: additional_analysis\scripts\tscv\fit_garch_tscv.R"
+echo ========================================
+echo STEP 2: GARCH FITTING (TS-CV)
+echo ========================================
 echo.
 echo Running TS-CV GARCH fitting with rolling windows...
 echo.
 
 "%RSCRIPT%" additional_analysis\scripts\tscv\fit_garch_tscv.R
 if %errorlevel% neq 0 (
-    call :LOG "[ERROR] TS-CV GARCH fitting failed with exit code %errorlevel%"
     echo [ERROR] TS-CV GARCH fitting failed
-    call :END_STEP
     pause
     exit /b 1
-) else (
-    call :LOG "[OK] TS-CV GARCH fitting completed successfully"
-    echo [OK] TS-CV GARCH fitting completed
 )
-call :END_STEP
+echo [OK] TS-CV GARCH fitting completed
 echo.
 
 REM =============================================================================
 REM STEP 3: NF TRAINING (ON TS-CV RESIDUALS)
 REM =============================================================================
-call :START_STEP "STEP 3: NF TRAINING (TS-CV)"
-call :LOG "Training NF models on TS-CV residuals"
-call :LOG "Script: additional_analysis\scripts\tscv\train_nf_tscv.py"
+echo ========================================
+echo STEP 3: NF TRAINING (TS-CV)
+echo ========================================
 echo.
 echo Training NF models on TS-CV residuals...
 echo.
 
 python additional_analysis\scripts\tscv\train_nf_tscv.py
 if %errorlevel% neq 0 (
-    call :LOG "[ERROR] NF training failed with exit code %errorlevel%"
     echo [ERROR] NF training failed
-    call :END_STEP
     pause
     exit /b 1
-) else (
-    call :LOG "[OK] NF training completed successfully"
-    echo [OK] NF training completed
 )
-call :END_STEP
+echo [OK] NF training completed
 echo.
 
 REM =============================================================================
 REM STEP 4: NF-GARCH SIMULATION
 REM =============================================================================
-call :START_STEP "STEP 4: NF-GARCH SIMULATION (TS-CV)"
-call :LOG "Running NF-GARCH simulation with TS-CV models"
-call :LOG "Script: scripts\simulation_forecasting\simulate_nf_garch_engine.R --split tscv"
+echo ========================================
+echo STEP 4: NF-GARCH SIMULATION (TS-CV)
+echo ========================================
 echo.
 echo Running NF-GARCH simulation with TS-CV models...
 echo.
 
 "%RSCRIPT%" scripts\simulation_forecasting\simulate_nf_garch_engine.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] NF-GARCH simulation had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] NF-GARCH simulation had issues, continuing...
 ) else (
-    call :LOG "[OK] NF-GARCH simulation completed successfully"
     echo [OK] NF-GARCH simulation completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 5: COMPARE NF-GARCH vs STANDARD GARCH
 REM =============================================================================
-call :START_STEP "STEP 5: NF-GARCH vs STANDARD COMPARISON"
-call :LOG "Comparing NF-GARCH vs Standard GARCH performance"
-call :LOG "Script: scripts\evaluation\compare_nf_vs_standard_garch.R --split tscv"
+echo ========================================
+echo STEP 5: NF-GARCH vs STANDARD COMPARISON
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\compare_nf_vs_standard_garch.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Comparison analysis had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Comparison analysis had issues, continuing...
 ) else (
-    call :LOG "[OK] Comparison analysis completed successfully"
     echo [OK] Comparison analysis completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 6: DISTRIBUTIONAL METRICS
 REM =============================================================================
-call :START_STEP "STEP 6: DISTRIBUTIONAL METRICS"
-call :LOG "Calculating distributional metrics (KS, Wasserstein, tail indices)"
-call :LOG "Script: scripts\evaluation\calculate_distributional_metrics.R --split tscv"
+echo ========================================
+echo STEP 6: DISTRIBUTIONAL METRICS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\calculate_distributional_metrics.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Distributional metrics had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Distributional metrics had issues, continuing...
 ) else (
-    call :LOG "[OK] Distributional metrics calculated successfully"
     echo [OK] Distributional metrics calculated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 7: STYLIZED FACTS
 REM =============================================================================
-call :START_STEP "STEP 7: STYLIZED FACTS"
-call :LOG "Calculating stylized facts (volatility clustering, leverage effects)"
-call :LOG "Script: scripts\evaluation\calculate_stylized_facts.R --split tscv"
+echo ========================================
+echo STEP 7: STYLIZED FACTS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\calculate_stylized_facts.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Stylized facts had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Stylized facts had issues, continuing...
 ) else (
-    call :LOG "[OK] Stylized facts calculated successfully"
     echo [OK] Stylized facts calculated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 8: VaR BACKTESTING
 REM =============================================================================
-call :START_STEP "STEP 8: VaR BACKTESTING"
-call :LOG "Running VaR backtesting (Kupiec, Christoffersen tests)"
-call :LOG "Script: scripts\evaluation\var_backtesting_comprehensive.R --split tscv"
+echo ========================================
+echo STEP 8: VaR BACKTESTING
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\var_backtesting_comprehensive.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] VaR backtesting had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] VaR backtesting had issues, continuing...
 ) else (
-    call :LOG "[OK] VaR backtesting completed successfully"
     echo [OK] VaR backtesting completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 9: STRESS TESTING
 REM =============================================================================
-call :START_STEP "STEP 9: STRESS TESTING"
-call :LOG "Running stress tests (historical crises, hypothetical shocks)"
-call :LOG "Script: scripts\evaluation\stress_testing_comprehensive.R --split tscv"
+echo ========================================
+echo STEP 9: STRESS TESTING
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\stress_testing_comprehensive.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Stress testing had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Stress testing had issues, continuing...
 ) else (
-    call :LOG "[OK] Stress testing completed successfully"
     echo [OK] Stress testing completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 10: RESIDUAL STATIONARITY TESTS
 REM =============================================================================
-call :START_STEP "STEP 10: RESIDUAL STATIONARITY TESTS"
-call :LOG "Testing GARCH residuals for stationarity (ADF, KPSS, Ljung-Box, ARCH)"
-call :LOG "Script: scripts\evaluation\test_residual_stationarity.R --split tscv"
+echo ========================================
+echo STEP 10: RESIDUAL STATIONARITY TESTS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\test_residual_stationarity.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Stationarity tests had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Stationarity tests had issues, continuing...
 ) else (
-    call :LOG "[OK] Stationarity tests completed successfully"
     echo [OK] Stationarity tests completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 11: CONDITIONAL HETEROGENEITY TESTS
 REM =============================================================================
-call :START_STEP "STEP 11: CONDITIONAL HETEROGENEITY TESTS"
-call :LOG "Testing for conditional heterogeneity in GARCH residuals"
-call :LOG "Script: scripts\evaluation\test_conditional_heterogeneity.R --split tscv"
+echo ========================================
+echo STEP 11: CONDITIONAL HETEROGENEITY TESTS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\test_conditional_heterogeneity.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Conditional heterogeneity tests had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Conditional heterogeneity tests had issues, continuing...
 ) else (
-    call :LOG "[OK] Conditional heterogeneity tests completed successfully"
     echo [OK] Conditional heterogeneity tests completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 12: VERIFY RESULTS
 REM =============================================================================
-call :START_STEP "STEP 12: VERIFYING RESULTS"
-call :LOG "Verifying all results for consistency and completeness"
-call :LOG "Script: scripts\evaluation\verify_all_results.R --split tscv"
+echo ========================================
+echo STEP 12: VERIFYING RESULTS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\verify_all_results.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Verification had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Verification had issues, continuing...
 ) else (
-    call :LOG "[OK] Results verification completed successfully"
     echo [OK] Results verification completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 13: CONSOLIDATE RESULTS
 REM =============================================================================
-call :START_STEP "STEP 13: CONSOLIDATING RESULTS"
-call :LOG "Consolidating all results into unified format"
-call :LOG "Command: consolidate_all_results('results/tscv', split='tscv')"
+echo ========================================
+echo STEP 13: CONSOLIDATING RESULTS
+echo ========================================
 echo.
 
 "%RSCRIPT%" -e "source('scripts/core/consolidation.R'); consolidate_all_results('results/tscv', split='tscv')"
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Consolidation had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Consolidation had issues, continuing...
 ) else (
-    call :LOG "[OK] Results consolidated successfully"
     echo [OK] Results consolidated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 14: HYPERPARAMETER SENSITIVITY SUMMARY
 REM =============================================================================
-call :START_STEP "STEP 14: HYPERPARAMETER SENSITIVITY SUMMARY"
-call :LOG "Creating hyperparameter selection methodology documentation"
-call :LOG "Script: scripts\evaluation\create_hyperparameter_summary.R --split tscv"
+echo ========================================
+echo STEP 14: HYPERPARAMETER SENSITIVITY SUMMARY
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\create_hyperparameter_summary.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Hyperparameter summary had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Hyperparameter summary had issues, continuing...
 ) else (
-    call :LOG "[OK] Hyperparameter summary created successfully"
     echo [OK] Hyperparameter summary created
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 15: METHODOLOGY CONSOLIDATED DOCUMENTATION
 REM =============================================================================
-call :START_STEP "STEP 15: METHODOLOGY CONSOLIDATED DOCUMENTATION"
-call :LOG "Consolidating methodology validation results"
-call :LOG "Script: scripts\evaluation\create_methodology_consolidated.R --split tscv"
+echo ========================================
+echo STEP 15: METHODOLOGY CONSOLIDATED DOCUMENTATION
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\create_methodology_consolidated.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Methodology consolidation had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Methodology consolidation had issues, continuing...
 ) else (
-    call :LOG "[OK] Methodology consolidated documentation created successfully"
     echo [OK] Methodology consolidated documentation created
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 16: FINAL DASHBOARD
 REM =============================================================================
-call :START_STEP "STEP 16: CREATING FINAL DASHBOARD"
-call :LOG "Creating comprehensive Excel dashboard with all metrics"
-call :LOG "Script: scripts\core\create_final_dashboard.R --split tscv"
+echo ========================================
+echo STEP 16: CREATING FINAL DASHBOARD
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\core\create_final_dashboard.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Dashboard creation had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Dashboard creation had issues, continuing...
 ) else (
-    call :LOG "[OK] Final Excel dashboard created successfully"
     echo [OK] Final Excel dashboard created
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 17: HTML DASHBOARD VISUALIZATIONS
 REM =============================================================================
-call :START_STEP "STEP 17: HTML DASHBOARD VISUALIZATIONS"
-call :LOG "Generating interactive HTML dashboard and visualization plots"
-call :LOG "Script: scripts\evaluation\generate_dashboard_visualizations.R --split tscv"
+echo ========================================
+echo STEP 17: HTML DASHBOARD VISUALIZATIONS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\generate_dashboard_visualizations.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] HTML dashboard had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] HTML dashboard had issues, continuing...
 ) else (
-    call :LOG "[OK] HTML dashboard visualizations generated successfully"
     echo [OK] HTML dashboard visualizations generated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 18: DISSERTATION TABLES
 REM =============================================================================
-call :START_STEP "STEP 18: DISSERTATION TABLES"
-call :LOG "Generating LaTeX tables for dissertation"
-call :LOG "Script: scripts\evaluation\extract_dissertation_tables.R --split tscv"
+echo ========================================
+echo STEP 18: DISSERTATION TABLES
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\extract_dissertation_tables.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Dissertation tables had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Dissertation tables had issues, continuing...
 ) else (
-    call :LOG "[OK] Dissertation tables generated successfully"
     echo [OK] Dissertation tables generated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 19: REPORT FIGURES
 REM =============================================================================
-call :START_STEP "STEP 19: REPORT FIGURES"
-call :LOG "Generating dissertation report figures (publication-ready PNGs)"
-call :LOG "Script: scripts\evaluation\generate_report_figures.R --split tscv"
+echo ========================================
+echo STEP 19: REPORT FIGURES
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\evaluation\generate_report_figures.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Report figures had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Report figures had issues, continuing...
 ) else (
-    call :LOG "[OK] Report figures generated successfully"
     echo [OK] Report figures generated
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 20: GARCH ORDER ROBUSTNESS
 REM =============================================================================
-call :START_STEP "STEP 20: GARCH ORDER ROBUSTNESS"
-call :LOG "Running GARCH order robustness analysis"
-call :LOG "Script: scripts\experiments\robustness_garch_order.R --split tscv"
+echo ========================================
+echo STEP 20: GARCH ORDER ROBUSTNESS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\experiments\robustness_garch_order.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] GARCH order robustness had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] GARCH order robustness had issues, continuing...
 ) else (
-    call :LOG "[OK] GARCH order robustness completed successfully"
     echo [OK] GARCH order robustness completed
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 21: COMPLETE ANALYSIS
 REM =============================================================================
-call :START_STEP "STEP 21: COMPLETE ANALYSIS"
-call :LOG "Running complete analysis summary"
-call :LOG "Script: scripts\complete_analysis.R --split tscv"
+echo ========================================
+echo STEP 21: COMPLETE ANALYSIS
+echo ========================================
 echo.
 
 "%RSCRIPT%" scripts\complete_analysis.R --split tscv
 if %errorlevel% neq 0 (
-    call :LOG "[WARNING] Complete analysis had issues with exit code %errorlevel%, continuing..."
     echo [WARNING] Complete analysis had issues, continuing...
 ) else (
-    call :LOG "[OK] Complete analysis finished successfully"
     echo [OK] Complete analysis finished
 )
-call :END_STEP
 echo.
 
 REM =============================================================================
 REM STEP 22: OVERLEAF EXPORT
 REM =============================================================================
 :overleaf_export
-call :START_STEP "STEP 22: OVERLEAF EXPORT (TS-CV)"
-call :LOG "Exporting tables and figures to Overleaf-ready format"
 echo ========================================
 echo STEP 22: OVERLEAF EXPORT (TS-CV)
 echo ========================================
@@ -563,8 +488,6 @@ REM Create import instructions
 
 echo   Created overleaf_export\tscv\README.txt
 echo.
-call :LOG "Overleaf export completed"
-call :END_STEP
 
 REM =============================================================================
 REM SUMMARY

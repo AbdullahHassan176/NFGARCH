@@ -101,7 +101,7 @@ if (fx_asset %in% names(raw_price_data) && equity_asset %in% names(raw_price_dat
   # Combine plots
   p1_combined <- grid.arrange(p1a, p1b, p1c, p1d, nrow = 2, ncol = 2)
   
-  ggsave(file.path(fig_dir, "Fig-R1_stylisedfacts_acf_pacf.png"), 
+  ggsave(paste(fig_dir, "Fig-R1_stylisedfacts_acf_pacf.png", sep="/"), 
          p1_combined, width = 14, height = 10, dpi = 300)
   
   cat("  [OK] Fig-R1 saved\n")
@@ -124,10 +124,10 @@ equity_resid_file <- NULL
 fx_resid_file <- NULL
 
 possible_paths <- c(
-  file.path("outputs", "manual", "residuals_by_model", model_example, paste0(equity_example, "_Manual_Optimized_residuals.csv")),
-  file.path("outputs", "manual", "residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv")),
-  file.path("residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv")),
-  file.path("data", "residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv"))
+  paste("outputs", "manual", "residuals_by_model", model_example, paste0(equity_example, "_Manual_Optimized_residuals.csv", sep="/")),
+  paste("outputs", "manual", "residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv", sep="/")),
+  paste("residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv", sep="/")),
+  paste("data", "residuals_by_model", model_example, paste0("equity_", equity_example, "_Chrono_Split_residuals.csv", sep="/"))
 )
 
 for (path in possible_paths) {
@@ -138,10 +138,10 @@ for (path in possible_paths) {
 }
 
 possible_paths_fx <- c(
-  file.path("outputs", "manual", "residuals_by_model", model_example, paste0(fx_example, "_Manual_Optimized_residuals.csv")),
-  file.path("outputs", "manual", "residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv")),
-  file.path("residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv")),
-  file.path("data", "residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv"))
+  paste("outputs", "manual", "residuals_by_model", model_example, paste0(fx_example, "_Manual_Optimized_residuals.csv", sep="/")),
+  paste("outputs", "manual", "residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv", sep="/")),
+  paste("residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv", sep="/")),
+  paste("data", "residuals_by_model", model_example, paste0("fx_", fx_example, "_Chrono_Split_residuals.csv", sep="/"))
 )
 
 for (path in possible_paths_fx) {
@@ -179,7 +179,7 @@ if (!is.null(equity_resid_file) && file.exists(equity_resid_file)) {
   
   # Combine equity plots
   p2 <- grid.arrange(p2a, p2b, nrow = 1, ncol = 2)
-  ggsave(file.path(fig_dir, "Fig-R2_hist_qq_equity.png"), 
+  ggsave(paste(fig_dir, "Fig-R2_hist_qq_equity.png", sep="/"), 
          p2, width = 12, height = 6, dpi = 300)
   cat("  [OK] Fig-R2 saved\n")
 }
@@ -212,7 +212,7 @@ if (!is.null(fx_resid_file) && file.exists(fx_resid_file)) {
   
   # Combine FX plots
   p3 <- grid.arrange(p3a, p3b, nrow = 1, ncol = 2)
-  ggsave(file.path(fig_dir, "Fig-R3_hist_qq_fx.png"), 
+  ggsave(paste(fig_dir, "Fig-R3_hist_qq_fx.png", sep="/"), 
          p3, width = 12, height = 6, dpi = 300)
   cat("  [OK] Fig-R3 saved\n")
 }
@@ -292,7 +292,7 @@ if (!is.null(equity_resid_file) && file.exists(equity_resid_file) && eq_key_nf %
   
   # Combine
   p4 <- grid.arrange(p4a, p4b, nrow = 1, ncol = 2)
-  ggsave(file.path(fig_dir, "Fig-R4_nf_vs_garch_resqq_equity.png"), 
+  ggsave(paste(fig_dir, "Fig-R4_nf_vs_garch_resqq_equity.png", sep="/"), 
          p4, width = 12, height = 6, dpi = 300)
   cat("  [OK] Fig-R4 saved\n")
 }
@@ -332,7 +332,7 @@ if (!is.null(fx_resid_file) && file.exists(fx_resid_file) && fx_key_nf %in% name
   
   # Combine
   p5 <- grid.arrange(p5a, p5b, nrow = 1, ncol = 2)
-  ggsave(file.path(fig_dir, "Fig-R5_nf_vs_garch_resqq_fx.png"), 
+  ggsave(paste(fig_dir, "Fig-R5_nf_vs_garch_resqq_fx.png", sep="/"), 
          p5, width = 12, height = 6, dpi = 300)
   cat("  [OK] Fig-R5 saved\n")
 }
@@ -460,7 +460,7 @@ if (file.exists(stress_file)) {
         p7 <- grid.arrange(p7a, p7b, nrow = 2, ncol = 1)
         
         # Save with explicit background
-        ggsave(file.path(fig_dir, "Fig-R7_stress_gfc_vs_covid.png"), 
+        ggsave(paste(fig_dir, "Fig-R7_stress_gfc_vs_covid.png", sep="/"), 
                p7, width = 14, height = 12, dpi = 300, bg = "white")
         cat("  [OK] Fig-R7 saved\n")
       }
@@ -495,7 +495,7 @@ if (file.exists(comparison_file)) {
         theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
         coord_flip()
       
-      ggsave(file.path(fig_dir, "Fig-R8_nf_winrate_bars.png"), 
+      ggsave(paste(fig_dir, "Fig-R8_nf_winrate_bars.png", sep="/"), 
              p8, width = 10, height = 6, dpi = 300)
       cat("  [OK] Fig-R8 saved\n")
     }

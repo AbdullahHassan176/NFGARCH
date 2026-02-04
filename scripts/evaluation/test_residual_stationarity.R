@@ -322,7 +322,7 @@ if (length(all_results) > 0) {
   cat("\n=== SAVING RESULTS ===\n")
   
   # Create output directory
-  output_file <- file.path(RESULTS_BASE, "consolidated", "Methodology_Residual_Stationarity.xlsx")
+  output_file <- paste(RESULTS_BASE, "consolidated", "Methodology_Residual_Stationarity.xlsx", sep="/")
   if (!dir.exists(dirname(output_file))) {
     dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
   }

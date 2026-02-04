@@ -160,7 +160,7 @@ calculate_kurtosis <- function(data) {
 cat("Loading results...\n")
 
 # Load NF-GARCH results
-nf_results_file <- file.path(RESULTS_BASE, "consolidated", paste0("NF_GARCH_Results_", EVAL_SPLIT_MODE, ".xlsx"))
+nf_results_file <- paste(RESULTS_BASE, "consolidated", paste0("NF_GARCH_Results_", EVAL_SPLIT_MODE, ".xlsx"), sep="/")
 if (!file.exists(nf_results_file)) {
   cat("[WARNING] NF-GARCH results not found. Calculating metrics from available data.\n")
   nf_results <- NULL
@@ -176,7 +176,7 @@ if (!file.exists(nf_results_file)) {
 }
 
 # Load standard GARCH results (if available)
-standard_results_file <- file.path(RESULTS_BASE, "consolidated", "NF_vs_Standard_GARCH_Comparison.xlsx")
+standard_results_file <- paste(RESULTS_BASE, "consolidated", "NF_vs_Standard_GARCH_Comparison.xlsx", sep="/")
 if (file.exists(standard_results_file)) {
   standard_results <- read.xlsx(standard_results_file, sheet = "Combined_Results")
   cat("[OK] Loaded standard GARCH results\n")
@@ -206,12 +206,12 @@ for (model_name in models) {
     cat("\nProcessing:", model_name, "-", asset_name, "\n")
     
     # Load standard residuals
-    standard_residual_file <- file.path(residuals_dir, model_name, 
-                                       paste0(asset_name, "_Manual_Optimized_residuals.csv"))
+    standard_residual_file <- paste(residuals_dir, model_name, 
+                                       paste0(asset_name, "_Manual_Optimized_residuals.csv"), sep="/")
     
     # Load NF residuals
-    nf_residual_file <- file.path(nf_residuals_dir, 
-                                  paste0(model_name, "_", asset_name, "_synthetic_residuals.csv"))
+    nf_residual_file <- paste(nf_residuals_dir, 
+                                  paste0(model_name, "_", asset_name, "_synthetic_residuals.csv"), sep="/")
     
     metrics <- data.frame(
       Model = model_name,
@@ -350,7 +350,7 @@ print(summary_stats)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- file.path(RESULTS_BASE, "consolidated", "Distributional_Metrics.xlsx")
+output_file <- paste(RESULTS_BASE, "consolidated", "Distributional_Metrics.xlsx", sep="/")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Distributional_Metrics")

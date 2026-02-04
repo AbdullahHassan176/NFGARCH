@@ -44,16 +44,16 @@ if (EVAL_SPLIT_MODE == "chronological") {
 # Define split-aware paths for evaluation
 EVAL_PATHS <- list(
   # Input paths (from simulation)
-  nf_garch_results = file.path(RESULTS_BASE, "consolidated", paste0("NF_GARCH_Results_", EVAL_SPLIT_MODE, ".xlsx")),
-  garch_fitting = file.path(OUTPUT_BASE, "garch_fitting"),
-  residuals = file.path(OUTPUT_BASE, "residuals_by_model"),
-  nf_models = file.path(OUTPUT_BASE, "nf_models"),
+  nf_garch_results = paste(RESULTS_BASE, "consolidated", paste0("NF_GARCH_Results_", EVAL_SPLIT_MODE, ".xlsx"), sep="/"),
+  garch_fitting = paste(OUTPUT_BASE, "garch_fitting", sep="/"),
+  residuals = paste(OUTPUT_BASE, "residuals_by_model", sep="/"),
+  nf_models = paste(OUTPUT_BASE, "nf_models", sep="/"),
   
   # Output paths
-  consolidated = file.path(RESULTS_BASE, "consolidated"),
-  tables = file.path(RESULTS_BASE, "dissertation_tables"),
-  figures = file.path(RESULTS_BASE, "figures"),
-  diagnostics = file.path(RESULTS_BASE, "diagnostics")
+  consolidated = paste(RESULTS_BASE, "consolidated", sep="/"),
+  tables = paste(RESULTS_BASE, "dissertation_tables", sep="/"),
+  figures = paste(RESULTS_BASE, "figures", sep="/"),
+  diagnostics = paste(RESULTS_BASE, "diagnostics", sep="/")
 )
 
 # Create output directories if they don't exist
@@ -67,9 +67,10 @@ for (path_name in names(EVAL_PATHS)) {
 # Helper function to get split-specific output filename
 get_eval_output_file <- function(base_name, extension = ".xlsx") {
   # Add split mode to filename
-  file.path(
+  paste(
     EVAL_PATHS$consolidated,
-    paste0(base_name, "_", EVAL_SPLIT_MODE, extension)
+    paste0(base_name, "_", EVAL_SPLIT_MODE, extension),
+    sep="/"
   )
 }
 

@@ -2,6 +2,15 @@
 # Rolling window TS CV for all assets and models
 # Designed to ensure consistent TS CV across the entire pipeline
 
+# Check for required packages before loading
+required_packages <- c("xts", "PerformanceAnalytics", "dplyr", "tidyr", "stringr", 
+                       "lubridate", "parallel", "doParallel")
+missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+if (length(missing_packages) > 0) {
+  stop("ERROR: Missing required packages: ", paste(missing_packages, collapse = ", "), 
+       "\nPlease install them with: install.packages(c('", paste(missing_packages, collapse = "', '"), "'))")
+}
+
 # Load required libraries
 library(xts)
 library(PerformanceAnalytics)
@@ -23,11 +32,33 @@ if (file.exists("scripts/core/config.R")) {
 # Load TS CV configuration
 source("scripts/config/tscv_split_config.R")
 
-# Load model configuration
+# Store TSCV-specific OUTPUT_PATHS before it gets overwritten
+TSCV_OUTPUT_PATHS <- OUTPUT_PATHS
+TSCV_RESULTS_PATHS <- RESULTS_PATHS
+TSCV_CONFIG_BACKUP <- list(
+  OUTPUT_BASE = OUTPUT_BASE,
+  RESULTS_BASE = RESULTS_BASE
+)
+
+# Load model configuration (WARNING: this sources config.R which overwrites OUTPUT_PATHS!)
 source("scripts/manual/manual_optimized_config.R")
 
 # Load manual engine
 source("scripts/engines/engine_selector.R")
+
+# RESTORE TS-CV OUTPUT_PATHS after manual_optimized_config overwrote them
+OUTPUT_PATHS <- TSCV_OUTPUT_PATHS
+RESULTS_PATHS <- TSCV_RESULTS_PATHS
+OUTPUT_BASE <- TSCV_CONFIG_BACKUP$OUTPUT_BASE
+RESULTS_BASE <- TSCV_CONFIG_BACKUP$RESULTS_BASE
+
+# Validate OUTPUT_PATHS is properly restored
+if (!exists("OUTPUT_PATHS") || is.null(OUTPUT_PATHS) || length(OUTPUT_PATHS) == 0) {
+  stop("ERROR: OUTPUT_PATHS not properly defined after sourcing tscv_split_config.R")
+}
+if (is.null(OUTPUT_PATHS$residuals) || OUTPUT_PATHS$residuals == "" || OUTPUT_PATHS$residuals == "/") {
+  stop("ERROR: OUTPUT_PATHS$residuals is empty or invalid: '", OUTPUT_PATHS$residuals, "'")
+}
 
 # Set up error handling and timing
 options(warn = 1)
@@ -229,7 +260,12 @@ for (asset_idx in 1:length(all_returns)) {
   
   # Initialize output directories for this asset (all windows)
   if (asset_idx == 1) {
+    cat("DEBUG: Before initialize_tscv_directories\n")
+    cat("DEBUG: OUTPUT_PATHS$garch_fitting =", OUTPUT_PATHS$garch_fitting, "\n")
+    cat("DEBUG: OUTPUT_PATHS$residuals =", OUTPUT_PATHS$residuals, "\n")
+    cat("DEBUG: Creating", length(windows), "window directories\n")
     initialize_tscv_directories(length(windows))
+    cat("DEBUG: After initialize_tscv_directories\n")
   }
   
   # Process each model
@@ -279,7 +315,7 @@ for (asset_idx in 1:length(all_returns)) {
       }
       
       # Memory management
-      if (TSCV_CONFIG$clear_memory && window_id %% 5 == 0) {
+      if (isTRUE(TSCV_CONFIG$clear_memory) && (window_id %% 5 == 0)) {
         gc()
       }
     }
@@ -302,7 +338,7 @@ for (window_id in unique_windows) {
   window_resid_dir <- get_window_path(OUTPUT_PATHS$residuals, window_id)
   
   for (model_name in manual_models) {
-    model_dir <- file.path(window_resid_dir, model_name)
+    model_dir <- paste(window_resid_dir, model_name, sep="/")
     if (!dir.exists(model_dir)) {
       dir.create(model_dir, recursive = TRUE)
     }
@@ -320,7 +356,7 @@ for (window_id in unique_windows) {
           
           # Save residuals from this window
           residuals_df <- data.frame(residuals = residuals_vec)
-          residuals_file <- file.path(model_dir, paste0(asset_name, "_TSCV_window", window_id, "_residuals.csv"))
+          residuals_file <- paste(model_dir, paste0(asset_name, "_TSCV_window", window_id, "_residuals.csv"), sep="/")
           write.csv(residuals_df, residuals_file, row.names = FALSE)
           
           cat("    Saved", length(residuals_vec), "residuals for", asset_name, "-", model_name, "\n")
@@ -337,7 +373,7 @@ for (window_id in unique_windows) {
 cat("\n5. Saving results...\n")
 
 # Save model summary
-summary_file <- file.path(OUTPUT_PATHS$garch_fitting, "model_summary.csv")
+summary_file <- paste(OUTPUT_PATHS$garch_fitting, "model_summary.csv", sep="/")
 write.csv(model_summary, summary_file, row.names = FALSE)
 cat("Model summary saved to:", summary_file, "\n")
 
@@ -348,12 +384,12 @@ for (window_id in unique_windows) {
   if (!dir.exists(window_garch_dir)) {
     dir.create(window_garch_dir, recursive = TRUE)
   }
-  window_summary_file <- file.path(window_garch_dir, "window_summary.csv")
+  window_summary_file <- paste(window_garch_dir, "window_summary.csv", sep="/")
   write.csv(window_summary, window_summary_file, row.names = FALSE)
 }
 
 # Save detailed results
-detailed_file <- file.path(OUTPUT_PATHS$garch_fitting, "detailed_results.rds")
+detailed_file <- paste(OUTPUT_PATHS$garch_fitting, "detailed_results.rds", sep="/")
 saveRDS(all_results, detailed_file)
 cat("Detailed results saved to:", detailed_file, "\n")
 

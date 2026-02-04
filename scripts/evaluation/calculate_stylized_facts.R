@@ -281,7 +281,7 @@ print(summary_by_class)
 
 cat("\n=== SAVING RESULTS ===\n")
 
-output_file <- file.path(RESULTS_BASE, "consolidated", "Stylized_Facts.xlsx")
+output_file <- paste(RESULTS_BASE, "consolidated", "Stylized_Facts.xlsx", sep="/")
 wb <- createWorkbook()
 
 addWorksheet(wb, "Stylized_Facts")

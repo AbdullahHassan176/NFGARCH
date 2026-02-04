@@ -78,21 +78,45 @@ NF_TRAINING_CONFIG <- list(
 OUTPUT_BASE <- "outputs/tscv"
 RESULTS_BASE <- "results/tscv"
 
+# Validate base paths are not empty
+if (is.null(OUTPUT_BASE) || OUTPUT_BASE == "" || !nchar(OUTPUT_BASE) > 0) {
+  stop("ERROR: OUTPUT_BASE is empty or undefined")
+}
+if (is.null(RESULTS_BASE) || RESULTS_BASE == "" || !nchar(RESULTS_BASE) > 0) {
+  stop("ERROR: RESULTS_BASE is empty or undefined")
+}
+
 # Specific output paths (window-based structure)
 OUTPUT_PATHS <- list(
-  garch_fitting = file.path(OUTPUT_BASE, "garch_fitting"),
-  residuals = file.path(OUTPUT_BASE, "residuals_by_model"),
-  nf_models = file.path(OUTPUT_BASE, "nf_models"),
-  evaluation = file.path(OUTPUT_BASE, "evaluation")
+  garch_fitting = paste(OUTPUT_BASE, "garch_fitting", sep="/"),
+  residuals = paste(OUTPUT_BASE, "residuals_by_model", sep="/"),
+  nf_models = paste(OUTPUT_BASE, "nf_models", sep="/"),
+  evaluation = paste(OUTPUT_BASE, "evaluation", sep="/")
 )
+
+# Validate OUTPUT_PATHS are not empty
+for (path_name in names(OUTPUT_PATHS)) {
+  path_value <- OUTPUT_PATHS[[path_name]]
+  if (is.null(path_value) || path_value == "" || path_value == "/" || !nchar(path_value) > 1) {
+    stop("ERROR: OUTPUT_PATHS$", path_name, " is empty or invalid: '", path_value, "'")
+  }
+}
 
 # Specific result paths
 RESULTS_PATHS <- list(
-  consolidated = file.path(RESULTS_BASE, "consolidated"),
-  tables = file.path(RESULTS_BASE, "dissertation_tables"),
-  figures = file.path(RESULTS_BASE, "figures"),
-  diagnostics = file.path(RESULTS_BASE, "diagnostics")
+  consolidated = paste(RESULTS_BASE, "consolidated", sep="/"),
+  tables = paste(RESULTS_BASE, "dissertation_tables", sep="/"),
+  figures = paste(RESULTS_BASE, "figures", sep="/"),
+  diagnostics = paste(RESULTS_BASE, "diagnostics", sep="/")
 )
+
+# Validate RESULTS_PATHS are not empty
+for (path_name in names(RESULTS_PATHS)) {
+  path_value <- RESULTS_PATHS[[path_name]]
+  if (is.null(path_value) || path_value == "" || path_value == "/" || !nchar(path_value) > 1) {
+    stop("ERROR: RESULTS_PATHS$", path_name, " is empty or invalid: '", path_value, "'")
+  }
+}
 
 # =============================================================================
 # TS CV HELPER FUNCTIONS
@@ -135,7 +159,7 @@ calculate_tscv_windows <- function(n_obs, config = TSCV_CONFIG) {
 
 # Get window directory path
 get_window_path <- function(base_path, window_id) {
-  file.path(base_path, paste0("window_", window_id))
+  paste(base_path, paste0("window_", window_id), sep="/")
 }
 
 # =============================================================================
@@ -144,8 +168,17 @@ get_window_path <- function(base_path, window_id) {
 
 # Initialize TS CV pipeline directories
 initialize_tscv_directories <- function(n_windows = NULL) {
+  # Validate OUTPUT_PATHS exists and is not empty
+  if (!exists("OUTPUT_PATHS", envir = parent.frame()) && !exists("OUTPUT_PATHS", envir = .GlobalEnv)) {
+    stop("ERROR: OUTPUT_PATHS is not defined")
+  }
+  
   # Create base output directories
-  for (path in OUTPUT_PATHS) {
+  for (path_name in names(OUTPUT_PATHS)) {
+    path <- OUTPUT_PATHS[[path_name]]
+    if (is.null(path) || path == "" || path == "/") {
+      stop("ERROR: OUTPUT_PATHS$", path_name, " is empty or invalid: '", path, "'")
+    }
     if (!dir.exists(path)) {
       dir.create(path, recursive = TRUE)
       cat("Created:", path, "\n")
@@ -153,7 +186,11 @@ initialize_tscv_directories <- function(n_windows = NULL) {
   }
   
   # Create base results directories
-  for (path in RESULTS_PATHS) {
+  for (path_name in names(RESULTS_PATHS)) {
+    path <- RESULTS_PATHS[[path_name]]
+    if (is.null(path) || path == "" || path == "/") {
+      stop("ERROR: RESULTS_PATHS$", path_name, " is empty or invalid: '", path, "'")
+    }
     if (!dir.exists(path)) {
       dir.create(path, recursive = TRUE)
       cat("Created:", path, "\n")
@@ -161,22 +198,31 @@ initialize_tscv_directories <- function(n_windows = NULL) {
   }
   
   # Create window-specific directories if n_windows specified
-  if (!is.null(n_windows)) {
+  if (!is.null(n_windows) && is.numeric(n_windows) && n_windows > 0) {
     for (i in 1:n_windows) {
       # GARCH fitting window directories
       window_garch_dir <- get_window_path(OUTPUT_PATHS$garch_fitting, i)
+      if (is.null(window_garch_dir) || window_garch_dir == "" || window_garch_dir == "/") {
+        stop("ERROR: window_garch_dir is empty for window ", i)
+      }
       if (!dir.exists(window_garch_dir)) {
         dir.create(window_garch_dir, recursive = TRUE)
       }
       
       # Residuals window directories
       window_resid_dir <- get_window_path(OUTPUT_PATHS$residuals, i)
+      if (is.null(window_resid_dir) || window_resid_dir == "" || window_resid_dir == "/") {
+        stop("ERROR: window_resid_dir is empty for window ", i)
+      }
       if (!dir.exists(window_resid_dir)) {
         dir.create(window_resid_dir, recursive = TRUE)
       }
       
       # NF models window directories
       window_nf_dir <- get_window_path(OUTPUT_PATHS$nf_models, i)
+      if (is.null(window_nf_dir) || window_nf_dir == "" || window_nf_dir == "/") {
+        stop("ERROR: window_nf_dir is empty for window ", i)
+      }
       if (!dir.exists(window_nf_dir)) {
         dir.create(window_nf_dir, recursive = TRUE)
       }

@@ -79,19 +79,25 @@ OUTPUT_BASE <- "outputs/tscv"
 RESULTS_BASE <- "results/tscv"
 
 # Specific output paths (window-based structure)
+# NOTE: Using paste() instead of file.path() to avoid empty path bug
 OUTPUT_PATHS <- list(
-  garch_fitting = file.path(OUTPUT_BASE, "garch_fitting"),
-  residuals = file.path(OUTPUT_BASE, "residuals_by_model"),
-  nf_models = file.path(OUTPUT_BASE, "nf_models"),
-  evaluation = file.path(OUTPUT_BASE, "evaluation")
+  garch_fitting = paste(OUTPUT_BASE, "garch_fitting", sep="/"),
+  residuals = paste(OUTPUT_BASE, "residuals_by_model", sep="/"),
+  nf_models = paste(OUTPUT_BASE, "nf_models", sep="/"),
+  evaluation = paste(OUTPUT_BASE, "evaluation", sep="/")
 )
+
+# DEBUG: Print OUTPUT_PATHS to verify
+cat("DEBUG: OUTPUT_BASE =", OUTPUT_BASE, "\n")
+cat("DEBUG: OUTPUT_PATHS$garch_fitting =", OUTPUT_PATHS$garch_fitting, "\n")
+cat("DEBUG: OUTPUT_PATHS$residuals =", OUTPUT_PATHS$residuals, "\n")
 
 # Specific result paths
 RESULTS_PATHS <- list(
-  consolidated = file.path(RESULTS_BASE, "consolidated"),
-  tables = file.path(RESULTS_BASE, "dissertation_tables"),
-  figures = file.path(RESULTS_BASE, "figures"),
-  diagnostics = file.path(RESULTS_BASE, "diagnostics")
+  consolidated = paste(RESULTS_BASE, "consolidated", sep="/"),
+  tables = paste(RESULTS_BASE, "dissertation_tables", sep="/"),
+  figures = paste(RESULTS_BASE, "figures", sep="/"),
+  diagnostics = paste(RESULTS_BASE, "diagnostics", sep="/")
 )
 
 # =============================================================================
@@ -135,7 +141,8 @@ calculate_tscv_windows <- function(n_obs, config = TSCV_CONFIG) {
 
 # Get window directory path
 get_window_path <- function(base_path, window_id) {
-  file.path(base_path, paste0("window_", window_id))
+  # Use paste instead of file.path to avoid empty path bug
+  paste(base_path, paste0("window_", window_id), sep="/")
 }
 
 # =============================================================================
@@ -144,8 +151,17 @@ get_window_path <- function(base_path, window_id) {
 
 # Initialize TS CV pipeline directories
 initialize_tscv_directories <- function(n_windows = NULL) {
+  # DEBUG: Check if OUTPUT_PATHS exists in function scope
+  cat("DEBUG [FUNC START]: exists('OUTPUT_PATHS') =", exists("OUTPUT_PATHS"), "\n")
+  cat("DEBUG [FUNC START]: OUTPUT_BASE =", get("OUTPUT_BASE", envir = parent.frame()), "\n")
+  cat("DEBUG [FUNC START]: length(OUTPUT_PATHS) =", length(get("OUTPUT_PATHS", envir = parent.frame())), "\n")
+  
+  # Get OUTPUT_PATHS from parent frame to ensure we have the right one
+  OUTPUT_PATHS_local <- get("OUTPUT_PATHS", envir = parent.frame())
+  RESULTS_PATHS_local <- get("RESULTS_PATHS", envir = parent.frame())
+  
   # Create base output directories
-  for (path in OUTPUT_PATHS) {
+  for (path in OUTPUT_PATHS_local) {
     if (!dir.exists(path)) {
       dir.create(path, recursive = TRUE)
       cat("Created:", path, "\n")
@@ -153,7 +169,7 @@ initialize_tscv_directories <- function(n_windows = NULL) {
   }
   
   # Create base results directories
-  for (path in RESULTS_PATHS) {
+  for (path in RESULTS_PATHS_local) {
     if (!dir.exists(path)) {
       dir.create(path, recursive = TRUE)
       cat("Created:", path, "\n")
@@ -162,21 +178,24 @@ initialize_tscv_directories <- function(n_windows = NULL) {
   
   # Create window-specific directories if n_windows specified
   if (!is.null(n_windows)) {
+    cat("DEBUG: Creating", n_windows, "window directories\n")
+    cat("DEBUG: OUTPUT_PATHS_local$garch_fitting =", OUTPUT_PATHS_local$garch_fitting, "\n")
     for (i in 1:n_windows) {
       # GARCH fitting window directories
-      window_garch_dir <- get_window_path(OUTPUT_PATHS$garch_fitting, i)
+      window_garch_dir <- get_window_path(OUTPUT_PATHS_local$garch_fitting, i)
+      cat("DEBUG: window_garch_dir for window", i, "=", window_garch_dir, "\n")
       if (!dir.exists(window_garch_dir)) {
         dir.create(window_garch_dir, recursive = TRUE)
       }
       
       # Residuals window directories
-      window_resid_dir <- get_window_path(OUTPUT_PATHS$residuals, i)
+      window_resid_dir <- get_window_path(OUTPUT_PATHS_local$residuals, i)
       if (!dir.exists(window_resid_dir)) {
         dir.create(window_resid_dir, recursive = TRUE)
       }
       
       # NF models window directories
-      window_nf_dir <- get_window_path(OUTPUT_PATHS$nf_models, i)
+      window_nf_dir <- get_window_path(OUTPUT_PATHS_local$nf_models, i)
       if (!dir.exists(window_nf_dir)) {
         dir.create(window_nf_dir, recursive = TRUE)
       }

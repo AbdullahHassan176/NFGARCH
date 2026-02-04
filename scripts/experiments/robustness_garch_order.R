@@ -576,12 +576,12 @@ if (length(results_list) == 0) {
 results_df <- do.call(rbind, results_list)
 
 # Write CSV
-csv_file <- file.path(OUTPUT_DIR, "garch_order_robustness_results.csv")
+csv_file <- paste(OUTPUT_DIR, "garch_order_robustness_results.csv", sep="/")
 write.csv(results_df, csv_file, row.names = FALSE)
 cat("CSV written:", csv_file, "\n")
 
 # Write Excel
-excel_file <- file.path(OUTPUT_DIR, "garch_order_robustness_results.xlsx")
+excel_file <- paste(OUTPUT_DIR, "garch_order_robustness_results.xlsx", sep="/")
 wb <- createWorkbook()
 addWorksheet(wb, "Results")
 writeData(wb, "Results", results_df)
@@ -589,7 +589,7 @@ saveWorkbook(wb, excel_file, overwrite = TRUE)
 cat("Excel written:", excel_file, "\n")
 
 # Write LaTeX table
-latex_file <- file.path(OUTPUT_DIR, "garch_order_robustness_table.tex")
+latex_file <- paste(OUTPUT_DIR, "garch_order_robustness_table.tex", sep="/")
 
 # Create summary table (one row per asset per model family)
 summary_df <- results_df %>%

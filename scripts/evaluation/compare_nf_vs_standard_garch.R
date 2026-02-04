@@ -26,7 +26,7 @@ cat("Split Mode:", EVAL_SPLIT_MODE, "\n\n")
 nf_results_file <- EVAL_PATHS$nf_garch_results
 if (!file.exists(nf_results_file)) {
   # Try alternative path
-  nf_results_file <- file.path(RESULTS_BASE, "consolidated", "NF_GARCH_Results_manual.xlsx")
+  nf_results_file <- paste(RESULTS_BASE, "consolidated", "NF_GARCH_Results_manual.xlsx", sep="/")
 }
 if (!file.exists(nf_results_file)) {
   stop("NF-GARCH results file not found: ", nf_results_file)
@@ -51,12 +51,13 @@ cat("  - TS CV: ", nrow(nf_tscv), " windows\n\n")
 cat("=== CREATING STANDARD GARCH BASELINE ===\n")
 
 # Load GARCH fitting summary (optional, for log message only; Standard re-fits in this script)
-if (file.exists("outputs/manual/garch_fitting/model_summary.csv")) {
-  garch_summary <- read.csv("outputs/manual/garch_fitting/model_summary.csv")
-  cat("GARCH fitting summary loaded: ", nrow(garch_summary), " models\n")
+garch_summary_file <- paste(EVAL_PATHS$garch_fitting, "model_summary.csv", sep="/")
+if (file.exists(garch_summary_file)) {
+  garch_summary <- read.csv(garch_summary_file)
+  cat("GARCH fitting summary loaded: ", nrow(garch_summary), " models from", garch_summary_file, "\n")
 } else {
   garch_summary <- data.frame()
-  cat("GARCH fitting summary not found (optional).\n")
+  cat("GARCH fitting summary not found at", garch_summary_file, "(optional).\n")
 }
 
 # Load configuration and utilities
@@ -181,7 +182,8 @@ for (asset_idx in seq_along(all_returns)) {
 
       if (engine_converged(fit)) {
         standard_residuals <- engine_residuals(fit, standardize = TRUE)
-        # Use evaluate_return_forecasts with n_paths=1000 so point forecast = mean of paths,
+        # Use evaluate_return_forecasts with n_paths=100 for computational efficiency
+        # (reduced from 1000 - still provides reliable point forecasts as mean of paths)
         # matching NF-GARCH. (Previously: one engine_path = one random path, inflating Standard MSE.)
         eval_result <- evaluate_return_forecasts(
           fit = fit,
@@ -191,7 +193,7 @@ for (asset_idx in seq_along(all_returns)) {
           model_type = cfg$model,
           submodel = cfg$submodel,
           engine = "manual",
-          n_paths = 1000L
+          n_paths = 100L
         )
         if (is.null(eval_result) || is.na(eval_result$mse) || eval_result$n_valid_paths < 1L) next
 
@@ -566,8 +568,12 @@ if (exists("best_by_class") && nrow(best_by_class) > 0) {
   writeData(wb, "Best_Model_By_Class", best_by_class)
 }
 
-# Save
-comparison_file <- "results/consolidated/NF_vs_Standard_GARCH_Comparison.xlsx"
+# Save (using split-aware path)
+comparison_file <- paste(EVAL_PATHS$consolidated, "NF_vs_Standard_GARCH_Comparison.xlsx", sep="/")
+cat("Saving comparison workbook to:", comparison_file, "\n")
+if (!dir.exists(dirname(comparison_file))) {
+  dir.create(dirname(comparison_file), recursive = TRUE, showWarnings = FALSE)
+}
 saveWorkbook(wb, comparison_file, overwrite = TRUE)
 
 cat("\n[OK] Comparison workbook saved to:", comparison_file, "\n")

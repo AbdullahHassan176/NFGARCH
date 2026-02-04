@@ -92,10 +92,10 @@ if (file.exists(stylized_file)) {
       .groups = "drop"
     )
   
-  write.csv(stylized_table, file.path(output_dir, "stylized_facts_summary.csv"), row.names = FALSE)
+  write.csv(stylized_table, paste(output_dir, "stylized_facts_summary.csv", sep="/"), row.names = FALSE)
   write_tabularx_tex(
     stylized_table,
-    file.path(output_dir, "stylized_facts_summary.tex"),
+    paste(output_dir, "stylized_facts_summary.tex", sep="/"),
     col_spec = "l *{4}{>{\\raggedleft\\arraybackslash}X}",
     headers = c("Asset Class", "Volatility Clustering", "Leverage Effect", "Gain/Loss Asymmetry", "Skewness"),
     digits = 3
@@ -124,10 +124,10 @@ if (file.exists(dashboard_file)) {
              Mean_LogLik = mean_LogLik) %>%
       arrange(Mean_MSE)
     
-    write.csv(baseline_summary, file.path(output_dir, "baseline_garch_performance.csv"), row.names = FALSE)
+    write.csv(baseline_summary, paste(output_dir, "baseline_garch_performance.csv", sep="/"), row.names = FALSE)
     write_tabularx_tex(
       baseline_summary,
-      file.path(output_dir, "baseline_garch_performance.tex"),
+      paste(output_dir, "baseline_garch_performance.tex", sep="/"),
       col_spec = "l *{6}{>{\\raggedleft\\arraybackslash}X}",
       headers = c("Model", "N Assets", "Mean MSE", "Mean MAE", "Mean AIC", "Mean BIC", "Mean LogLik"),
       digits = c(0, 0, 4, 4, 2, 2, 2)
@@ -138,7 +138,7 @@ if (file.exists(dashboard_file)) {
   # Asset class analysis
   if ("Asset_Class_Analysis" %in% sheets) {
     asset_class <- read.xlsx(dashboard_file, sheet = "Asset_Class_Analysis")
-    write.csv(asset_class, file.path(output_dir, "asset_class_analysis.csv"), row.names = FALSE)
+    write.csv(asset_class, paste(output_dir, "asset_class_analysis.csv", sep="/"), row.names = FALSE)
     cat("  [OK] Asset class analysis saved\n")
   }
 }
@@ -172,12 +172,12 @@ if (file.exists(nf_comparison_file)) {
         .groups = "drop"
       )
     
-    write.csv(overall_comparison, file.path(output_dir, "nf_vs_standard_overall.csv"), row.names = FALSE)
+    write.csv(overall_comparison, paste(output_dir, "nf_vs_standard_overall.csv", sep="/"), row.names = FALSE)
     overall_tex <- overall_comparison %>%
       select(Source, N_Obs = N_Observations, Mean_MSE, Median_MSE, Mean_MAE, Median_MAE, Mean_AIC, Mean_BIC)
     write_tabularx_tex(
       overall_tex,
-      file.path(output_dir, "nf_vs_standard_overall.tex"),
+      paste(output_dir, "nf_vs_standard_overall.tex", sep="/"),
       col_spec = "l *{7}{>{\\raggedleft\\arraybackslash}X}",
       headers = c("Source", "N Obs", "Mean MSE", "Median MSE", "Mean MAE", "Median MAE", "Mean AIC", "Mean BIC"),
       digits = c(0, 0, 4, 4, 4, 4, 0, 0),
@@ -207,13 +207,13 @@ if (file.exists(nf_comparison_file)) {
                                      (Mean_MAE_Standard - Mean_MAE_NF_GARCH) / Mean_MAE_Standard * 100, NA)
       )
     
-    write.csv(model_comparison, file.path(output_dir, "nf_vs_standard_by_model.csv"), row.names = FALSE)
+    write.csv(model_comparison, paste(output_dir, "nf_vs_standard_by_model.csv", sep="/"), row.names = FALSE)
     by_model_tex <- model_comparison %>%
       select(Model, N, NF_MSE = Mean_MSE_NF_GARCH, Standard_MSE = Mean_MSE_Standard,
              MSE_Imp_Pct = MSE_Improvement_Pct, MAE_Imp_Pct = MAE_Improvement_Pct)
     write_tabularx_tex(
       by_model_tex,
-      file.path(output_dir, "nf_vs_standard_by_model.tex"),
+      paste(output_dir, "nf_vs_standard_by_model.tex", sep="/"),
       col_spec = "l *{5}{>{\\raggedleft\\arraybackslash}X}",
       headers = c("Model", "N", "NF MSE", "Standard MSE", "MSE Improvement (\\%)", "MAE Improvement (\\%)"),
       digits = c(0, 0, 4, 4, 1, 1),
@@ -225,25 +225,25 @@ if (file.exists(nf_comparison_file)) {
   # Win rate
   if ("Win_Rate_Analysis" %in% sheets) {
     win_rate <- read.xlsx(nf_comparison_file, sheet = "Win_Rate_Analysis")
-    write.csv(win_rate, file.path(output_dir, "nf_win_rate.csv"), row.names = FALSE)
+    write.csv(win_rate, paste(output_dir, "nf_win_rate.csv", sep="/"), row.names = FALSE)
     wr_tex <- win_rate %>% select(Model, Total = total_comparisons, NF_Wins = nf_wins, Win_Rate_Pct = win_rate)
-    write_tabularx_tex(wr_tex, file.path(output_dir, "nf_win_rate.tex"), "l *{3}{>{\\centering\\arraybackslash}X}", headers = c("Model", "Total Comparisons", "NF Wins", "Win Rate (\\%)"), digits = c(0,0,0,1))
+    write_tabularx_tex(wr_tex, paste(output_dir, "nf_win_rate.tex", sep="/"), "l *{3}{>{\\centering\\arraybackslash}X}", headers = c("Model", "Total Comparisons", "NF Wins", "Win Rate (\\%)"), digits = c(0,0,0,1))
     cat("  [OK] Win rate analysis saved (CSV + .tex)\n")
   }
   
   # Wilcoxon test
   if ("Wilcoxon_Test" %in% sheets) {
     wilcoxon <- read.xlsx(nf_comparison_file, sheet = "Wilcoxon_Test")
-    write.csv(wilcoxon, file.path(output_dir, "wilcoxon_test_results.csv"), row.names = FALSE)
+    write.csv(wilcoxon, paste(output_dir, "wilcoxon_test_results.csv", sep="/"), row.names = FALSE)
     wx_tex <- wilcoxon %>% select(Model, Metric = Test_Type, Statistic, Pvalue, Significant, Alternative)
-    write_tabularx_tex(wx_tex, file.path(output_dir, "wilcoxon_test_results.tex"), "l l *{4}{>{\\centering\\arraybackslash}X}", headers = c("Model", "Metric", "Statistic", "P-value", "Significant", "Alternative"), digits = c(0,0,0,4,0,0))
+    write_tabularx_tex(wx_tex, paste(output_dir, "wilcoxon_test_results.tex", sep="/"), "l l *{4}{>{\\centering\\arraybackslash}X}", headers = c("Model", "Metric", "Statistic", "P-value", "Significant", "Alternative"), digits = c(0,0,0,4,0,0))
     cat("  [OK] Wilcoxon test results saved (CSV + .tex)\n")
   }
   
   # Asset class summary with median values (Table 4.5)
   if ("Asset_Class_Summary" %in% sheets) {
     asset_class_summary <- read.xlsx(nf_comparison_file, sheet = "Asset_Class_Summary")
-    write.csv(asset_class_summary, file.path(output_dir, "nf_performance_by_asset_class.csv"), row.names = FALSE)
+    write.csv(asset_class_summary, paste(output_dir, "nf_performance_by_asset_class.csv", sep="/"), row.names = FALSE)
     cat("  [OK] Performance by asset class (median values) saved\n")
   } else if ("Combined_Results" %in% sheets) {
     # Calculate median values by asset class and source from combined results
@@ -258,10 +258,10 @@ if (file.exists(nf_comparison_file)) {
       ) %>%
       arrange(Asset_Class, Source)
     
-    write.csv(asset_class_medians, file.path(output_dir, "nf_performance_by_asset_class.csv"), row.names = FALSE)
+    write.csv(asset_class_medians, paste(output_dir, "nf_performance_by_asset_class.csv", sep="/"), row.names = FALSE)
     write_tabularx_tex(
       asset_class_medians,
-      file.path(output_dir, "nf_performance_by_asset_class.tex"),
+      paste(output_dir, "nf_performance_by_asset_class.tex", sep="/"),
       col_spec = "l l *{4}{>{\\raggedleft\\arraybackslash}X}",
       headers = c("Asset Class", "Source", "N Assets", "Median MSE", "Median MAE", "Median AIC"),
       digits = c(0, 0, 0, 4, 4, 2),
@@ -295,10 +295,10 @@ if (file.exists(dist_file)) {
       .groups = "drop"
     )
   
-  write.csv(dist_by_model, file.path(output_dir, "distributional_metrics_by_model.csv"), row.names = FALSE)
-  write.csv(dist_summary, file.path(output_dir, "distributional_summary.csv"), row.names = FALSE)
+  write.csv(dist_by_model, paste(output_dir, "distributional_metrics_by_model.csv", sep="/"), row.names = FALSE)
+  write.csv(dist_summary, paste(output_dir, "distributional_summary.csv", sep="/"), row.names = FALSE)
   # Distributional .tex: prefer distributional_metrics_detailed (has Tail/Skew Std vs NF) to match dissertation layout
-  detail_path <- file.path(output_dir, "distributional_metrics_detailed.csv")
+  detail_path <- paste(output_dir, "distributional_metrics_detailed.csv", sep="/")
   if (file.exists(detail_path)) {
     det <- read.csv(detail_path)
     agg <- det %>% group_by(Model) %>% summarise(KS = mean(KS_distance, na.rm = TRUE), Wass = mean(Wasserstein_distance, na.rm = TRUE), Tail_Std = mean(Tail_index_Std, na.rm = TRUE), Tail_NF = mean(Tail_index_NF, na.rm = TRUE), Skew_Std = mean(Skewness_Std, na.rm = TRUE), Skew_NF = mean(Skewness_NF, na.rm = TRUE), .groups = "drop")
@@ -314,10 +314,10 @@ if (file.exists(dist_file)) {
       paste0(rows, " \\\\"),
       "\\bottomrule",
       "\\end{tabularx}"
-    ), file.path(output_dir, "distributional_metrics_by_model.tex"))
+    ), paste(output_dir, "distributional_metrics_by_model.tex", sep="/"))
   } else {
     dm_tex <- dist_by_model %>% select(Model, KS = Mean_KS, Wass = Mean_Wasserstein, Tail = Mean_Tail_Index, Skew = Mean_Skewness)
-    write_tabularx_tex(dm_tex, file.path(output_dir, "distributional_metrics_by_model.tex"), "l *{4}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "KS Distance", "Wasserstein", "Tail Index", "Skewness"), digits = 3)
+    write_tabularx_tex(dm_tex, paste(output_dir, "distributional_metrics_by_model.tex", sep="/"), "l *{4}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "KS Distance", "Wasserstein", "Tail Index", "Skewness"), digits = 3)
   }
   cat("  [OK] Distributional metrics saved (CSV + .tex)\n")
 }
@@ -344,10 +344,10 @@ if (file.exists(var_file)) {
       .groups = "drop"
     )
   
-  write.csv(var_by_model, file.path(output_dir, "var_backtesting_by_model.csv"), row.names = FALSE)
-  write.csv(var_summary, file.path(output_dir, "var_summary.csv"), row.names = FALSE)
+  write.csv(var_by_model, paste(output_dir, "var_backtesting_by_model.csv", sep="/"), row.names = FALSE)
+  write.csv(var_summary, paste(output_dir, "var_summary.csv", sep="/"), row.names = FALSE)
   var_tex <- var_by_model %>% select(Model, `Conf_Level` = Confidence_Level, N_Assets, Obs_Rate = Mean_Exceedance_Rate, Exp_Rate = Expected_Rate, Kupiec = Mean_Kupiec_pvalue, Christ = Mean_Christoffersen_pvalue)
-  write_tabularx_tex(var_tex, file.path(output_dir, "var_backtesting_by_model.tex"), "l l *{5}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "Conf Level", "N Assets", "Observed Rate", "Expected Rate", "Kupiec p-value", "Christoffersen p-value"), digits = c(0, 2, 0, 4, 2, 2, 2))
+  write_tabularx_tex(var_tex, paste(output_dir, "var_backtesting_by_model.tex", sep="/"), "l l *{5}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "Conf Level", "N Assets", "Observed Rate", "Expected Rate", "Kupiec p-value", "Christoffersen p-value"), digits = c(0, 2, 0, 4, 2, 2, 2))
   cat("  [OK] VaR backtesting results saved (CSV + .tex)\n")
 }
 
@@ -374,7 +374,7 @@ if (file.exists(stress_file)) {
         .groups = "drop"
       )
     
-    write.csv(stress_summary, file.path(output_dir, "stress_testing_summary.csv"), row.names = FALSE)
+    write.csv(stress_summary, paste(output_dir, "stress_testing_summary.csv", sep="/"), row.names = FALSE)
     cat("  [OK] Stress testing summary saved\n")
   }
   
@@ -396,9 +396,9 @@ if (file.exists(stress_file)) {
         .groups = "drop"
       )
     
-    write.csv(crisis_forecast, file.path(output_dir, "crisis_forecast_performance.csv"), row.names = FALSE)
+    write.csv(crisis_forecast, paste(output_dir, "crisis_forecast_performance.csv", sep="/"), row.names = FALSE)
     cf_tex <- crisis_forecast %>% select(Crisis = Scenario_Name, Model, N, NF_MSE = NF_GARCH_MSE, Standard_MSE = Standard_GARCH_MSE, MSE_Imp_Pct = MSE_Improvement_Pct)
-    write_tabularx_tex(cf_tex, file.path(output_dir, "crisis_forecast_performance.tex"), "l l r *{3}{>{\\raggedleft\\arraybackslash}X}", headers = c("Crisis", "Model", "N", "NF MSE", "Standard MSE", "MSE Improvement (\\%)"), digits = c(0, 0, 0, 4, 4, 1), max_abs = 1e10)
+    write_tabularx_tex(cf_tex, paste(output_dir, "crisis_forecast_performance.tex", sep="/"), "l l r *{3}{>{\\raggedleft\\arraybackslash}X}", headers = c("Crisis", "Model", "N", "NF MSE", "Standard MSE", "MSE Improvement (\\%)"), digits = c(0, 0, 0, 4, 4, 1), max_abs = 1e10)
     cat("  [OK] Crisis forecast performance saved (CSV + .tex)\n")
   }
 }
