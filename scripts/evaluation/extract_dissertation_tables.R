@@ -281,7 +281,8 @@ if (file.exists(dist_file)) {
   dist_metrics <- read.xlsx(dist_file, sheet = "Distributional_Metrics")
   dist_summary <- read.xlsx(dist_file, sheet = "Summary_Statistics")
   
-  # Summary by model
+  # Summary by model - handle split columns (Tail_index_Std/NF, Skewness_Std/NF, Kurtosis_Std/NF)
+  # Calculate averages across both Standard and NF versions
   dist_by_model <- dist_metrics %>%
     group_by(Model) %>%
     summarise(
@@ -289,9 +290,12 @@ if (file.exists(dist_file)) {
       Median_KS = median(KS_distance, na.rm = TRUE),
       Mean_Wasserstein = mean(Wasserstein_distance, na.rm = TRUE),
       Median_Wasserstein = median(Wasserstein_distance, na.rm = TRUE),
-      Mean_Tail_Index = mean(Tail_index, na.rm = TRUE),
-      Mean_Skewness = mean(Skewness, na.rm = TRUE),
-      Mean_Kurtosis = mean(Kurtosis, na.rm = TRUE),
+      Mean_Tail_Index_Std = mean(Tail_index_Std, na.rm = TRUE),
+      Mean_Tail_Index_NF = mean(Tail_index_NF, na.rm = TRUE),
+      Mean_Skewness_Std = mean(Skewness_Std, na.rm = TRUE),
+      Mean_Skewness_NF = mean(Skewness_NF, na.rm = TRUE),
+      Mean_Kurtosis_Std = mean(Kurtosis_Std, na.rm = TRUE),
+      Mean_Kurtosis_NF = mean(Kurtosis_NF, na.rm = TRUE),
       .groups = "drop"
     )
   
@@ -316,8 +320,9 @@ if (file.exists(dist_file)) {
       "\\end{tabularx}"
     ), paste(output_dir, "distributional_metrics_by_model.tex", sep="/"))
   } else {
-    dm_tex <- dist_by_model %>% select(Model, KS = Mean_KS, Wass = Mean_Wasserstein, Tail = Mean_Tail_Index, Skew = Mean_Skewness)
-    write_tabularx_tex(dm_tex, paste(output_dir, "distributional_metrics_by_model.tex", sep="/"), "l *{4}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "KS Distance", "Wasserstein", "Tail Index", "Skewness"), digits = 3)
+    # Fallback: use the split columns directly from dist_by_model
+    dm_tex <- dist_by_model %>% select(Model, KS = Mean_KS, Wass = Mean_Wasserstein, Tail_Std = Mean_Tail_Index_Std, Tail_NF = Mean_Tail_Index_NF, Skew_Std = Mean_Skewness_Std, Skew_NF = Mean_Skewness_NF)
+    write_tabularx_tex(dm_tex, paste(output_dir, "distributional_metrics_by_model.tex", sep="/"), "l *{6}{>{\\raggedleft\\arraybackslash}X}", headers = c("Model", "KS Distance", "Wasserstein", "Tail Index (Std)", "Tail Index (NF)", "Skewness (Std)", "Skewness (NF)"), digits = 3)
   }
   cat("  [OK] Distributional metrics saved (CSV + .tex)\n")
 }

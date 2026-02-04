@@ -296,7 +296,7 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
           model_type = model_type,
           submodel = submodel,
           engine = engine,
-                n_paths = 100  # Number of simulation paths for point forecast (reduced from 1000 for efficiency)
+                n_paths = 1000  # Number of simulation paths for point forecast
         )
         
         # Log if result is invalid
@@ -580,7 +580,7 @@ fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, 
         model_type = model_config[["model"]],
         submodel = model_config[["submodel"]],
         engine = engine,
-        n_paths = 100  # Reduced from 1000 for computational efficiency
+        n_paths = 1000  # Number of simulation paths for reliable forecasts
       )
       cat("  evaluate_return_forecasts completed\n")
       

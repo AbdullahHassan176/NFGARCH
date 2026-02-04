@@ -182,9 +182,8 @@ for (asset_idx in seq_along(all_returns)) {
 
       if (engine_converged(fit)) {
         standard_residuals <- engine_residuals(fit, standardize = TRUE)
-        # Use evaluate_return_forecasts with n_paths=100 for computational efficiency
-        # (reduced from 1000 - still provides reliable point forecasts as mean of paths)
-        # matching NF-GARCH. (Previously: one engine_path = one random path, inflating Standard MSE.)
+        # Use evaluate_return_forecasts with n_paths=1000 for robust point forecasts
+        # Point forecast = mean across paths, matching NF-GARCH methodology
         eval_result <- evaluate_return_forecasts(
           fit = fit,
           nf_residuals = standard_residuals,
@@ -193,7 +192,7 @@ for (asset_idx in seq_along(all_returns)) {
           model_type = cfg$model,
           submodel = cfg$submodel,
           engine = "manual",
-          n_paths = 100L
+          n_paths = 1000L
         )
         if (is.null(eval_result) || is.na(eval_result$mse) || eval_result$n_valid_paths < 1L) next
 
