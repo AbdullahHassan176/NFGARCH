@@ -129,14 +129,9 @@ dnorm_ll <- function(z) {
 
 dt_ll <- function(z, nu) {
   # Student-t distribution log-likelihood (STANDARD PARAMETERIZATION)
-  # 
-  # REVIEWED 2026-02-02: Uses standard (unrescaled) Student-t where Var(z) = ν/(ν-2)
-  # This is the canonical parameterization (Bollerslev 1987) and is mathematically
-  # correct. It differs from rugarch's rescaled form but is asymptotically equivalent
-  # under MLE - parameters differ by scale factor √((ν-2)/ν) but inference is valid.
-  # 
+  # Uses standard (unrescaled) Student-t where Var(z) = ν/(ν-2)
+  # This is the canonical parameterization (Bollerslev 1987).
   # Computes: log[ Γ((ν+1)/2) / (Γ(ν/2)√(πν)) ] - ((ν+1)/2) log(1 + z²/ν)
-  #
   if (nu <= 2) stop("Degrees of freedom must be greater than 2 for finite variance")
   lgamma((nu + 1) / 2) - lgamma(nu / 2) - 0.5 * log(pi * nu) - 
     ((nu + 1) / 2) * log(1 + z^2 / nu)

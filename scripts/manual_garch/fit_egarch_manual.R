@@ -9,8 +9,6 @@
 #
 # DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
 #
-# REVIEWED: ✅ 2026-02-02 - Mathematically correct eGARCH implementation
-#
 # ASYMMETRY INTERPRETATION:
 #   - γ < 0: Negative shocks increase volatility (leverage effect)
 #   - γ > 0: Positive shocks increase volatility

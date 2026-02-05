@@ -6,13 +6,6 @@
 # MODE-AWARE: Respects PIPELINE_MODE from scripts/core/config.R (optimized or full)
 # EXECUTION: Designed for manual execution in R Studio or via Rscript
 #
-# REVIEWED: ✅ 2026-02-02
-# Implementation verified for mathematical correctness across:
-#   ✅ Model specification and parameter estimation
-#   ✅ Cross-validation and time-series splitting
-#   ✅ Residual extraction for NF training
-#   ✅ Forecasting and simulation
-#
 # MODELS SUPPORTED: sGARCH, gjrGARCH, eGARCH, TGARCH (Zakoian)
 # DISTRIBUTIONS: norm (Normal), std (Student-t)
 # NOTE: sstd (Skewed Student-t) is NOT implemented - will error if requested

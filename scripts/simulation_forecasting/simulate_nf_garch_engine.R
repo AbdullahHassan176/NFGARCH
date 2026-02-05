@@ -185,16 +185,21 @@ fx_returns     <- lapply(fx_xts,     function(x) diff(log(x))[-1, ])
 # Model Configuration and Data Splitting
 cat("Setting up model configurations...\n")
 
-# Model configurations - manual engine only
-# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
-# Student-t (std) provides heavy tails; NF then learns residual skewness/shape
-model_configs <- list(
-  sGARCH_norm  = list(model = "sGARCH", distribution = "norm", submodel = NULL),
-  sGARCH_std   = list(model = "sGARCH", distribution = "std", submodel = NULL),
-  gjrGARCH     = list(model = "gjrGARCH", distribution = "std", submodel = NULL),
-  eGARCH       = list(model = "eGARCH", distribution = "std", submodel = NULL),
-  TGARCH       = list(model = "TGARCH", distribution = "std", submodel = NULL)
-)
+# Use centralized model configuration to ensure consistency across pipeline stages
+# This ensures GARCH fitting, NF training, and simulation all use the same models
+if (exists("GARCH_MODELS") && length(GARCH_MODELS) > 0) {
+  model_configs <- GARCH_MODELS
+  cat("Using centralized GARCH_MODELS configuration:", length(model_configs), "models\n")
+} else {
+  # Fallback to manual config if central config not loaded
+  cat("WARNING: GARCH_MODELS not found, using fallback configuration\n")
+  model_configs <- list(
+    sGARCH_norm  = list(model = "sGARCH", distribution = "norm", submodel = NULL),
+    gjrGARCH     = list(model = "gjrGARCH", distribution = "norm", submodel = NULL),
+    eGARCH       = list(model = "eGARCH", distribution = "norm", submodel = NULL),
+    TGARCH       = list(model = "TGARCH", distribution = "norm", submodel = NULL)
+  )
+}
 
 # Data Splitting for Model Training and Evaluation
 get_split_index <- function(x, split_ratio = 0.65) {
@@ -296,7 +301,7 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
           model_type = model_type,
           submodel = submodel,
           engine = engine,
-                n_paths = 1000  # Number of simulation paths for point forecast
+                n_paths = 200  # Number of simulation paths for point forecast (balanced for speed)
         )
         
         # Log if result is invalid
@@ -580,7 +585,7 @@ fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, 
         model_type = model_config[["model"]],
         submodel = model_config[["submodel"]],
         engine = engine,
-        n_paths = 1000  # Number of simulation paths for reliable forecasts
+        n_paths = 200  # Number of simulation paths (balanced for speed)
       )
       cat("  evaluate_return_forecasts completed\n")
       

@@ -10,8 +10,6 @@
 #
 # DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
 #
-# REVIEWED: ✅ 2026-02-02 - Mathematically correct GJR-GARCH implementation
-#
 # LEVERAGE EFFECT:
 #   - γ > 0: Negative shocks increase volatility more (typical for equities)
 #   - γ < 0: Positive shocks increase volatility more (unusual)

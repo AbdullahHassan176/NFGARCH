@@ -12,16 +12,6 @@
 # Currently supports ONLY the "manual" engine (custom R implementations).
 # The engine parameter is retained for API consistency and future extensibility.
 #
-# REVIEWED: ✅ 2026-02-02
-# Academic code review verified the manual GARCH implementation is mathematically
-# correct and statistically valid. All models tested for correctness across:
-#   ✅ Parameter estimation (MLE with proper constraints)
-#   ✅ Variance recursion (sGARCH, gjrGARCH, eGARCH, TGARCH-Zakoian)
-#   ✅ Residual extraction (raw and standardized)
-#   ✅ Forecasting (1-step and multi-step simulation-based)
-#   ✅ Path simulation (for NF-GARCH framework)
-#   ✅ Model diagnostics (AIC, BIC, convergence)
-#
 # ENGINE TYPES:
 #   - "manual" (CURRENT): Custom R implementation of GARCH models
 #     * Provides fine-grained control over estimation
@@ -116,7 +106,7 @@ engine_fit <- function(model, returns, dist, submodel = NULL, engine = "manual")
   }
   
   # Handle distribution compatibility
-  # REVIEWED 2026-02-02: Manual GARCH implementation supports norm, std
+  # Manual GARCH implementation supports norm, std
   # Skewed Student-t (sstd) is NOT implemented - error if requested
   if (dist == "sstd") {
     stop("Skewed Student-t distribution (sstd) is not implemented in manual engine.\n",

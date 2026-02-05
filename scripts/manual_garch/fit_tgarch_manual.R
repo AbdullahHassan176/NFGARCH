@@ -10,8 +10,6 @@
 #
 # DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
 #
-# REVIEWED: ✅ 2026-02-02 - Mathematically correct implementation of Zakoian (1994)
-#
 # IMPLEMENTATION NOTE:
 # This implements Zakoian's TGARCH specification using CONDITIONAL STANDARD DEVIATION
 # with absolute residuals. This is distinct from variance-based TGARCH formulations

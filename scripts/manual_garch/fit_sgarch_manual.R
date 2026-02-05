@@ -12,8 +12,6 @@
 # ESTIMATION METHOD: Maximum Likelihood Estimation (MLE)
 # OPTIMIZER: BFGS with parameter transformation for constraint enforcement
 #
-# REVIEWED: ✅ 2026-02-02 - Mathematically correct and statistically valid
-#
 # CONSTRAINT ENFORCEMENT:
 #   - ω > 0         : Via exp(θ₂)
 #   - α, β ∈ (0,1)  : Via logistic transformation

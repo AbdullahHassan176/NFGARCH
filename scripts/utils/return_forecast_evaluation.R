@@ -89,11 +89,6 @@ generate_multiple_paths <- function(fit, nf_residuals, horizon, model_type, subm
   # Count valid paths
   valid_paths <- sum(!is.na(all_return_paths[1, ]))
   
-  # #region agent log
-  log_entry <- list(location="return_forecast_evaluation.R:90",message="End generate_multiple_paths",data=list(valid_paths=valid_paths,total_paths=n_paths,errors=path_errors),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1_H3")
-  tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
-  # #endregion
-  
   if (valid_paths == 0) {
     warning("No valid paths generated")
     return(NULL)
@@ -233,18 +228,8 @@ evaluate_return_forecasts <- function(fit, nf_residuals, actual_returns, horizon
   mse <- mean((actual - point_forecast)^2, na.rm = TRUE)
   mae <- mean(abs(actual - point_forecast), na.rm = TRUE)
   
-  # #region agent log
-  log_entry <- list(location="return_forecast_evaluation.R:234",message="Before density loglik calc",data=list(actual_len=length(actual),paths_dim=dim(all_paths_subset)),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1")
-  tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
-  # #endregion
-  
   # Calculate density forecast log-likelihood
   loglik <- calculate_predictive_loglik(actual, all_paths_subset)
-  
-  # #region agent log
-  log_entry <- list(location="return_forecast_evaluation.R:242",message="After density loglik calc",data=list(loglik=loglik),timestamp=as.numeric(Sys.time())*1000,sessionId="debug-session",hypothesisId="H1")
-  tryCatch(write(jsonlite::toJSON(log_entry,auto_unbox=TRUE),file="c:\\Experimentation\\NFGARCH\\.cursor\\debug.log",append=TRUE),error=function(e){})
-  # #endregion
   
   return(list(
     mse = mse,

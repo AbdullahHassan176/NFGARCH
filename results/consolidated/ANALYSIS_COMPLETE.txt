@@ -1,6 +1,6 @@
 === NF-GARCH SIMULATION ANALYSIS COMPLETE ===
 
-Date: 2026-02-04 16:30:50
+Date: 2026-02-05 07:16:45
 
 RESULTS SUMMARY:
   - Total Models Attempted: 30 (5 models × 6 assets)

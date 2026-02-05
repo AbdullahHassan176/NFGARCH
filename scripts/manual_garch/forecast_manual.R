@@ -2,8 +2,6 @@
 # MANUAL GARCH FORECASTING AND PATH SIMULATION
 # =============================================================================
 #
-# REVIEWED: ✅ 2026-02-02 - Mathematically correct implementation
-#
 # MULTI-STEP FORECAST METHODOLOGY (h > 1):
 # Uses simulation-based approach where E[ε_{t+h}] = 0 for h > 1, reflecting
 # the conditional expectation given information at time t. This is appropriate

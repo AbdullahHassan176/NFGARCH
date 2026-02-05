@@ -66,8 +66,6 @@ PIPELINE_MODE <- "optimized"  # Change to "full" for comprehensive runs
 # GARCH MODEL SPECIFICATIONS
 # =============================================================================
 #
-# REVIEWED: ✅ 2026-02-02 - All models verified for mathematical correctness
-#
 # SUPPORTED DISTRIBUTIONS: 
 #   - "norm": Normal distribution (Gaussian)
 #   - "std": Student-t distribution (standard parameterization, Var(z)=ν/(ν-2))
