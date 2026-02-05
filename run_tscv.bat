@@ -310,7 +310,7 @@ echo STEP 13: CONSOLIDATING RESULTS
 echo ========================================
 echo.
 
-"%RSCRIPT%" -e "source('scripts/core/consolidation.R'); consolidate_all_results('results/tscv', split='tscv')"
+"%RSCRIPT%" -e "source('scripts/core/consolidation.R'); consolidate_all_results('results/tscv')"
 if %errorlevel% neq 0 (
     echo [WARNING] Consolidation had issues, continuing...
 ) else (
@@ -528,8 +528,9 @@ echo ========================================
 REM Generate timing summary
 call :GENERATE_SUMMARY
 
+REM Exit successfully
 pause
-goto :EOF
+exit /b 0
 
 REM =============================================================================
 REM HELPER FUNCTIONS FOR LOGGING AND TIMING
