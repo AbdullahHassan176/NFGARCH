@@ -148,17 +148,31 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     })
   }
   
+  # Set up box constraints for L-BFGS-B
+  # Tightly constrain mu around sample mean (±0.005 for daily returns)
+  mu_bound <- max(abs(sample_mean) * 2, 0.005)
+  
+  if (dist == "norm") {
+    lower <- c(sample_mean - mu_bound, -20, -1, -1, -10)
+    upper <- c(sample_mean + mu_bound, 5, 1, 1, 10)
+  } else {
+    lower <- c(sample_mean - mu_bound, -20, -1, -1, -10, log(1))
+    upper <- c(sample_mean + mu_bound, 5, 1, 1, 10, log(20))
+  }
+  
   # Try multiple optimization methods with different starting points
   best_result <- NULL
   best_value <- Inf
   
-  # Method 1: L-BFGS-B with original starting point
+  # Method 1: L-BFGS-B with original starting point and CONSTRAINTS
   tryCatch({
     opt_result <- optim(
       par = init,
       fn = neg_ll,
       method = "L-BFGS-B",
-      control = list(maxit = 150, factr = 1e6)  # Faster optimization
+      lower = lower,
+      upper = upper,
+      control = list(maxit = 300, factr = 1e7)  # More iterations with constraints
     )
     if (opt_result$value < best_value) {
       best_result <- opt_result
@@ -168,14 +182,21 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     # Continue to next method
   })
   
-  # Method 2: Nelder-Mead if L-BFGS-B failed
-  if (is.null(best_result)) {
+  # Method 2: L-BFGS-B with alternative starting point
+  if (best_value > 1e6) {  # Only try if first attempt failed badly
+    alt_init <- init
+    alt_init[2] <- log(sample_var * 0.5)  # Different omega
+    alt_init[3] <- 0.1   # Different alpha
+    alt_init[5] <- qlogis(0.95)  # Different beta (transformed)
+    
     tryCatch({
       opt_result <- optim(
-        par = init,
+        par = alt_init,
         fn = neg_ll,
-        method = "Nelder-Mead",
-        control = list(maxit = 200)
+        method = "L-BFGS-B",
+        lower = lower,
+        upper = upper,
+        control = list(maxit = 300, factr = 1e7)
       )
       if (opt_result$value < best_value) {
         best_result <- opt_result
@@ -186,25 +207,27 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     })
   }
   
-  # Method 3: Use simple starting point if all else fails
-  if (is.null(best_result)) {
+  # Method 3: Use simple starting point with constraints if all else fails
+  if (is.null(best_result) || best_value > 1e6) {
     simple_init <- c(
-      mu = mean(returns),
-      omega = log(var(returns)),
-      alpha = 0.01,
-      gamma = 0.01,
-      beta = 0.95
+      mu = sample_mean,
+      omega = log(sample_var * 0.2),
+      alpha = 0.03,
+      gamma = 0.05,
+      beta = qlogis(0.92)  # Transform to unconstrained
     )
     if (dist == "std") {
-      simple_init <- c(simple_init, nu = log(5))
+      simple_init <- c(simple_init, nu = log(8))
     }
     
     tryCatch({
       opt_result <- optim(
         par = simple_init,
         fn = neg_ll,
-        method = "Nelder-Mead",
-        control = list(maxit = 150)
+        method = "L-BFGS-B",
+        lower = lower,
+        upper = upper,
+        control = list(maxit = 300, factr = 1e7)
       )
       if (opt_result$value < best_value) {
         best_result <- opt_result
@@ -212,11 +235,13 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
       }
     }, error = function(e) {
       # If all methods fail, create a basic result
-      best_result <- list(
-        par = simple_init,
-        value = 1e6,
-        convergence = 1
-      )
+      if (is.null(best_result)) {
+        best_result <- list(
+          par = simple_init,
+          value = 1e6,
+          convergence = 1
+        )
+      }
     })
   }
   
@@ -227,6 +252,11 @@ fit_egarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
   
   # Extract final parameters and compute fitted values
   if (dist == "norm") {
+    # DEBUG: Check optimization result
+    cat("DEBUG: best_result$value =", best_result$value, "convergence =", best_result$convergence, "\n")
+    cat("DEBUG: best_result$par =", paste(best_result$par, collapse=", "), "\n")
+    cat("DEBUG: sample_mean =", mean(returns), "sample_var =", var(returns), "\n")
+    
     # Extract parameters directly
     mu <- best_result$par[1]
     omega <- best_result$par[2]

@@ -1,0 +1,290 @@
+Loading required package: zoo
+
+Attaching package: 'zoo'
+
+The following objects are masked from 'package:base':
+
+    as.Date, as.Date.numeric
+
+
+Attaching package: 'PerformanceAnalytics'
+
+The following object is masked from 'package:graphics':
+
+    legend
+
+
+######################### Warning from 'xts' package ##########################
+#                                                                             #
+# The dplyr lag() function breaks how base R's lag() function is supposed to  #
+# work, which breaks lag(my_xts). Calls to lag(my_xts) that you type or       #
+# source() into this session won't work correctly.                            #
+#                                                                             #
+# Use stats::lag() to make sure you're not using dplyr::lag(), or you can add #
+# conflictRules('dplyr', exclude = 'lag') to your .Rprofile to stop           #
+# dplyr from breaking base R's lag() function.                                #
+#                                                                             #
+# Code in packages is not affected. It's protected by R's namespace mechanism #
+# Set `options(xts.warn_dplyr_breaks_lag = FALSE)` to suppress this warning.  #
+#                                                                             #
+###############################################################################
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:xts':
+
+    first, last
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'lubridate'
+
+The following objects are masked from 'package:base':
+
+    date, intersect, setdiff, union
+
+✓ Config exported to: scripts/core/nf_config.json 
+  Mode: optimized 
+  NF Layers: 4 
+  NF Hidden Features: 64 
+  NF Epochs: 75 
+=== CHRONOLOGICAL SPLIT CONFIGURATION ===
+Split Mode: chronological 
+Train Ratio: 0.65 (65%)
+Test Ratio: 0.35 (35%)
+TS CV Enabled: FALSE 
+NF Validation Split: 0 (No validation)
+Output Base: outputs/chronological 
+Results Base: results/chronological 
+========================================
+=== CHRONOLOGICAL SPLIT GARCH FITTING ===
+Start time: 2026-02-06 02:13:54.180177 
+=== CHRONOLOGICAL SPLIT CONFIGURATION ===
+Split Mode: chronological 
+Train Ratio: 0.65 (65%)
+Test Ratio: 0.35 (35%)
+TS CV Enabled: FALSE 
+NF Validation Split: 0 (No validation)
+Output Base: outputs/chronological 
+Results Base: results/chronological 
+========================================
+Chronological pipeline directories initialized.
+
+1. Loading and preprocessing data...
+Using asset set: NVDA, MSFT, AMZN, EURUSD, GBPUSD, USDZAR 
+  FX assets: 3 
+  Equity assets: 3 
+Data loaded successfully. Equity assets: 3 FX assets: 3 
+
+2. Setting up model configuration...
+Using models: sGARCH_norm, eGARCH, gjrGARCH, TGARCH 
+Model configurations prepared for 4 models
+
+3. Fitting GARCH models with chronological 65/35 split...
+
+Processing asset: NVDA 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 5428.81 , AIC = -10849.63 
+  Fitting model: eGARCH (training set only)
+DEBUG: best_result$value = 117999.5 convergence = 0 
+DEBUG: best_result$par = 0.391695953160397, -6.9488255648539, 0.877786385460884, -0.38517065417474, 0.815352280760198 
+DEBUG: sample_mean = 0.001042747 sample_var = 0.0009333138 
+WARNING: Estimated mu = 0.391696 is unreasonably large for daily returns!
+  This suggests optimization failed. Using sample mean instead.
+DEBUG fit_egarch_manual (norm): residuals mean= 1.729044e-19 std= 0.03055019 min= -0.3681514 max= 0.2598334 
+DEBUG fit_egarch_manual (norm): std_residuals mean= 0.01641901 std= 19.70143 min= -230.6845 max= 496.758 
+DEBUG fit_egarch_manual (norm): sigma mean= 5.901892e+55 min= 0.0001008867 max= 1.731615e+59 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= -3.752345 min= -18.40303 max= 272.8032 
+DEBUG fit_garch_chronological: After engine_residuals for NVDA eGARCH 
+  residuals mean= 0.01641901 std= 19.70143 min= -230.6845 max= 496.758 
+  garch_fit$residuals mean= 1.729044e-19 
+  garch_fit$std_residuals mean= 0.01641901 
+    Fit successful: LogLik = -117999.5 , AIC = 236009 
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 6274.62 , AIC = -12539.25 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 4327.6 , AIC = -8645.2 
+
+Processing asset: MSFT 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 6961.91 , AIC = -13915.82 
+  Fitting model: eGARCH (training set only)
+Warning in fit_egarch_manual(returns, dist = manual_dist) :
+  Optimization may not have converged. Convergence code: 52
+DEBUG: best_result$value = -3414.934 convergence = 52 
+DEBUG: best_result$par = -0.0073046488801415, 7.70845428022817, 17.7937056829593, -8.25158857167637, -6.4165439117958 
+DEBUG: sample_mean = 0.0004809946 sample_var = 0.0002934001 
+DEBUG fit_egarch_manual (norm): residuals mean= 0.007785643 std= 0.01712893 min= -0.1172735 max= 0.1779304 
+DEBUG fit_egarch_manual (norm): std_residuals mean= 0.1058065 std= 0.2835463 min= -2.920004 max= 3.758626 
+DEBUG fit_egarch_manual (norm): sigma mean= 500970471767 min= 0.01712893 max= 1.268355e+15 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= -4.179237 min= -8.133973 max= 69.55299 
+Warning: Model eGARCH for MSFT did not converge
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 8076.18 , AIC = -16142.36 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 3441.94 , AIC = -6873.89 
+
+Processing asset: AMZN 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 5544.76 , AIC = -11081.52 
+  Fitting model: eGARCH (training set only)
+Warning in fit_egarch_manual(returns, dist = manual_dist) :
+  Optimization may not have converged. Convergence code: 52
+DEBUG: best_result$value = 211050.3 convergence = 52 
+DEBUG: best_result$par = 0.830471458757636, -7.21360381192751, 0.775073337206807, -0.348257282359328, 1.41990212223296 
+DEBUG: sample_mean = 0.001127788 sample_var = 0.0006507598 
+WARNING: Estimated mu = 0.8304715 is unreasonably large for daily returns!
+  This suggests optimization failed. Using sample mean instead.
+DEBUG fit_egarch_manual (norm): residuals mean= 4.362306e-20 std= 0.02550999 min= -0.2473093 max= 0.2374932 
+DEBUG fit_egarch_manual (norm): std_residuals mean= 1.835106 std= 60.06566 min= -480.6206 max= 1717.124 
+DEBUG fit_egarch_manual (norm): sigma mean= 7.387633e+150 min= 8.641859e-06 max= 2.167531e+154 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= 9.489663 min= -23.31779 max= 710.7434 
+Warning: Model eGARCH for AMZN did not converge
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 6633.81 , AIC = -13257.62 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 2633.79 , AIC = -5257.59 
+
+Processing asset: EURUSD 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 9690.38 , AIC = -19372.77 
+  Fitting model: eGARCH (training set only)
+Warning in fit_egarch_manual(returns, dist = manual_dist) :
+  Optimization may not have converged. Convergence code: 52
+DEBUG: best_result$value = -10511.64 convergence = 52 
+DEBUG: best_result$par = 0.00154308435748027, -7.15390574371162, 1.04925236270579, 0.255581430254323, -0.975722731644993 
+DEBUG: sample_mean = -8.384547e-06 sample_var = 4.099827e-05 
+DEBUG fit_egarch_manual (norm): residuals mean= -0.001551469 std= 0.006402989 min= -0.0488975 max= 0.03883403 
+DEBUG fit_egarch_manual (norm): std_residuals mean= -0.2393018 std= 0.9846429 min= -8.35698 max= 5.128968 
+DEBUG fit_egarch_manual (norm): sigma mean= 0.007167369 min= 0.004176054 max= 0.119069 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= -10.02973 min= -10.95678 max= -4.256104 
+Warning: Model eGARCH for EURUSD did not converge
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 10729.9 , AIC = -21449.81 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 8535.74 , AIC = -17061.49 
+
+Processing asset: GBPUSD 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 10050.99 , AIC = -20093.98 
+  Fitting model: eGARCH (training set only)
+Warning in fit_egarch_manual(returns, dist = manual_dist) :
+  Optimization may not have converged. Convergence code: 52
+DEBUG: best_result$value = 13498376 convergence = 52 
+DEBUG: best_result$par = -0.991095341981526, -10.0313575589212, 0.208623454871086, -0.0156137438171485, 0.892027858311163 
+DEBUG: sample_mean = -9.502129e-05 sample_var = 4.392122e-05 
+WARNING: Estimated mu = -0.9910953 is unreasonably large for daily returns!
+  This suggests optimization failed. Using sample mean instead.
+DEBUG fit_egarch_manual (norm): residuals mean= 3.57717e-20 std= 0.006627308 min= -0.08311435 max= 0.04124844 
+DEBUG fit_egarch_manual (norm): std_residuals mean= 0.9245911 std= 130.0151 min= -1561.415 max= 1971.915 
+DEBUG fit_egarch_manual (norm): sigma mean= 2.037323e+73 min= 2.590508e-06 max= 5.977504e+76 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= -4.302815 min= -25.72731 max= 353.5689 
+Warning: Model eGARCH for GBPUSD did not converge
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 10250.47 , AIC = -20490.95 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 8596.45 , AIC = -17182.9 
+
+Processing asset: USDZAR 
+  Total observations: 4515 
+  Training set: 1 - 2934 ( 2934 obs)
+  Test set: 2935 - 4515 ( 1581 obs)
+  Fitting model: sGARCH_norm (training set only)
+    Fit successful: LogLik = 8359.68 , AIC = -16711.36 
+  Fitting model: eGARCH (training set only)
+DEBUG: best_result$value = 664900.8 convergence = 0 
+DEBUG: best_result$par = -0.470011283802456, -9.30839118968958, 0.522561030594834, 0.359321433801978, 0.4856774966036 
+DEBUG: sample_mean = 0.0002543506 sample_var = 0.0001282211 
+WARNING: Estimated mu = -0.4700113 is unreasonably large for daily returns!
+  This suggests optimization failed. Using sample mean instead.
+DEBUG fit_egarch_manual (norm): residuals mean= -5.907831e-20 std= 0.01132348 min= -0.07427954 max= 0.1052634 
+DEBUG fit_egarch_manual (norm): std_residuals mean= 1.704052 std= 47.99335 min= -719.7474 max= 939.5362 
+DEBUG fit_egarch_manual (norm): sigma mean= 4.112835e+171 min= 2.214071e-05 max= 1.206706e+175 
+DEBUG fit_egarch_manual (norm): log_sigma2 mean= -1.28543 min= -21.43618 max= 806.2806 
+DEBUG fit_garch_chronological: After engine_residuals for USDZAR eGARCH 
+  residuals mean= 1.704052 std= 47.99335 min= -719.7474 max= 939.5362 
+  garch_fit$residuals mean= -5.907831e-20 
+  garch_fit$std_residuals mean= 1.704052 
+    Fit successful: LogLik = -664900.8 , AIC = 1329812 
+  Fitting model: gjrGARCH (training set only)
+    Fit successful: LogLik = 9205.4 , AIC = -18400.81 
+  Fitting model: TGARCH (training set only)
+    Fit successful: LogLik = 7434.71 , AIC = -14859.42 
+
+4. Extracting residuals from training set fits...
+Residuals directory: outputs/chronological/residuals_by_model 
+Models to extract: sGARCH_norm, eGARCH, gjrGARCH, TGARCH 
+  Saved 2934 residuals for NVDA - sGARCH_norm 
+  Saved 2934 residuals for MSFT - sGARCH_norm 
+  Saved 2934 residuals for AMZN - sGARCH_norm 
+  Saved 2934 residuals for EURUSD - sGARCH_norm 
+  Saved 2934 residuals for GBPUSD - sGARCH_norm 
+  Saved 2934 residuals for USDZAR - sGARCH_norm 
+DEBUG before saving NVDA eGARCH :
+  residuals_vec mean= 0.01641901 std= 19.70143 min= -230.6845 max= 496.758 
+  ALL NEGATIVE? FALSE 
+  Saved 2934 residuals for NVDA - eGARCH 
+DEBUG before saving USDZAR eGARCH :
+  residuals_vec mean= 1.704052 std= 47.99335 min= -719.7474 max= 939.5362 
+  ALL NEGATIVE? FALSE 
+  Saved 2934 residuals for USDZAR - eGARCH 
+  Saved 2934 residuals for NVDA - gjrGARCH 
+  Saved 2934 residuals for MSFT - gjrGARCH 
+  Saved 2934 residuals for AMZN - gjrGARCH 
+  Saved 2934 residuals for EURUSD - gjrGARCH 
+  Saved 2934 residuals for GBPUSD - gjrGARCH 
+  Saved 2934 residuals for USDZAR - gjrGARCH 
+  Saved 2934 residuals for NVDA - TGARCH 
+  Saved 2934 residuals for MSFT - TGARCH 
+  Saved 2934 residuals for AMZN - TGARCH 
+  Saved 2934 residuals for EURUSD - TGARCH 
+  Saved 2934 residuals for GBPUSD - TGARCH 
+  Saved 2934 residuals for USDZAR - TGARCH 
+
+5. Saving results...
+Model summary saved to: outputs/chronological/garch_fitting/model_summary.csv 
+Detailed results saved to: outputs/chronological/garch_fitting/detailed_results.rds 
+
+=== CHRONOLOGICAL SPLIT GARCH FITTING SUMMARY ===
+Execution time: 1.01 minutes
+Assets processed: 6 
+Models fitted: 4 
+Total combinations: 24 
+Successful fits: 20 
+Success rate: 83.33 %
+
+Split Configuration:
+  Training ratio: 0.65 (65%)
+  Test ratio: 0.35 (35%)
+  Cross-validation: Disabled 
+
+Results saved to: outputs/chronological 
+Residuals saved to: 
+================================================
+          used (Mb) gc trigger (Mb) max used (Mb)
+Ncells  791149 42.3    1257840 67.2  1257840 67.2
+Vcells 1862583 14.3    8388608 64.0  2344358 17.9
+
+Chronological GARCH fitting completed successfully.

@@ -163,6 +163,14 @@ fit_garch_chronological <- function(returns_data, asset_name, model_name) {
       # Extract standardized residuals
       residuals <- engine_residuals(garch_fit, standardize = TRUE)
       
+      # DEBUG: Print extracted residuals
+      if (model_name == "eGARCH") {
+        cat("DEBUG fit_garch_chronological: After engine_residuals for", asset_name, model_name, "\n")
+        cat("  residuals mean=", mean(residuals), "std=", sd(residuals), "min=", min(residuals), "max=", max(residuals), "\n")
+        cat("  garch_fit$residuals mean=", mean(garch_fit$residuals), "\n")
+        cat("  garch_fit$std_residuals mean=", mean(garch_fit$std_residuals), "\n")
+      }
+      
       # Calculate basic statistics
       stats <- list(
         asset = asset_name,
@@ -302,6 +310,13 @@ for (model_name in manual_models) {
       
       if (!is.null(fit_result$residuals)) {
         residuals_vec <- as.numeric(fit_result$residuals)
+        
+        # DEBUG: Print residuals before saving
+        if (model_name == "eGARCH") {
+          cat("DEBUG before saving", asset_name, model_name, ":\n")
+          cat("  residuals_vec mean=", mean(residuals_vec), "std=", sd(residuals_vec), "min=", min(residuals_vec), "max=", max(residuals_vec), "\n")
+          cat("  ALL NEGATIVE?", all(residuals_vec < 0), "\n")
+        }
         
         # Save residuals from training set
         residuals_df <- data.frame(residuals = residuals_vec)

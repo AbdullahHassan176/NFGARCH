@@ -31,29 +31,31 @@ fit_tgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
   dist <- match.arg(dist)
   n <- length(returns)
   
-  # Initialize parameters if not provided
+  # Initialize parameters with better starting values
+  sample_var <- var(returns, na.rm = TRUE)
+  sample_mean <- mean(returns, na.rm = TRUE)
+  sample_sd <- sqrt(sample_var)
+  
   if (is.null(init)) {
-    sample_var <- var(returns, na.rm = TRUE)
-    sample_mean <- mean(returns, na.rm = TRUE)
-    
     if (dist == "norm") {
       # 5 parameters: μ, ω, α, η, β
+      # Better initial values based on GARCH literature
       init <- c(
         mu = sample_mean,
-        omega = log(sample_var * 0.1),
-        alpha = 0,
-        eta = 0,  # asymmetry parameter
-        beta = 0
+        omega = log(sample_sd * 0.05),  # Small constant
+        alpha = qlogis(0.1),            # Transform to unconstrained: α ≈ 0.1
+        eta = 0,                         # Start with no asymmetry
+        beta = qlogis(0.85)             # Transform to unconstrained: β ≈ 0.85
       )
     } else if (dist == "std") {
       # 6 parameters: μ, ω, α, η, β, ν
       init <- c(
         mu = sample_mean,
-        omega = log(sample_var * 0.1),
-        alpha = 0,
+        omega = log(sample_sd * 0.05),
+        alpha = qlogis(0.1),
         eta = 0,
-        beta = 0,
-        nu = log(5)
+        beta = qlogis(0.85),
+        nu = log(8)  # Start with df=10 (2 + exp(log(8)))
       )
     }
   }
@@ -114,17 +116,53 @@ fit_tgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     })
   }
   
-  # Optimize with faster settings
+  # Set up box constraints for L-BFGS-B
+  # Tightly constrain mu around sample mean (±0.005 for daily returns)
+  mu_bound <- max(abs(sample_mean) * 2, 0.005)
+  
+  if (dist == "norm") {
+    lower <- c(sample_mean - mu_bound, log(1e-10), -10, -5, -10)
+    upper <- c(sample_mean + mu_bound, log(sample_var), 10, 5, 10)
+  } else {
+    lower <- c(sample_mean - mu_bound, log(1e-10), -10, -5, -10, log(1))
+    upper <- c(sample_mean + mu_bound, log(sample_var), 10, 5, 10, log(20))
+  }
+  
+  # Optimize with L-BFGS-B (box-constrained)
   opt_result <- optim(
     par = init,
     fn = neg_ll,
-    method = "BFGS",  # Use BFGS for better stability
+    method = "L-BFGS-B",  # Box-constrained optimizer
+    lower = lower,
+    upper = upper,
     control = list(
-      maxit = 200,        # Reduced iterations for speed
-      reltol = 1e-4,      # Less strict tolerance
-      abstol = 1e-4       # Less strict absolute tolerance
+      maxit = 300,        # More iterations with constraints
+      factr = 1e7         # Moderate tolerance (1e7 * machine precision)
     )
   )
+  
+  # If convergence failed, try from different starting point
+  if (opt_result$convergence != 0 || opt_result$value > 1e8) {
+    if (dist == "norm") {
+      init2 <- c(sample_mean, log(sample_sd * 0.01), qlogis(0.05), 0, qlogis(0.9))
+    } else {
+      init2 <- c(sample_mean, log(sample_sd * 0.01), qlogis(0.05), 0, qlogis(0.9), log(5))
+    }
+    
+    opt_result2 <- optim(
+      par = init2,
+      fn = neg_ll,
+      method = "L-BFGS-B",
+      lower = lower,
+      upper = upper,
+      control = list(maxit = 300, factr = 1e7)
+    )
+    
+    # Use better result
+    if (opt_result2$value < opt_result$value) {
+      opt_result <- opt_result2
+    }
+  }
   
   # Check convergence
   if (opt_result$convergence != 0) {
