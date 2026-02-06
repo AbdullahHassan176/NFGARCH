@@ -308,17 +308,17 @@ for (model_name in manual_models) {
     if (result_key %in% names(all_results)) {
       fit_result <- all_results[[result_key]]
       
-      if (!is.null(fit_result$residuals)) {
-        residuals_vec <- as.numeric(fit_result$residuals)
+      # Use standardized residuals for NF training (CRITICAL FIX)
+      if (!is.null(fit_result$std_residuals)) {
+        residuals_vec <- as.numeric(fit_result$std_residuals)
         
-        # DEBUG: Print residuals before saving
-        if (model_name == "eGARCH") {
-          cat("DEBUG before saving", asset_name, model_name, ":\n")
-          cat("  residuals_vec mean=", mean(residuals_vec), "std=", sd(residuals_vec), "min=", min(residuals_vec), "max=", max(residuals_vec), "\n")
-          cat("  ALL NEGATIVE?", all(residuals_vec < 0), "\n")
-        }
+        # Verify standardization
+        res_mean <- mean(residuals_vec)
+        res_std <- sd(residuals_vec)
+        cat("  [", asset_name, "-", model_name, "] Residuals: mean=", sprintf("%.4f", res_mean), 
+            " std=", sprintf("%.4f", res_std), "\n", sep="")
         
-        # Save residuals from training set
+        # Save STANDARDIZED residuals from training set for NF
         residuals_df <- data.frame(residuals = residuals_vec)
         residuals_file <- file.path(model_dir, paste0(asset_name, "_Chronological_residuals.csv"))
         write.csv(residuals_df, residuals_file, row.names = FALSE)

@@ -351,10 +351,19 @@ for (window_id in unique_windows) {
       if (result_key %in% names(all_results)) {
         fit_result <- all_results[[result_key]]
         
-        if (!is.null(fit_result$residuals)) {
-          residuals_vec <- as.numeric(fit_result$residuals)
+        # Use standardized residuals for NF training (CRITICAL FIX)
+        if (!is.null(fit_result$std_residuals)) {
+          residuals_vec <- as.numeric(fit_result$std_residuals)
           
-          # Save residuals from this window
+          # Verify standardization
+          res_mean <- mean(residuals_vec)
+          res_std <- sd(residuals_vec)
+          if (window_id == 1) {  # Only print for first window to reduce clutter
+            cat("  [", asset_name, "-", model_name, "] Residuals: mean=", sprintf("%.4f", res_mean), 
+                " std=", sprintf("%.4f", res_std), "\n", sep="")
+          }
+          
+          # Save STANDARDIZED residuals from this window for NF
           residuals_df <- data.frame(residuals = residuals_vec)
           residuals_file <- paste(model_dir, paste0(asset_name, "_TSCV_window", window_id, "_residuals.csv"), sep="/")
           write.csv(residuals_df, residuals_file, row.names = FALSE)

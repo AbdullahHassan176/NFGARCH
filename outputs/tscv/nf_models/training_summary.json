@@ -1,12 +1,12 @@
 {
-  "execution_time": 336.93782782554626,
+  "execution_time": 424.33281540870667,
   "windows_processed": 3,
   "window_ids": [
     1,
     2,
     3
   ],
-  "models_trained": 58,
+  "models_trained": 69,
   "config": {
     "epochs": 75,
     "batch_size": 512,

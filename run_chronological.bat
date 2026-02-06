@@ -531,8 +531,7 @@ echo ========================================
 REM Generate timing summary
 call :GENERATE_SUMMARY
 
-REM Exit successfully
-pause
+REM Exit successfully - skip pause when called from wrapper
 exit /b 0
 
 REM =============================================================================
