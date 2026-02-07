@@ -80,30 +80,32 @@ PIPELINE_MODE <- "optimized"  # Change to "full" for comprehensive runs
 # =============================================================================
 
 GARCH_MODELS <- list(
-  sGARCH_norm = list(
+  sGARCH_std = list(
     model = "sGARCH",
-    distribution = "norm",
-    description = "Standard GARCH with Normal Distribution"
+    distribution = "std",
+    description = "Standard GARCH with Student-t Distribution"
   ),
-  # sGARCH_sstd: REMOVED 2026-02-02 - Skewed Student-t not implemented
-  # Previous results labeled "sstd" actually used symmetric Student-t "std"
-  # For Student-t distribution, add sGARCH_std manually or use NF-GARCH
-  eGARCH = list(
+  eGARCH_std = list(
     model = "eGARCH",
-    distribution = "norm", 
-    description = "Exponential GARCH with Normal Distribution (Nelson 1991)"
+    distribution = "std", 
+    description = "Exponential GARCH with Student-t Distribution (Nelson 1991)"
   ),
-  gjrGARCH = list(
+  gjrGARCH_std = list(
     model = "gjrGARCH",
-    distribution = "norm",
-    description = "GJR-GARCH with Leverage Effects (Glosten et al. 1993)"
+    distribution = "std",
+    description = "GJR-GARCH with Leverage Effects and Student-t (Glosten et al. 1993)"
   ),
-  TGARCH = list(
+  TGARCH_std = list(
     model = "TGARCH", 
-    distribution = "norm",
-    description = "Threshold GARCH (Zakoian 1994 specification)"
+    distribution = "std",
+    description = "Threshold GARCH with Student-t (Zakoian 1994 specification)"
   )
 )
+
+# NOTE: Using Student-t (std) only as it's the standard for financial econometrics.
+# Student-t captures fat tails and is the appropriate baseline for financial returns.
+# This ensures fair comparison: both NF-GARCH and Standard GARCH start from the
+# same realistic distributional assumption.
 
 # NF-GARCH Model Specifications (using NF residuals)
 # NOTE: distribution parameter here is metadata only - the NF learns the actual

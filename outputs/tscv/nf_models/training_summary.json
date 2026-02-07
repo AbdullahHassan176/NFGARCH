@@ -1,0 +1,22 @@
+{
+  "execution_time": 7.025894403457642,
+  "windows_processed": 3,
+  "window_ids": [
+    1,
+    2,
+    3
+  ],
+  "models_trained": 1,
+  "config": {
+    "epochs": 75,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "validation_split": 0.0,
+    "early_stopping": false,
+    "num_layers": 4,
+    "hidden_features": 64,
+    "clear_cache": true,
+    "save_models": true,
+    "output_dir": "outputs/tscv/nf_models"
+  }
+}
