@@ -15,6 +15,12 @@ if exist "C:\Program Files\R\R-4.5.1\bin\Rscript.exe" (
     exit /b 0
 )
 
+if exist "C:\Program Files\R\R-4.4.2\bin\Rscript.exe" (
+    set "RSCRIPT=C:\Program Files\R\R-4.4.2\bin\Rscript.exe"
+    echo Found Rscript: %RSCRIPT%
+    exit /b 0
+)
+
 if exist "C:\Program Files\R\R-4.4.1\bin\Rscript.exe" (
     set "RSCRIPT=C:\Program Files\R\R-4.4.1\bin\Rscript.exe"
     echo Found Rscript: %RSCRIPT%

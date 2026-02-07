@@ -236,17 +236,23 @@ def train_tscv_nf(file_path, model_key, window_id, output_dir, config):
     with torch.no_grad():
         samples = flow.sample(len(residuals)).numpy()
     
-    # CRITICAL: Force standardization of NF samples
-    # NF samples may not be exactly standardized after transformations
-    # Must ensure mean=0, SD=1 for proper use in simulation (σ_t * ε_t)
+    # Verify NF samples are standardized (should be naturally if trained correctly)
     samples_mean = samples.mean()
     samples_std = samples.std()
-    if abs(samples_mean) > 0.01 or abs(samples_std - 1) > 0.01:
-        print(f"  Standardizing NF samples: mean={samples_mean:.6f}, std={samples_std:.6f}")
-        samples = (samples - samples_mean) / samples_std
-        print(f"  After standardization: mean={samples.mean():.6f}, std={samples.std():.6f}")
+    
+    print(f"    NF sample statistics: mean={samples_mean:.6f}, std={samples_std:.6f}")
+    
+    # Check if samples are properly standardized
+    if abs(samples_mean) > 0.1 or abs(samples_std - 1) > 0.15:
+        print(f"    WARNING: NF samples NOT standardized! This indicates NF training issue.")
+        print(f"      Expected: mean~0, std~1")
+        print(f"      Got: mean={samples_mean:.4f}, std={samples_std:.4f}")
+        print(f"    Recommendation: Check training residuals and NF architecture")
+        # Don't force standardization - let it fail so we know there's an issue
+    elif abs(samples_mean) > 0.05 or abs(samples_std - 1) > 0.05:
+        print(f"    Note: Slight deviation from perfect standardization (acceptable)")
     else:
-        print(f"  NF samples already standardized: mean={samples_mean:.6f}, std={samples_std:.6f}")
+        print(f"    [OK] NF samples properly standardized")
     
     # Calculate evaluation metrics
     ks_stat, ks_pvalue = ks_2samp(residuals.flatten(), samples.flatten())

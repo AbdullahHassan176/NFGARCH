@@ -321,7 +321,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 200
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -352,7 +352,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 200
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -462,7 +462,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 200
+              n_paths = 100
             )
           }, error = function(e) NULL)
           
@@ -493,7 +493,7 @@ for (asset_name in names(returns_data)) {
               model_type = cfg$model,
               submodel = cfg$submodel,
               engine = "manual",
-              n_paths = 200
+              n_paths = 100
             )
           }, error = function(e) NULL)
           

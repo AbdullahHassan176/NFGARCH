@@ -309,21 +309,30 @@ for (model_name in manual_models) {
       fit_result <- all_results[[result_key]]
       
       # Use standardized residuals for NF training (CRITICAL FIX)
-      if (!is.null(fit_result$std_residuals)) {
-        residuals_vec <- as.numeric(fit_result$std_residuals)
+      # residuals field contains output from engine_residuals(..., standardize = TRUE)
+      if (!is.null(fit_result$residuals)) {
+        residuals_vec <- as.numeric(fit_result$residuals)
         
-        # Verify standardization
-        res_mean <- mean(residuals_vec)
-        res_std <- sd(residuals_vec)
-        cat("  [", asset_name, "-", model_name, "] Residuals: mean=", sprintf("%.4f", res_mean), 
-            " std=", sprintf("%.4f", res_std), "\n", sep="")
+        # Verify standardization (STRICT validation)
+        res_mean <- mean(residuals_vec, na.rm = TRUE)
+        res_std <- sd(residuals_vec, na.rm = TRUE)
         
-        # Save STANDARDIZED residuals from training set for NF
-        residuals_df <- data.frame(residuals = residuals_vec)
-        residuals_file <- file.path(model_dir, paste0(asset_name, "_Chronological_residuals.csv"))
-        write.csv(residuals_df, residuals_file, row.names = FALSE)
-        
-        cat("  Saved", length(residuals_vec), "residuals for", asset_name, "-", model_name, "\n")
+        if (abs(res_mean) > 0.05 || abs(res_std - 1.0) > 0.1) {
+          cat("  [WARNING] ", asset_name, "-", model_name, " residuals NOT standardized!\n", sep="")
+          cat("    Mean = ", sprintf("%.6f", res_mean), " (should be ~0)\n", sep="")
+          cat("    SD = ", sprintf("%.6f", res_std), " (should be ~1)\n", sep="")
+          cat("    SKIPPING NF training for this model\n")
+        } else {
+          cat("  [", asset_name, "-", model_name, "] Residuals validated: mean=", sprintf("%.4f", res_mean), 
+              " std=", sprintf("%.4f", res_std), "\n", sep="")
+          
+          # Save STANDARDIZED residuals from training set for NF
+          residuals_df <- data.frame(residuals = residuals_vec)
+          residuals_file <- file.path(model_dir, paste0(asset_name, "_Chronological_residuals.csv"))
+          write.csv(residuals_df, residuals_file, row.names = FALSE)
+          
+          cat("  Saved", length(residuals_vec), "standardized residuals\n")
+        }
       }
     }
   }

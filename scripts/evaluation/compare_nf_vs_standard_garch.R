@@ -13,6 +13,9 @@ if (file.exists("scripts/core/config.R")) {
 # Load split-specific configuration for evaluation
 source("scripts/evaluation/evaluation_split_config.R")
 
+# Load parametric sampling functions for Standard GARCH
+source("scripts/utils/parametric_sampling.R")
+
 library(openxlsx)
 library(dplyr)
 library(tidyr)
@@ -181,18 +184,31 @@ for (asset_idx in seq_along(all_returns)) {
       )
 
       if (engine_converged(fit)) {
-        standard_residuals <- engine_residuals(fit, standardize = TRUE)
-        # Use evaluate_return_forecasts with n_paths=200 for balanced speed/accuracy
+        # FIXED: For Standard GARCH, use parametric sampling instead of bootstrap
+        # Generate innovations from the assumed parametric distribution (norm/std)
+        n_paths <- 100L
+        n_total <- length(test_returns) * n_paths  # horizon * paths
+        
+        cat("    Generating", n_total, "parametric innovations from", cfg$distribution, "...\n")
+        parametric_innovations <- generate_standard_garch_innovations(
+          fit = fit,
+          n = n_total,
+          distribution = cfg$distribution
+        )
+        cat("    Generated innovations: mean =", round(mean(parametric_innovations), 6), 
+            ", sd =", round(sd(parametric_innovations), 6), "\n")
+        
+        # Use evaluate_return_forecasts with parametric innovations
         # Point forecast = mean across paths, matching NF-GARCH methodology
         eval_result <- evaluate_return_forecasts(
           fit = fit,
-          nf_residuals = standard_residuals,
+          nf_residuals = parametric_innovations,
           actual_returns = test_returns,
           horizon = length(test_returns),
           model_type = cfg$model,
           submodel = cfg$submodel,
           engine = "manual",
-          n_paths = 200L
+          n_paths = n_paths
         )
         if (is.null(eval_result) || is.na(eval_result$mse) || eval_result$n_valid_paths < 1L) next
 

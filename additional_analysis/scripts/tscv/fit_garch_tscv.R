@@ -352,23 +352,35 @@ for (window_id in unique_windows) {
         fit_result <- all_results[[result_key]]
         
         # Use standardized residuals for NF training (CRITICAL FIX)
-        if (!is.null(fit_result$std_residuals)) {
-          residuals_vec <- as.numeric(fit_result$std_residuals)
+        # residuals field contains output from engine_residuals(..., standardize = TRUE)
+        if (!is.null(fit_result$residuals)) {
+          residuals_vec <- as.numeric(fit_result$residuals)
           
           # Verify standardization
-          res_mean <- mean(residuals_vec)
-          res_std <- sd(residuals_vec)
-          if (window_id == 1) {  # Only print for first window to reduce clutter
-            cat("  [", asset_name, "-", model_name, "] Residuals: mean=", sprintf("%.4f", res_mean), 
-                " std=", sprintf("%.4f", res_std), "\n", sep="")
+          # Verify standardization (STRICT validation)
+          res_mean <- mean(residuals_vec, na.rm = TRUE)
+          res_std <- sd(residuals_vec, na.rm = TRUE)
+          
+          if (abs(res_mean) > 0.05 || abs(res_std - 1.0) > 0.1) {
+            if (window_id == 1) {  # Only print for first window to reduce clutter
+              cat("  [WARNING] ", asset_name, "-", model_name, " window ", window_id, " residuals NOT standardized!\n", sep="")
+              cat("    Mean = ", sprintf("%.6f", res_mean), " (should be ~0)\n", sep="")
+              cat("    SD = ", sprintf("%.6f", res_std), " (should be ~1)\n", sep="")
+              cat("    SKIPPING NF training for this window\n")
+            }
+          } else {
+            if (window_id == 1) {  # Only print for first window to reduce clutter
+              cat("  [", asset_name, "-", model_name, "] Residuals validated: mean=", sprintf("%.4f", res_mean), 
+                  " std=", sprintf("%.4f", res_std), "\n", sep="")
+            }
+            
+            # Save STANDARDIZED residuals from this window for NF
+            residuals_df <- data.frame(residuals = residuals_vec)
+            residuals_file <- paste(model_dir, paste0(asset_name, "_TSCV_window", window_id, "_residuals.csv"), sep="/")
+            write.csv(residuals_df, residuals_file, row.names = FALSE)
+            
+            cat("    Saved", length(residuals_vec), "standardized residuals\n")
           }
-          
-          # Save STANDARDIZED residuals from this window for NF
-          residuals_df <- data.frame(residuals = residuals_vec)
-          residuals_file <- paste(model_dir, paste0(asset_name, "_TSCV_window", window_id, "_residuals.csv"), sep="/")
-          write.csv(residuals_df, residuals_file, row.names = FALSE)
-          
-          cat("    Saved", length(residuals_vec), "residuals for", asset_name, "-", model_name, "\n")
         }
       }
     }

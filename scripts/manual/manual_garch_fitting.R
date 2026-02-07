@@ -280,7 +280,7 @@ run_optimized_cv <- function(returns_data, asset_name, model_name) {
     }
     
     # Memory management
-    if (cv_config$clear_memory && i %% 5 == 0) {
+    if (isTRUE(cv_config$clear_memory) && i %% 5 == 0) {
       gc()
     }
   }
@@ -410,11 +410,26 @@ for (model_name in manual_models) {
               ") does not match training size (", train_size, ")\n")
         }
         
-        # Save residuals for NF training
+        # Validate residuals are standardized
+        resid_mean <- mean(residuals_vec, na.rm = TRUE)
+        resid_sd <- sd(residuals_vec, na.rm = TRUE)
+        
+        if (abs(resid_mean) > 0.05 || abs(resid_sd - 1.0) > 0.1) {
+          cat("    WARNING: Residuals not properly standardized!\n")
+          cat("      Mean =", resid_mean, "(should be ~0)\n")
+          cat("      SD =", resid_sd, "(should be ~1)\n")
+          cat("      Skipping NF training for this model\n")
+          next
+        }
+        
+        cat("    Residuals validated: mean =", round(resid_mean, 4), 
+            ", sd =", round(resid_sd, 4), "\n")
+        
+        # Save residuals for NF training (using correct filename)
         residuals_df <- data.frame(residuals = residuals_vec)
-        residuals_file <- file.path(model_dir, paste0(asset_name, "_Manual_residuals.csv"))
+        residuals_file <- file.path(model_dir, paste0(asset_name, "_Manual_Optimized_residuals.csv"))
         write.csv(residuals_df, residuals_file, row.names = FALSE)
-        cat("    Saved", length(residuals_vec), "residuals (training set only)\n")
+        cat("    Saved", length(residuals_vec), "standardized residuals\n")
       } else {
         cat("    WARNING: Failed to fit", model_name, "for", asset_name, "on full training set\n")
       }

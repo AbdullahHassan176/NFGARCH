@@ -34,20 +34,27 @@ fit_sgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     sample_mean <- mean(returns, na.rm = TRUE)
     
     if (dist == "norm") {
-      # 4 parameters: μ, ω, α, β - Better starting values for faster convergence
+      # 4 parameters: μ, ω, α, β (UNCONSTRAINED theta values for optim)
+      # Use inverse logit to convert constrained initial guesses to unconstrained theta
+      alpha_init <- 0.1
+      beta_raw_init <- 0.8  # This will be constrained further by transform_params
+      
       init <- c(
         mu = sample_mean,
-        omega = log(sample_var * 0.05),  # Smaller initial omega
-        alpha = 0.1,  # Start with small positive alpha
-        beta = 0.8    # Start with high beta (typical for financial data)
+        omega = log(sample_var * 0.05),  # log transform
+        alpha = log(alpha_init / (1 - alpha_init)),  # inverse logit
+        beta = log(beta_raw_init / (1 - beta_raw_init))  # inverse logit for beta_raw
       )
     } else if (dist == "std") {
-      # 5 parameters: μ, ω, α, β, ν - Better starting values
+      # 5 parameters: μ, ω, α, β, ν (UNCONSTRAINED theta values for optim)
+      alpha_init <- 0.1
+      beta_raw_init <- 0.8
+      
       init <- c(
         mu = sample_mean,
         omega = log(sample_var * 0.05),
-        alpha = 0.1,
-        beta = 0.8,
+        alpha = log(alpha_init / (1 - alpha_init)),  # inverse logit
+        beta = log(beta_raw_init / (1 - beta_raw_init)),  # inverse logit
         nu = log(5)  # ν = 2 + exp(log(5)) = 7
       )
     }
@@ -110,19 +117,32 @@ fit_sgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     })
   }
   
-  # Optimize with faster settings
+  # DEBUG: Check initial neg_ll
+  init_ll <- neg_ll(init)
+  cat("DEBUG sGARCH optim: init_ll=", sprintf("%.4f", init_ll), "\n", sep="")
+  
+  # Set parameter bounds for L-BFGS-B
+  mu_bound <- max(abs(sample_mean) * 2, 0.005)
+  lower <- c(-mu_bound, log(sample_var * 0.001), log(0.01/(1-0.01)), log(0.01/(1-0.01)))
+  upper <- c(mu_bound, log(sample_var * 0.5), log(0.3/(1-0.3)), log(0.95/(1-0.95)))
+  
+  # Optimize with L-BFGS-B (box-constrained)
   opt_result <- optim(
     par = init,
     fn = neg_ll,
-    method = "BFGS",  # Use BFGS for better stability
+    method = "L-BFGS-B",  # Box-constrained optimizer
+    lower = lower,
+    upper = upper,
     control = list(
-      maxit = 200,        # Reduced iterations for speed
-      reltol = 1e-4,      # Less strict tolerance
-      abstol = 1e-4       # Less strict absolute tolerance
+      maxit = 500,         # More iterations
+      factr = 1e7,         # Moderate precision
+      trace = 1            # Print optimization progress
     )
   )
   
   # Check convergence
+  cat("DEBUG sGARCH optim: final_ll=", sprintf("%.4f", opt_result$value), 
+      " convergence=", opt_result$convergence, " counts=", opt_result$counts[1], "\n", sep="")
   if (opt_result$convergence != 0) {
     warning("Optimization may not have converged. Convergence code: ", opt_result$convergence)
   }
@@ -146,6 +166,13 @@ fit_sgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     
     sigma <- sqrt(sigma2)
     std_residuals <- residuals / sigma
+    
+    # DEBUG: Check standardization
+    cat("DEBUG sGARCH: mu=", sprintf("%.6f", mu), " omega=", sprintf("%.6f", omega), 
+        " alpha=", sprintf("%.4f", alpha), " beta=", sprintf("%.4f", beta), "\n", sep="")
+    cat("  residuals: mean=", sprintf("%.6f", mean(residuals)), " std=", sprintf("%.6f", sd(residuals)), "\n", sep="")
+    cat("  sigma: mean=", sprintf("%.6f", mean(sigma)), " std=", sprintf("%.6f", sd(sigma)), "\n", sep="")
+    cat("  std_residuals: mean=", sprintf("%.6f", mean(std_residuals)), " std=", sprintf("%.6f", sd(std_residuals)), "\n", sep="")
     
     # Compute log-likelihood and information criteria
     ll <- -opt_result$value
