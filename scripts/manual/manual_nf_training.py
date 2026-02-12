@@ -44,7 +44,7 @@ def load_nf_config(config_path="scripts/core/nf_config.json"):
             full_config = json.load(f)
         
         print("=" * 70)
-        print(f"✓ Loaded config from: {config_path}")
+        print(f"[OK] Loaded config from: {config_path}")
         print(f"  Pipeline mode: {full_config['pipeline_mode']}")
         print(f"  NF Architecture: {full_config['nf_config']['num_layers']} layers, "
               f"{full_config['nf_config']['hidden_features']} hidden features")
@@ -119,7 +119,7 @@ def set_seed(seed=None):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)  # For multi-GPU setups
     
-    print(f"✓ Random seed set to: {seed} (from R config)")
+    print(f"[OK] Random seed set to: {seed} (from R config)")
     return seed
 
 def clear_memory():

@@ -128,7 +128,7 @@ echo.
 echo Running TS-CV GARCH fitting with rolling windows...
 echo.
 
-"%RSCRIPT%" additional_analysis\scripts\tscv\fit_garch_tscv.R
+"%RSCRIPT%" scripts\manual\manual_garch_fitting.R
 if %errorlevel% neq 0 (
     echo [ERROR] TS-CV GARCH fitting failed
     pause
@@ -147,7 +147,7 @@ echo.
 echo Training NF models on TS-CV residuals...
 echo.
 
-python additional_analysis\scripts\tscv\train_nf_tscv.py
+python scripts\manual\manual_nf_training.py
 if %errorlevel% neq 0 (
     echo [ERROR] NF training failed
     pause

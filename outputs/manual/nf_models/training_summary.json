@@ -1,0 +1,31 @@
+{
+  "execution_time": 84.99143981933594,
+  "models_trained": 18,
+  "total_files": 18,
+  "success_rate": 1.0,
+  "config": {
+    "epochs": 75,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "early_stopping": true,
+    "patience": 15,
+    "min_delta": 0.0001,
+    "validation_split": 0.2,
+    "validation_frequency": 5,
+    "num_layers": 4,
+    "hidden_features": 64,
+    "dropout": null,
+    "batch_norm": null,
+    "residual_connections": null,
+    "gradient_checkpointing": true,
+    "mixed_precision": true,
+    "gradient_clipping": null,
+    "weight_decay": null,
+    "clear_cache": true,
+    "lr_scheduler": null,
+    "warmup_epochs": null,
+    "save_models": true,
+    "save_plots": true,
+    "output_dir": "outputs/manual/nf_models"
+  }
+}

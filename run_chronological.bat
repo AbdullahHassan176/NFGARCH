@@ -127,7 +127,7 @@ echo.
 echo Running chronological GARCH fitting (65/35 split, no CV)...
 echo.
 
-"%RSCRIPT%" additional_analysis\scripts\chronological\fit_garch_chronological.R
+"%RSCRIPT%" scripts\manual\manual_garch_fitting.R
 if %errorlevel% neq 0 (
     echo [ERROR] Chronological GARCH fitting failed
     pause
@@ -147,7 +147,7 @@ echo.
 echo Training NF models on chronological residuals...
 echo.
 
-python additional_analysis\scripts\chronological\train_nf_chronological.py
+python scripts\manual\manual_nf_training.py
 if %errorlevel% neq 0 (
     echo [ERROR] NF training failed
     pause

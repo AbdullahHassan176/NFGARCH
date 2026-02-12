@@ -214,7 +214,13 @@ fit_sgarch_manual <- function(returns, dist = c("norm", "std"), init = NULL) {
     }
     
     sigma <- sqrt(sigma2)
+    
+    # Standardize residuals - Student-t requires additional scaling
+    # Student-t(nu) has Var(z) = nu/(nu-2), so scale by sqrt((nu-2)/nu) to get Var=1
     std_residuals <- residuals / sigma
+    if (nu > 2) {
+      std_residuals <- std_residuals * sqrt((nu - 2) / nu)
+    }
     
     # Compute log-likelihood and information criteria
     ll <- -opt_result$value
