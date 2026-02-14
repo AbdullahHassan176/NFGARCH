@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Meta-Analysis: Chronological vs Time-Series Cross-Validation
 # Compares NF-GARCH performance across both validation strategies
-# Provides insights for dissertation on robustness and temporal stability
+# Compare chronological vs TSCV results for dissertation
 
 library(openxlsx)
 library(dplyr)
@@ -346,7 +346,7 @@ if (!is.null(comparison_results$temporal_stability)) {
 cat("\n3. Publication Readiness:\n")
 cat("   -> Both validation methods complete: YES\n")
 cat("   -> Addresses reviewer concerns: YES\n")
-cat("   -> Methodological rigor: ENHANCED\n")
+cat("   -> Methodological rigor: addressed\n")
 cat("   -> Ready for journal submission\n")
 
 cat("\n=====================================\n")

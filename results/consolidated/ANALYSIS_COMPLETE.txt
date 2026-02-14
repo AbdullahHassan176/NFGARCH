@@ -19,7 +19,5 @@ METRICS INCLUDED:
   - NPaths (Number of valid simulation paths)
   - AIC, BIC, LogLikelihood
 
-Note: 5 eGARCH models failed due to optimization convergence issues.
-      This is expected for complex GARCH models and does not affect
-      the validity of the 25 successful model fits.
+Five eGARCH fits failed (optimization convergence). The 25 successful fits are unchanged.
 

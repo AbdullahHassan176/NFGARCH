@@ -1,5 +1,5 @@
 # scripts/utils/utils_nf_garch.R
-# Manual NF-GARCH simulator with safety floors and robust variance handling
+# NF-GARCH simulator with safety floors and variance handling
 
 # Load centralized standardization function
 source("scripts/utils/standardize_residuals.R")
@@ -127,8 +127,7 @@ simulate_nf_garch <- function(fit,
   # eGARCH needs E|z| term; use theoretical expectation
   # For standardized residuals (mean=0, SD=1), E|z| depends on distribution
   # Default to Normal: E|z| = sqrt(2/pi) ≈ 0.798
-  # Note: This assumes z_nf are standardized Normal residuals
-  # For Student-t, should use E_abs_t(nu) but nu is not available here
+  # Assumes z_nf are standardized Normal residuals. For Student-t we would need E_abs_t(nu) but nu is not available here.
   # Using theoretical Normal expectation is correct for standardized Normal residuals
   Ez_abs <- sqrt(2/pi)  # Theoretical E|z| for N(0,1)
 

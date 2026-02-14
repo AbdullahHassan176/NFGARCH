@@ -128,7 +128,7 @@ fit_models <- function(returns_list, model_type, dist_type = "sstd", submodel = 
 #### Set the GARCH Model Configs ####
 
 # List of Different model configurations
-# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
+# sstd was changed to std; skewed Student-t is not implemented in the engine (verified 2026-02-02)
 # Student-t (std) is appropriate; NF learns actual residual distribution in NF-GARCH
 model_configs <- list(
   sGARCH_norm  = list(model = "sGARCH", distribution = "norm", submodel = NULL),

@@ -128,7 +128,7 @@ fit_models <- function(returns_list, model_type, dist_type = "sstd", submodel = 
 
 # Model Configuration Definitions
 # Define specifications for various GARCH-family models to capture different volatility dynamics
-# NOTE: Changed "sstd" to "std" - skewed Student-t not implemented (verified 2026-02-02)
+# sstd was changed to std; skewed Student-t is not implemented in the engine (verified 2026-02-02)
 
 model_configs <- list(
   sGARCH  = list(model = "sGARCH", distribution = "std", submodel = NULL),    # Standard GARCH with Student-t
@@ -158,12 +158,12 @@ equity_train_returns <- lapply(equity_returns, function(x) x[1:get_split_index(x
 equity_test_returns  <- lapply(equity_returns, function(x) x[(get_split_index(x) + 1):nrow(x)])
 
 # Time-Series Cross-Validation
-# Implement sliding window approach for robust model evaluation across time
+# Sliding window for model evaluation across time
 
 ts_cross_validate <- function(returns, model_type, dist_type = "sstd", submodel = NULL, 
                               window_size = 500, step_size = 150, forecast_horizon = 20, engine = "manual") {
   # Perform sliding window time-series cross-validation
-  # This approach respects temporal ordering and provides robust performance estimates
+  # Respects temporal ordering
   
   n <- nrow(returns)
   results <- list()

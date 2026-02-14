@@ -11,7 +11,7 @@ if (file.exists("scripts/core/config.R")) {
 
 library(openxlsx)
 
-cat("=== COMPREHENSIVE RESULTS VERIFICATION ===\n\n")
+cat("=== RESULTS VERIFICATION ===\n\n")
 
 all_ok <- TRUE
 

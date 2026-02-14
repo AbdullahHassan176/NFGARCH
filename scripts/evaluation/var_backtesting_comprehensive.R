@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Comprehensive VaR Backtesting
+# VaR backtesting (Kupiec, Christoffersen)
 # Implements: Kupiec test, Christoffersen test, exceedance rates, Expected Shortfall
 #
 # NOTE (methodology): This script uses *empirical* VaR (quantile of the test returns)
@@ -28,7 +28,7 @@ source("scripts/evaluation/evaluation_split_config.R")
 # Load manual config for asset lists
 source("scripts/manual/manual_optimized_config.R")
 
-cat("=== COMPREHENSIVE VaR BACKTESTING ===\n\n")
+cat("=== VaR BACKTESTING ===\n\n")
 
 # =============================================================================
 # Helper Functions

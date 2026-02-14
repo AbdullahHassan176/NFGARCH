@@ -188,7 +188,7 @@ clean_numeric <- function(x) {
 }
 
 # =============================================================================
-# ENHANCED PLOTTING
+# PLOTTING
 # =============================================================================
 
 # Professional theme for plots
@@ -219,7 +219,7 @@ professional_theme <- function() {
     )
 }
 
-# Enhanced histogram
+# Histogram with optional density overlay
 create_enhanced_histogram <- function(data, x_var, title = NULL, subtitle = NULL, 
                                      bins = 30, fill_color = "steelblue", 
                                      alpha = 0.7, add_density = TRUE) {
@@ -242,7 +242,7 @@ create_enhanced_histogram <- function(data, x_var, title = NULL, subtitle = NULL
   return(p)
 }
 
-# Enhanced time series plot
+# Time series plot
 create_enhanced_timeseries <- function(data, x_var, y_var, title = NULL, 
                                       subtitle = NULL, color_var = NULL,
                                       line_size = 0.8, point_size = 1) {
@@ -272,7 +272,7 @@ create_enhanced_timeseries <- function(data, x_var, y_var, title = NULL,
   return(p)
 }
 
-# Enhanced correlation heatmap
+# Correlation heatmap
 create_correlation_heatmap <- function(data, title = NULL, subtitle = NULL,
                                       method = "pearson", show_values = TRUE,
                                       color_palette = "viridis") {
@@ -500,7 +500,7 @@ utils <- list(
   safe_numeric = safe_numeric,
   clean_numeric = clean_numeric,
   
-  # Enhanced plotting
+  # Plotting
   professional_theme = professional_theme,
   create_enhanced_histogram = create_enhanced_histogram,
   create_enhanced_timeseries = create_enhanced_timeseries,

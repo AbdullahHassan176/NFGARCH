@@ -188,134 +188,187 @@ if (file.exists(standard_results_file)) {
 residuals_dir <- EVAL_PATHS$residuals
 nf_residuals_dir <- EVAL_PATHS$nf_models
 
+# Map folder/config names to base model (e.g. sGARCH_std -> sGARCH, TGARCH_std -> TGARCH)
+base_model_from_name <- function(name) {
+  sub("_(std|norm|sstd)$", "", name, ignore.case = TRUE)
+}
+
+# Discover standard residual files: residuals_by_model/{model_folder}/{asset}_Manual_Optimized_residuals.csv
+# Returns list of (base_model, asset) -> path (one path per pair; if multiple folders map to same base, first wins)
+discover_standard_residuals <- function() {
+  out <- list()
+  if (!dir.exists(residuals_dir)) return(out)
+  subdirs <- list.dirs(residuals_dir, full.names = FALSE, recursive = FALSE)
+  for (sub in subdirs) {
+    base <- base_model_from_name(sub)
+    dir_path <- file.path(residuals_dir, sub)
+    files <- list.files(dir_path, pattern = "_Manual_Optimized_residuals\\.csv$", full.names = TRUE)
+    for (f in files) {
+      asset <- sub("_Manual_Optimized_residuals\\.csv$", "", basename(f))
+      key <- paste(base, asset, sep = "_")
+      if (!key %in% names(out)) out[[key]] <- list(base_model = base, asset = asset, path = f)
+    }
+  }
+  out
+}
+
+# Discover NF residual files: nf_models/*_synthetic_residuals.csv
+# Supports MODEL_ASSET (e.g. eGARCH_AMZN) and MODEL_DIST_ASSET (e.g. sGARCH_std_AMZN, sGARCH_norm_AMZN)
+discover_nf_residuals <- function() {
+  out <- list()
+  if (!dir.exists(nf_residuals_dir)) return(out)
+  files <- list.files(nf_residuals_dir, pattern = "_synthetic_residuals\\.csv$", full.names = TRUE)
+  for (f in files) {
+    fname_clean <- stringr::str_replace(basename(f), "_synthetic_residuals\\.csv$", "")
+    parts <- strsplit(fname_clean, "_")[[1]]
+    if (length(parts) == 2) {
+      base <- parts[1]
+      asset <- parts[2]
+    } else if (length(parts) >= 3) {
+      base <- base_model_from_name(paste(parts[1:(length(parts)-1)], collapse = "_"))
+      asset <- parts[length(parts)]
+    } else next
+    key <- paste(base, asset, sep = "_")
+    if (!key %in% names(out)) out[[key]] <- list(base_model = base, asset = asset, path = f)
+  }
+  out
+}
+
+# Load residual vector from CSV (handles header row)
+load_residuals <- function(path) {
+  tryCatch({
+    data <- read.csv(path, header = FALSE, stringsAsFactors = FALSE)
+    vec <- data[[1]]
+    if (is.character(vec[1]) && grepl("residual", vec[1], ignore.case = TRUE))
+      vec <- vec[-1]
+    vec <- as.numeric(vec[!is.na(vec)])
+    if (length(vec) > 10) vec else NULL
+  }, error = function(e) NULL)
+}
+
 # =============================================================================
 # Calculate Distributional Metrics
 # =============================================================================
 
 cat("\n=== CALCULATING DISTRIBUTIONAL METRICS ===\n")
 
+standard_map <- discover_standard_residuals()
+nf_map <- discover_nf_residuals()
+cat("  Discovered", length(standard_map), "standard residual files\n")
+cat("  Discovered", length(nf_map), "NF residual files\n")
+
+# Process each (base_model, asset) that has both standard and NF residuals
 distributional_results <- list()
+keys_std <- names(standard_map)
+keys_nf <- names(nf_map)
+keys_both <- intersect(keys_std, keys_nf)
+cat("  Pairs with both standard and NF:", length(keys_both), "\n")
 
-# Process each model and asset combination
-models <- c("sGARCH", "eGARCH", "TGARCH", "gjrGARCH")
-# Get assets from centralized config
-assets <- get_manual_assets()
-
-for (model_name in models) {
-  for (asset_name in assets) {
-    cat("\nProcessing:", model_name, "-", asset_name, "\n")
-    
-    # Load standard residuals
-    standard_residual_file <- paste(residuals_dir, model_name, 
-                                       paste0(asset_name, "_Manual_Optimized_residuals.csv"), sep="/")
-    
-    # Load NF residuals
-    nf_residual_file <- paste(nf_residuals_dir, 
-                                  paste0(model_name, "_", asset_name, "_synthetic_residuals.csv"), sep="/")
-    
-    metrics <- data.frame(
-      Model = model_name,
-      Asset = asset_name,
-      KS_distance = NA,
-      Wasserstein_distance = NA,
-      Tail_index_Std = NA,
-      Skewness_Std = NA,
-      Kurtosis_Std = NA,
-      Tail_index_NF = NA,
-      Skewness_NF = NA,
-      Kurtosis_NF = NA
-    )
-    
-    # Load and process standard residuals
-    standard_residuals <- NULL
-    if (file.exists(standard_residual_file)) {
-      tryCatch({
-        standard_data <- read.csv(standard_residual_file, header = FALSE)
-        standard_residuals <- standard_data[[1]]
-        
-        # Skip header row if it's character
-        if (is.character(standard_residuals[1]) && 
-            (standard_residuals[1] == "residual" || 
-             standard_residuals[1] == "synthetic_residuals" ||
-             grepl("residual", standard_residuals[1], ignore.case = TRUE))) {
-          standard_residuals <- standard_residuals[-1]
-        }
-        
-        standard_residuals <- as.numeric(standard_residuals[!is.na(standard_residuals)])
-        
-        if (length(standard_residuals) > 10) {
-          # Standardize
-          standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
-          
-          # Calculate properties of standard residuals
-          metrics$Tail_index_Std <- calculate_tail_index(standard_residuals_std)
-          metrics$Skewness_Std <- calculate_skewness(standard_residuals_std)
-          metrics$Kurtosis_Std <- calculate_kurtosis(standard_residuals_std)
-        }
-      }, error = function(e) {
-        cat("  [WARNING] Error loading standard residuals:", e$message, "\n")
-      })
-    }
-    
-    # Load and process NF residuals
-    nf_residuals <- NULL
-    if (file.exists(nf_residual_file)) {
-      tryCatch({
-        nf_data <- read.csv(nf_residual_file, header = FALSE)
-        nf_residuals <- nf_data[[1]]
-        
-        # Skip header row if it's character
-        if (is.character(nf_residuals[1]) && 
-            (nf_residuals[1] == "residual" || 
-             nf_residuals[1] == "synthetic_residuals" ||
-             grepl("residual", nf_residuals[1], ignore.case = TRUE))) {
-          nf_residuals <- nf_residuals[-1]
-        }
-        
-        nf_residuals <- as.numeric(nf_residuals[!is.na(nf_residuals)])
-        
-        if (length(nf_residuals) > 10) {
-          # Standardize
-          nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
-          
-          # Calculate properties of NF residuals
-          metrics$Tail_index_NF <- calculate_tail_index(nf_residuals_std)
-          metrics$Skewness_NF <- calculate_skewness(nf_residuals_std)
-          metrics$Kurtosis_NF <- calculate_kurtosis(nf_residuals_std)
-        }
-      }, error = function(e) {
-        cat("  [WARNING] Error loading NF residuals:", e$message, "\n")
-      })
-    }
-    
-    # Compare standard vs NF residuals if both available
-    if (!is.null(standard_residuals) && !is.null(nf_residuals) && 
-        length(standard_residuals) > 10 && length(nf_residuals) > 10) {
-      tryCatch({
-        # Standardize both for comparison
-        standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
-        nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
-        
-        metrics$KS_distance <- calculate_ks_distance(standard_residuals_std, nf_residuals_std)
-        metrics$Wasserstein_distance <- calculate_wasserstein_distance(standard_residuals_std, nf_residuals_std)
-      }, error = function(e) {
-        cat("  [WARNING] Error calculating KS/Wasserstein for", model_name, "-", asset_name, ":", e$message, "\n")
-      })
-    } else {
-      if (is.null(standard_residuals) || length(standard_residuals) <= 10) {
-        cat("  [WARNING] Standard residuals missing or insufficient:", standard_residual_file, "\n")
-      }
-      if (is.null(nf_residuals) || length(nf_residuals) <= 10) {
-        cat("  [WARNING] NF residuals missing or insufficient:", nf_residual_file, "\n")
-      }
-    }
-    
-    distributional_results[[paste(model_name, asset_name, sep = "_")]] <- metrics
+for (key in keys_both) {
+  std_info <- standard_map[[key]]
+  nf_info <- nf_map[[key]]
+  model_name <- std_info$base_model
+  asset_name <- std_info$asset
+  cat("\nProcessing:", model_name, "-", asset_name, "\n")
+  
+  metrics <- data.frame(
+    Model = model_name,
+    Asset = asset_name,
+    KS_distance = NA,
+    Wasserstein_distance = NA,
+    Tail_index_Std = NA,
+    Skewness_Std = NA,
+    Kurtosis_Std = NA,
+    Tail_index_NF = NA,
+    Skewness_NF = NA,
+    Kurtosis_NF = NA
+  )
+  
+  standard_residuals <- load_residuals(std_info$path)
+  nf_residuals <- load_residuals(nf_info$path)
+  
+  if (!is.null(standard_residuals)) {
+    standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
+    metrics$Tail_index_Std <- calculate_tail_index(standard_residuals_std)
+    metrics$Skewness_Std <- calculate_skewness(standard_residuals_std)
+    metrics$Kurtosis_Std <- calculate_kurtosis(standard_residuals_std)
   }
+  
+  if (!is.null(nf_residuals)) {
+    nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
+    metrics$Tail_index_NF <- calculate_tail_index(nf_residuals_std)
+    metrics$Skewness_NF <- calculate_skewness(nf_residuals_std)
+    metrics$Kurtosis_NF <- calculate_kurtosis(nf_residuals_std)
+  }
+  
+  if (!is.null(standard_residuals) && !is.null(nf_residuals) &&
+      length(standard_residuals) > 10 && length(nf_residuals) > 10) {
+    tryCatch({
+      standard_residuals_std <- (standard_residuals - mean(standard_residuals)) / sd(standard_residuals)
+      nf_residuals_std <- (nf_residuals - mean(nf_residuals)) / sd(nf_residuals)
+      metrics$KS_distance <- calculate_ks_distance(standard_residuals_std, nf_residuals_std)
+      metrics$Wasserstein_distance <- calculate_wasserstein_distance(standard_residuals_std, nf_residuals_std)
+    }, error = function(e) {
+      cat("  [WARNING] Error calculating KS/Wasserstein:", e$message, "\n")
+    })
+  }
+  
+  distributional_results[[key]] <- metrics
+}
+
+# Also add rows for (model, asset) pairs that have only standard or only NF (so we don't drop assets)
+# Use keys that appear in either set but not both, to record what we have
+all_keys <- unique(c(keys_std, keys_nf))
+for (key in all_keys) {
+  if (key %in% names(distributional_results)) next
+  info <- standard_map[[key]]
+  if (is.null(info)) info <- nf_map[[key]]
+  if (is.null(info)) next
+  model_name <- info$base_model
+  asset_name <- info$asset
+  metrics <- data.frame(
+    Model = model_name,
+    Asset = asset_name,
+    KS_distance = NA,
+    Wasserstein_distance = NA,
+    Tail_index_Std = NA,
+    Skewness_Std = NA,
+    Kurtosis_Std = NA,
+    Tail_index_NF = NA,
+    Skewness_NF = NA,
+    Kurtosis_NF = NA
+  )
+  if (key %in% keys_std) {
+    std_res <- load_residuals(standard_map[[key]]$path)
+    if (!is.null(std_res) && length(std_res) > 10) {
+      std_std <- (std_res - mean(std_res)) / sd(std_res)
+      metrics$Tail_index_Std <- calculate_tail_index(std_std)
+      metrics$Skewness_Std <- calculate_skewness(std_std)
+      metrics$Kurtosis_Std <- calculate_kurtosis(std_std)
+    }
+  }
+  if (key %in% keys_nf) {
+    nf_res <- load_residuals(nf_map[[key]]$path)
+    if (!is.null(nf_res) && length(nf_res) > 10) {
+      nf_std <- (nf_res - mean(nf_res)) / sd(nf_res)
+      metrics$Tail_index_NF <- calculate_tail_index(nf_std)
+      metrics$Skewness_NF <- calculate_skewness(nf_std)
+      metrics$Kurtosis_NF <- calculate_kurtosis(nf_std)
+    }
+  }
+  distributional_results[[key]] <- metrics
 }
 
 # Combine results
 distributional_df <- bind_rows(distributional_results)
+if (nrow(distributional_df) == 0) {
+  distributional_df <- data.frame(
+    Model = character(), Asset = character(),
+    KS_distance = numeric(), Wasserstein_distance = numeric(),
+    Tail_index_Std = numeric(), Skewness_Std = numeric(), Kurtosis_Std = numeric(),
+    Tail_index_NF = numeric(), Skewness_NF = numeric(), Kurtosis_NF = numeric()
+  )
+}
 
 cat("\n[OK] Distributional metrics calculated\n")
 cat("  Total model-asset combinations:", nrow(distributional_df), "\n")
@@ -326,7 +379,8 @@ cat("  Total model-asset combinations:", nrow(distributional_df), "\n")
 
 cat("\n=== SUMMARY STATISTICS ===\n")
 
-summary_stats <- distributional_df %>%
+summary_stats <- if (nrow(distributional_df) > 0) {
+  distributional_df %>%
   group_by(Model) %>%
   summarise(
     mean_KS = mean(KS_distance, na.rm = TRUE),
@@ -341,6 +395,14 @@ summary_stats <- distributional_df %>%
     mean_Kurtosis_NF = mean(Kurtosis_NF, na.rm = TRUE),
     .groups = "drop"
   )
+} else {
+  data.frame(
+    Model = character(), mean_KS = numeric(), median_KS = numeric(),
+    mean_Wasserstein = numeric(), median_Wasserstein = numeric(),
+    mean_Tail_index_Std = numeric(), mean_Skewness_Std = numeric(), mean_Kurtosis_Std = numeric(),
+    mean_Tail_index_NF = numeric(), mean_Skewness_NF = numeric(), mean_Kurtosis_NF = numeric()
+  )
+}
 
 print(summary_stats)
 

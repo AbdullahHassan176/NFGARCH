@@ -316,7 +316,7 @@ def train_optimized_nf(file_path, model_key, output_dir="outputs/manual/nf_model
         print(f"  Recommendation: Check training residuals and NF architecture")
         # Don't force standardization - let it fail so we know there's an issue
     elif abs(samples_mean) > 0.05 or abs(samples_std - 1) > 0.05:
-        print(f"  Note: Slight deviation from perfect standardization (acceptable)")
+        print(f"  Slight deviation from perfect standardization")
     else:
         print(f"  [OK] NF samples properly standardized")
     
@@ -410,7 +410,7 @@ def main():
     print(f"Total residual files processed: {len(residual_files)}")
     print(f"Success rate: {len(training_results)/len(residual_files)*100:.1f}%")
     
-    # Save comprehensive results
+    # Save results
     results_summary = {
         'execution_time': execution_time,
         'models_trained': len(training_results),

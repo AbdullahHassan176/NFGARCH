@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Comprehensive Audit Runner
+# Synthetic recovery audit runner
 # Runs all audit checks and generates audit report
 
 # Load centralized seed configuration
@@ -27,7 +27,7 @@ OUTPUT_DIR <- "outputs/synthetic_recovery"
 dir.create(OUTPUT_DIR, recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(OUTPUT_DIR, "audit"), recursive = TRUE, showWarnings = FALSE)
 
-cat("=== SYNTHETIC RECOVERY EXPERIMENT - COMPREHENSIVE AUDIT ===\n\n")
+cat("=== SYNTHETIC RECOVERY AUDIT ===\n\n")
 
 # =============================================================================
 # PHASE 1: CONFIGURATION VERIFICATION
@@ -125,7 +125,7 @@ cat("  - Likelihood: Normal distribution [CORRECT]\n\n")
 cat("Student-t GARCH:\n")
 cat("  - Standardized residuals: z_hat = (r_t - mu_hat) / sigma_hat [CORRECT]\n")
 cat("  - Degrees of freedom: Estimated (not fixed) [CORRECT]\n")
-cat("  - Note: Uses symmetric t, not skewed-t [DOCUMENTED]\n\n")
+cat("  - Uses symmetric t, not skewed-t [DOCUMENTED].\n\n")
 
 cat("NF-GARCH:\n")
 cat("  - Base GARCH: Student-t GARCH [CORRECT]\n")

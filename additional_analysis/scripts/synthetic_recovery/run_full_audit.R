@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Full Comprehensive Audit
+# Full audit of synthetic recovery experiment
 # Runs experiment, performs all checks, generates audit report
 
 # Load centralized seed configuration
@@ -28,7 +28,7 @@ OUTPUT_DIR <- "outputs/synthetic_recovery"
 AUDIT_DIR <- file.path(OUTPUT_DIR, "audit")
 dir.create(AUDIT_DIR, recursive = TRUE, showWarnings = FALSE)
 
-cat("=== COMPREHENSIVE AUDIT OF SYNTHETIC RECOVERY EXPERIMENT ===\n\n")
+cat("=== FULL AUDIT OF SYNTHETIC RECOVERY ===\n\n")
 
 # =============================================================================
 # PHASE 1-4: CONFIGURATION AND IMPLEMENTATION AUDIT (Read-only)
@@ -78,7 +78,7 @@ cat("Burn-in: 100 observations [CORRECT]\n")
 
 # Check skewed-t implementation
 cat("Skewed-t implementation: Uses Fernandez-Steel transform [CORRECT]\n")
-cat("Note: Post-hoc standardization may reduce effective skewness [LIMITATION DOCUMENTED]\n\n")
+cat("Post-hoc standardization may reduce effective skewness [LIMITATION DOCUMENTED].\n\n")
 
 # =============================================================================
 # PHASE 3: EVALUATION TARGET
@@ -247,7 +247,7 @@ write.csv(repro_df_diff, file.path(AUDIT_DIR, "reproducibility_test_multiple_see
 
 cat("PHASE 6: Sanity Checks\n")
 cat("======================\n")
-cat("Running full experiment for comprehensive sanity checks...\n\n")
+cat("Running full experiment for sanity checks...\n\n")
 
 # Run full experiment
 set.seed(123)

@@ -199,9 +199,8 @@ status_report <- paste0(
   "  - PredictiveLogLik (Predictive Log-Likelihood)\n",
   "  - NPaths (Number of valid simulation paths)\n",
   "  - AIC, BIC, LogLikelihood\n\n",
-  "Note: 5 eGARCH models failed due to optimization convergence issues.\n",
-  "      This is expected for complex GARCH models and does not affect\n",
-  "      the validity of the 25 successful model fits.\n"
+  "Five eGARCH fits failed (optimization convergence). This is common for eGARCH;\n",
+  "      the 25 successful fits are unchanged.\n"
 )
 
 cat(status_report)

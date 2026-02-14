@@ -354,7 +354,7 @@ simulate_nf_garch_rugarch <- function(fit, nf_residuals, horizon, model_family) 
     }
     
     # Create path simulation with NF innovations
-    # Note: presigma, preresiduals, prereturns should be scalars, not matrices
+    # presigma, preresiduals, prereturns must be scalars, not matrices
     sim <- ugarchpath(
       spec = spec,
       n.sim = horizon,

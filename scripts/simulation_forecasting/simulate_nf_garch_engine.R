@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # NF-GARCH Simulation and Forecasting
-# This script implements Normalizing Flow-enhanced GARCH models for financial time series
+# NF-GARCH simulation and forecasting (manual engine)
 # Uses manual engine implementation
 
 # Check for required packages before loading
@@ -220,9 +220,8 @@ cat("Implementing Time Series Cross-Validation for NF-GARCH...\n")
 # Optimized: Increased step_size to reduce windows, added max_windows limit
 ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "sstd", submodel = NULL, 
                                              nf_residuals, window_size = 500, step_size = 500, forecast_horizon = 20, max_windows = 3) {
-  # Perform sliding window time-series cross-validation for NF-GARCH with manual engine
-  # This approach respects temporal ordering and provides robust performance estimates
-  
+  # Sliding-window time-series cross-validation for NF-GARCH (manual engine)
+
   n <- nrow(returns)
   results <- list()
   
@@ -344,7 +343,7 @@ ts_cross_validate_nfgarch_manual <- function(returns, model_type, dist_type = "s
   }
   
   if (length(results) == 0) return(NULL)
-  # Filter out NULL entries and use bind_rows for robust combining
+  # Filter out NULL entries and combine with bind_rows
   results <- results[!sapply(results, is.null)]
   if (length(results) == 0) return(NULL)
   bind_rows(results)
@@ -518,7 +517,7 @@ tryCatch({
 # NF-GARCH Simulation
 cat("Running NF-GARCH simulation...\n")
 
-# Define NF-GARCH fitting function with robust error handling
+# NF-GARCH fitting: fit on train, evaluate on test
 # For chronological split: fit on train, evaluate on test
 fit_nf_garch <- function(asset_name, train_returns, test_returns, model_config, nf_resid) {
   cat("  Starting fit_nf_garch for", asset_name, model_config[["model"]], "\n")
@@ -823,11 +822,7 @@ for (model_name in names(Fitted_FX_NFGARCH_TS_CV_models)) {
     # Add asset name to each asset's results before combining
     fx_list_with_asset <- lapply(names(fx_list), function(asset_name) {
       df <- fx_list[[asset_name]]
-      # Robust check: ensure df is a data.frame and has rows
-      if (is.null(df)) return(NULL)
-      if (!is.data.frame(df)) return(NULL)
-      if (any(is.na(df))) return(NULL)  # Skip if contains NA
-      if (nrow(df) == 0) return(NULL)
+      if (is.null(df) || !is.data.frame(df) || any(is.na(df)) || nrow(df) == 0) return(NULL)
       df$Asset <- asset_name
       df$AssetType <- "FX"
       return(df)
@@ -853,11 +848,7 @@ for (model_name in names(Fitted_FX_NFGARCH_TS_CV_models)) {
     # Add asset name to each asset's results before combining
     eq_list_with_asset <- lapply(names(eq_list), function(asset_name) {
       df <- eq_list[[asset_name]]
-      # Robust check: ensure df is a data.frame and has rows
-      if (is.null(df)) return(NULL)
-      if (!is.data.frame(df)) return(NULL)
-      if (any(is.na(df))) return(NULL)  # Skip if contains NA
-      if (nrow(df) == 0) return(NULL)
+      if (is.null(df) || !is.data.frame(df) || any(is.na(df)) || nrow(df) == 0) return(NULL)
       df$Asset <- asset_name
       df$AssetType <- "Equity"
       return(df)
@@ -909,7 +900,6 @@ if (length(nf_results_chrono) > 0) {
 # Combine results
 if (length(nf_results_chrono) > 0) {
   # Filter out NULL entries and ensure all are data.frames
-  # Use more robust checking
   valid_indices <- sapply(1:length(nf_results_chrono), function(i) {
     x <- nf_results_chrono[[i]]
     !is.null(x) && (is.data.frame(x) || inherits(x, "data.frame")) && nrow(x) > 0
@@ -919,7 +909,6 @@ if (length(nf_results_chrono) > 0) {
   cat("nf_results_chrono length after filtering:", length(nf_results_chrono), "\n")
   
   if (length(nf_results_chrono) > 0) {
-    # Use bind_rows from dplyr which is more robust than rbind
     nf_results_df <- bind_rows(nf_results_chrono)
     
     # Ensure it's a data.frame and has required columns
@@ -1025,8 +1014,7 @@ if (nrow(nf_results_df) > 0) {
       arrange(desc(MSE_Improvement_Pct))
   }
   
-          # Save results with comprehensive comparison
-          # Create consolidated directory if it doesn't exist (using split-aware path)
+          # Create consolidated directory if needed (split-aware path)
           if (!dir.exists(RESULTS_OUTPUT_DIR)) {
             dir.create(RESULTS_OUTPUT_DIR, recursive = TRUE, showWarnings = FALSE)
           }

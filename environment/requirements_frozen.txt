@@ -1,8 +1,8 @@
 # Frozen Python package versions for exact reproducibility
 # Generated via: pip freeze > environment/requirements_frozen.txt
 # 
-# NOTE: This file should be regenerated after setting up a working environment
-# to capture exact versions of all installed packages (including transitive dependencies)
+# Regenerate this file after setting up a working environment to capture exact
+# versions of all installed packages (including transitive dependencies).
 #
 # To install exact versions:
 # pip install -r environment/requirements_frozen.txt
@@ -25,9 +25,8 @@ openpyxl>=3.0.0
 plotly>=5.0.0
 nflows>=0.14.0
 
-# NOTE: After installing packages, run:
-# pip freeze > environment/requirements_frozen.txt
-# to capture exact versions for reproducibility
+# After installing packages, run: pip freeze > environment/requirements_frozen.txt
+# to capture exact versions for reproducibility.
 
 
 

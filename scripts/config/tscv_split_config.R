@@ -79,7 +79,7 @@ OUTPUT_BASE <- "outputs/tscv"
 RESULTS_BASE <- "results/tscv"
 
 # Specific output paths (window-based structure)
-# NOTE: Using paste() instead of file.path() to avoid empty path bug
+# Using paste() to avoid empty path bug with file.path()
 OUTPUT_PATHS <- list(
   garch_fitting = paste(OUTPUT_BASE, "garch_fitting", sep="/"),
   residuals = paste(OUTPUT_BASE, "residuals_by_model", sep="/"),

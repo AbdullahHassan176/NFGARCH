@@ -31,10 +31,12 @@ if (EVAL_SPLIT_MODE == "chronological") {
   if (file.exists("scripts/config/tscv_split_config.R")) {
     suppressMessages(source("scripts/config/tscv_split_config.R"))
   } else {
-    # Defaults
     OUTPUT_BASE <- "outputs/tscv"
     RESULTS_BASE <- "results/tscv"
   }
+} else if (EVAL_SPLIT_MODE == "manual") {
+  OUTPUT_BASE <- "outputs/manual"
+  RESULTS_BASE <- "results/manual"
 } else {
   warning("Unknown split mode: ", EVAL_SPLIT_MODE, ". Using chronological.")
   OUTPUT_BASE <- "outputs/chronological"

@@ -276,7 +276,7 @@ def train_tscv_nf(file_path, model_key, window_id, output_dir, config):
         print(f"    Recommendation: Check training residuals and NF architecture")
         # Don't force standardization - let it fail so we know there's an issue
     elif abs(samples_mean) > 0.05 or abs(samples_std - 1) > 0.05:
-        print(f"    Note: Slight deviation from perfect standardization (acceptable)")
+        print(f"    Slight deviation from perfect standardization")
     else:
         print(f"    [OK] NF samples properly standardized")
     
@@ -403,7 +403,7 @@ def main():
         window_models = [k for k in training_results.keys() if f"_window_{window_id}" in k]
         print(f"  Window {window_id}: {len(window_models)} models trained")
     
-    # Save comprehensive results
+    # Save results
     results_summary = {
         'execution_time': execution_time,
         'windows_processed': len(window_ids),

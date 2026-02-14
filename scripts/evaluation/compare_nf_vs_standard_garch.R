@@ -104,8 +104,7 @@ names(fx_xts) <- fx_names
 fx_xts <- fx_xts[!sapply(fx_xts, is.null)]
 
 # Calculate returns (using standard log returns: diff(log(x)))
-# NOTE: This matches the return calculation in simulate_nf_garch_engine.R
-# to ensure consistent data processing across NF-GARCH and Standard GARCH
+# Return calculation matches simulate_nf_garch_engine.R for consistency across NF-GARCH and Standard GARCH
 equity_returns <- lapply(equity_xts, function(x) diff(log(x))[-1])
 fx_returns <- lapply(fx_xts, function(x) diff(log(x))[-1])
 

@@ -10,7 +10,6 @@
 #
 # DISTRIBUTIONS SUPPORTED: norm (Normal), std (Student-t)
 #
-# IMPLEMENTATION NOTE:
 # This implements Zakoian's TGARCH specification using CONDITIONAL STANDARD DEVIATION
 # with absolute residuals. This is distinct from variance-based TGARCH formulations
 # (e.g., fGARCH submodels) but is a widely-used and valid alternative specification.

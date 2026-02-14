@@ -351,5 +351,53 @@ print_config_summary <- function() {
   cat("SEED:", REPRODUCIBILITY_SEED, "\n")
 }
 
+# Export NF config to JSON so Python (NF training) uses same pipeline_mode and assets as R
+export_config_to_json <- function(output_file = "scripts/core/nf_config.json") {
+  config_export <- list(
+    pipeline_mode = PIPELINE_MODE,
+    reproducibility_seed = REPRODUCIBILITY_SEED,
+    assets = list(
+      fx = ASSETS$fx,
+      equity = ASSETS$equity,
+      all_assets = ALL_ASSETS
+    ),
+    nf_config = list(
+      epochs = as.integer(NF_CONFIG$epochs),
+      batch_size = as.integer(NF_CONFIG$batch_size),
+      learning_rate = NF_CONFIG$learning_rate,
+      early_stopping = NF_CONFIG$early_stopping,
+      patience = as.integer(NF_CONFIG$patience),
+      min_delta = NF_CONFIG$min_delta,
+      validation_split = NF_CONFIG$validation_split,
+      validation_frequency = as.integer(NF_CONFIG$validation_frequency),
+      num_layers = as.integer(NF_CONFIG$num_layers),
+      hidden_features = as.integer(NF_CONFIG$hidden_features),
+      gradient_checkpointing = NF_CONFIG$gradient_checkpointing,
+      mixed_precision = NF_CONFIG$mixed_precision,
+      clear_cache = NF_CONFIG$clear_cache,
+      dropout = NF_CONFIG$dropout,
+      batch_norm = NF_CONFIG$batch_norm,
+      residual_connections = NF_CONFIG$residual_connections,
+      gradient_clipping = NF_CONFIG$gradient_clipping,
+      weight_decay = NF_CONFIG$weight_decay,
+      lr_scheduler = NF_CONFIG$lr_scheduler,
+      warmup_epochs = NF_CONFIG$warmup_epochs
+    ),
+    output_paths = list(
+      nf_models = "outputs/manual/nf_models",
+      residuals = "outputs/manual/residuals_by_model",
+      garch_fitting = "outputs/manual/garch_fitting"
+    )
+  )
+  if (requireNamespace("jsonlite", quietly = TRUE)) {
+    json_string <- jsonlite::toJSON(config_export, pretty = TRUE, auto_unbox = TRUE, null = "null")
+    writeLines(json_string, output_file)
+    cat("Config exported to:", output_file, " (mode:", PIPELINE_MODE, ", assets:", length(ALL_ASSETS), ")\n")
+  } else {
+    warning("jsonlite not available; run install.packages(\"jsonlite\") and re-run to export nf_config.json")
+  }
+  invisible(NULL)
+}
+
 load_config <- function() { invisible(NULL) }
 

@@ -139,7 +139,7 @@ consolidate_results <- function(
     all_results$stress_tests <- consolidate_stress_testing_data(all_results)
   }
   
-  # Always process all data types for comprehensive output
+  # Process all data types when output_type is "all"
   if (output_type == "all") {
     all_results$performance <- consolidate_performance_data(all_results)
     all_results$backtesting <- consolidate_backtesting_data(all_results)
@@ -695,7 +695,7 @@ save_to_excel <- function(all_results, output_type) {
     }
   }
   
-  # Add additional sheets for comprehensive output
+  # Add extra sheets when output_type is "all"
   if (output_type == "all") {
     if ("stylized_facts" %in% names(all_results) && nrow(all_results$stylized_facts) > 0) {
       addWorksheet(wb, "Stylized_Facts_Summary")

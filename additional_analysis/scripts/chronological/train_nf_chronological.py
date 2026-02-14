@@ -271,7 +271,7 @@ def train_chronological_nf(file_path, model_key, output_dir, config):
         print(f"  Recommendation: Check training residuals and NF architecture")
         # Don't force standardization - let it fail so we know there's an issue
     elif abs(samples_mean) > 0.05 or abs(samples_std - 1) > 0.05:
-        print(f"  Note: Slight deviation from perfect standardization (acceptable)")
+        print(f"  Slight deviation from perfect standardization")
     else:
         print(f"  [OK] NF samples properly standardized")
     
@@ -374,7 +374,7 @@ def main():
     print(f"Validation split: {CHRONO_NF_CONFIG['validation_split']} (NO validation)")
     print(f"Training data usage: 100% of residuals (from 65% chronological split)")
     
-    # Save comprehensive results
+    # Save results
     results_summary = {
         'execution_time': execution_time,
         'models_trained': len(training_results),

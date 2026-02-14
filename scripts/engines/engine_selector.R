@@ -111,8 +111,8 @@ engine_fit <- function(model, returns, dist, submodel = NULL, engine = "manual")
   if (dist == "sstd") {
     stop("Skewed Student-t distribution (sstd) is not implemented in manual engine.\n",
          "Supported distributions: 'norm' (Normal), 'std' (symmetric Student-t)\n",
-         "Note: For NF-GARCH, the NF learns the actual innovation distribution,\n",
-         "      so using 'std' with NF is appropriate for skewed/heavy-tailed data.")
+         "For NF-GARCH the NF learns the innovation distribution,\n",
+         "      so 'std' with NF is fine for skewed/heavy-tailed data.")
   }
   manual_dist <- dist
   

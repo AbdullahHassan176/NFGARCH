@@ -8,7 +8,7 @@
 #
 # MODELS SUPPORTED: sGARCH, gjrGARCH, eGARCH, TGARCH (Zakoian)
 # DISTRIBUTIONS: norm (Normal), std (Student-t)
-# NOTE: sstd (Skewed Student-t) is NOT implemented - will error if requested
+# sstd (Skewed Student-t) is not implemented; requesting it will error
 #
 # =============================================================================
 
@@ -235,8 +235,7 @@ fit_optimized_garch <- function(returns_data, asset_name, model_name) {
 # =============================================================================
 
 # Time-series cross-validation with configuration from PIPELINE_MODE
-# Note: garch_spec not needed - using manual engine directly
-# Function name retained for backward compatibility
+# garch_spec is not used; the manual engine is called directly. Function name kept for backward compatibility.
 run_optimized_cv <- function(returns_data, asset_name, model_name) {
   n_obs <- length(returns_data)
   window_size <- floor(n_obs * cv_config$window_size)
@@ -367,8 +366,7 @@ write.csv(model_summary, "outputs/manual/garch_fitting/model_summary.csv", row.n
 saveRDS(all_results, "outputs/manual/garch_fitting/detailed_results.rds")
 
 # Extract and save residuals for NF training
-# NOTE: Residuals are extracted from a SINGLE full training set fit (65% of data)
-# This avoids data leakage from overlapping CV windows used for model selection
+# Residuals come from a single full training-set fit (65% of data) to avoid leakage from overlapping CV windows
 residuals_dir <- "outputs/manual/residuals_by_model"
 if (!dir.exists(residuals_dir)) {
   dir.create(residuals_dir, recursive = TRUE)

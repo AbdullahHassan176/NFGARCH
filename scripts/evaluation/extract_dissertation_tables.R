@@ -22,13 +22,23 @@ cat("=== EXTRACTING DISSERTATION TABLES ===\n\n")
 
 cat("Loading results files...\n")
 
+# Resolve paths: try results/consolidated first, then split-specific (chronological, manual)
+find_result <- function(basename) {
+  candidates <- c(
+    file.path("results", "consolidated", basename),
+    file.path("results", "chronological", "consolidated", basename),
+    file.path("results", "manual", "consolidated", basename)
+  )
+  for (p in candidates) if (file.exists(p)) return(p)
+  file.path("results", "consolidated", basename)
+}
 # Final Dashboard
-dashboard_file <- "results/consolidated/Final_Dashboard.xlsx"
-nf_comparison_file <- "results/consolidated/NF_vs_Standard_GARCH_Comparison.xlsx"
-var_file <- "results/consolidated/VaR_Backtesting.xlsx"
-stress_file <- "results/consolidated/Stress_Testing.xlsx"
-stylized_file <- "results/consolidated/Stylized_Facts.xlsx"
-dist_file <- "results/consolidated/Distributional_Metrics.xlsx"
+dashboard_file <- find_result("Final_Dashboard.xlsx")
+nf_comparison_file <- find_result("NF_vs_Standard_GARCH_Comparison.xlsx")
+var_file <- find_result("VaR_Backtesting.xlsx")
+stress_file <- find_result("Stress_Testing.xlsx")
+stylized_file <- find_result("Stylized_Facts.xlsx")
+dist_file <- find_result("Distributional_Metrics.xlsx")
 
 # Create output directory
 output_dir <- "results/dissertation_tables"
@@ -220,6 +230,35 @@ if (file.exists(nf_comparison_file)) {
       max_abs = 1e10
     )
     cat("  [OK] NF vs Standard by model saved (CSV + .tex)\n")
+    
+    # Detailed per-asset, per-model, per-distribution (Table 4.5: filtered results; NA = convergence/outlier filter)
+    if ("Asset" %in% names(combined) && "Distribution" %in% names(combined)) {
+      detailed_wide <- combined %>%
+        group_by(Asset, Model, Distribution, Source) %>%
+        summarise(MSE = mean(MSE, na.rm = TRUE), MAE = mean(MAE, na.rm = TRUE), .groups = "drop") %>%
+        pivot_wider(names_from = Source, values_from = c(MSE, MAE)) %>%
+        mutate(
+          MSE_Impr_Pct = ifelse(!is.na(MSE_Standard) & !is.na(MSE_NF_GARCH) & abs(MSE_Standard) > 0,
+                                (MSE_Standard - MSE_NF_GARCH) / abs(MSE_Standard) * 100, NA_real_),
+          MAE_Impr_Pct = ifelse(!is.na(MAE_Standard) & !is.na(MAE_NF_GARCH) & abs(MAE_Standard) > 0,
+                               (MAE_Standard - MAE_NF_GARCH) / abs(MAE_Standard) * 100, NA_real_)
+        ) %>%
+        arrange(Asset, Model, Distribution) %>%
+        select(Asset, Model, Dist. = Distribution,
+               Std_MSE = MSE_Standard, Std_MAE = MAE_Standard,
+               NF_MSE = MSE_NF_GARCH, NF_MAE = MAE_NF_GARCH,
+               MSE_Impr_Pct, MAE_Impr_Pct)
+      write.csv(detailed_wide, paste(output_dir, "detailed_nf_vs_standard.csv", sep="/"), row.names = FALSE)
+      write_tabularx_tex(
+        detailed_wide,
+        paste(output_dir, "detailed_nf_vs_standard.tex", sep="/"),
+        col_spec = "l l l *{6}{>{\\raggedleft\\arraybackslash}X}",
+        headers = c("Asset", "Model", "Dist.", "Std MSE", "Std MAE", "NF MSE", "NF MAE", "MSE Impr. (\\%)", "MAE Impr. (\\%)"),
+        digits = c(0, 0, 0, 4, 4, 4, 4, 1, 1),
+        max_abs = 1e10
+      )
+      cat("  [OK] Detailed NF vs Standard (Table 4.5 source) saved (CSV + .tex)\n")
+    }
   }
   
   # Win rate

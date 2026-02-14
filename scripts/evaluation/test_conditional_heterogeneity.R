@@ -156,7 +156,7 @@ test_time_varying_distribution <- function(residuals, window_size = 100) {
   ))
 }
 
-#' Test ARCH effects in residuals (enhanced)
+#' Test ARCH effects in residuals
 test_arch_effects <- function(residuals, lags = 10) {
   tryCatch({
     # ARCH LM test

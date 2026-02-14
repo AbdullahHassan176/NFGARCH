@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Comprehensive Stress Testing
+# Stress testing (historical crises and hypothetical shocks)
 # Historical crises and hypothetical shocks
 
 # Load centralized seed configuration
@@ -24,7 +24,7 @@ source("scripts/manual/manual_optimized_config.R")
 source("scripts/utils/return_forecast_evaluation.R")
 source("scripts/engines/engine_selector.R")
 
-cat("=== COMPREHENSIVE STRESS TESTING ===\n\n")
+cat("=== STRESS TESTING ===\n\n")
 
 # =============================================================================
 # Load Data
@@ -211,6 +211,7 @@ source("scripts/utils/safety_functions.R")
 nf_residuals_map <- list()
 nf_files <- list.files(EVAL_PATHS$nf_models, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
 
+# Filenames are Model_dist_Asset (e.g. sGARCH_std_AMZN) or Model_Asset; use first part as model, last as asset
 if (length(nf_files) > 0) {
   for (f in nf_files) {
     fname <- basename(f)
@@ -219,7 +220,7 @@ if (length(nf_files) > 0) {
     
     if (length(parts) >= 2) {
       model_name <- parts[1]
-      asset_name <- parts[2]
+      asset_name <- parts[length(parts)]
       
       tryCatch({
         residuals_data <- read.csv(f)

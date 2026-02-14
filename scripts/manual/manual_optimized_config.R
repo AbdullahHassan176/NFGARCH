@@ -23,7 +23,7 @@ if (file.exists("scripts/core/config.R")) {
 # Print a reminder that this is now a wrapper
 if (interactive()) {
   cat("════════════════════════════════════════════════════════════\n")
-  cat("NOTE: Configuration loaded from scripts/core/config.R\n")
+  cat("Configuration loaded from scripts/core/config.R\n")
   cat("      Current mode:", PIPELINE_MODE, "\n")
   cat("      To change modes, edit scripts/core/config.R\n")
   cat("════════════════════════════════════════════════════════════\n\n")

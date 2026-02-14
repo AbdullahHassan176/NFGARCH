@@ -39,7 +39,7 @@ parse_cli_args <- function() {
     } else if (args[i] == "--split") {
       if (i + 1 <= length(args)) {
         split_mode <- args[i + 1]
-        if (split_mode %in% c("chronological", "tscv")) {
+        if (split_mode %in% c("chronological", "tscv", "manual")) {
           config$split <- split_mode
         } else {
           warning("Invalid split mode: ", split_mode, ". Using 'chronological'.")
