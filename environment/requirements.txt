@@ -9,3 +9,4 @@ pyyaml>=5.4.0
 openpyxl>=3.0.0
 plotly>=5.0.0
 nflows>=0.14.0
+psutil>=5.8.0

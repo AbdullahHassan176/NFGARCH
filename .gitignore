@@ -13,6 +13,9 @@
 /*.Rcheck/
 /*.tar.gz
 
+# Project R package library (install via setup or R)
+environment/R_library/
+
 # Python cache (if any Python usage in future)
 __pycache__/
 *.pyc
@@ -39,3 +42,6 @@ data/raw/*
 
 results/tables/*
 !results/tables/garch_comparison.csv
+
+# Large RDS outputs (exceed GitHub 100MB limit)
+**/detailed_results.rds

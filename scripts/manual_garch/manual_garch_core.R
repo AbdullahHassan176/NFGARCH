@@ -6,7 +6,7 @@
 # models without relying on external packages, enabling full control over the 
 # estimation process for integration with Normalizing Flow architecture.
 #
-# REVIEW STATUS: ✅ VERIFIED 2026-02-02
+# REVIEW STATUS: VERIFIED 2026-02-02
 # Academic code review confirmed mathematical correctness and statistical validity.
 # All implementation choices below are intentional design decisions, not errors.
 #

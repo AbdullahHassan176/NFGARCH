@@ -1,0 +1,39 @@
+{
+  "execution_time": 2124.2917931079865,
+  "windows_processed": 8,
+  "window_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "models_trained": 237,
+  "config": {
+    "epochs": 75,
+    "batch_size": 512,
+    "learning_rate": 0.001,
+    "early_stopping": false,
+    "patience": 15,
+    "min_delta": 0.0001,
+    "validation_split": 0.0,
+    "validation_frequency": 5,
+    "num_layers": 4,
+    "hidden_features": 64,
+    "dropout": null,
+    "batch_norm": null,
+    "residual_connections": null,
+    "gradient_checkpointing": true,
+    "mixed_precision": true,
+    "gradient_clipping": null,
+    "weight_decay": null,
+    "clear_cache": true,
+    "lr_scheduler": null,
+    "warmup_epochs": null,
+    "save_models": true,
+    "output_dir": "outputs/tscv/nf_models"
+  }
+}

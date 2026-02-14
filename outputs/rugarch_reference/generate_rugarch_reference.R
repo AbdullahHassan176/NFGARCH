@@ -122,12 +122,12 @@ for (model_name in names(specs)) {
     if (convergence(fit) == 0) {
       fits[[model_name]] <- fit
       ll <- likelihood(fit)
-      cat("✓ Converged (LL =", round(ll, 2), ")\n")
+      cat("Converged (LL =", round(ll, 2), ")\n")
     } else {
-      cat("✗ Did not converge (code:", convergence(fit), ")\n")
+      cat("Did not converge (code:", convergence(fit), ")\n")
     }
   }, error = function(e) {
-    cat("✗ Error:", e$message, "\n")
+    cat("Error:", e$message, "\n")
   })
 }
 
@@ -228,7 +228,7 @@ for (model_name in names(fits)) {
             file.path(OUTPUT_DIR, paste0(model_name, "_forecasts.csv")), 
             row.names = FALSE)
   
-  cat("✓\n")
+  cat("OK\n")
   
   # =======================================================================
   # PATH SIMULATION
@@ -252,7 +252,7 @@ for (model_name in names(fits)) {
             file.path(OUTPUT_DIR, paste0(model_name, "_simulation.csv")), 
             row.names = FALSE)
   
-  cat("✓\n")
+  cat("OK\n")
   
   # =======================================================================
   # DIAGNOSTICS
@@ -369,19 +369,19 @@ cat("1. PARAMETERS\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_parameters.csv"), "\n")
 cat("   With: Manual implementation parameter estimates\n")
 cat("   Expected: Correlation > 0.95, |diff| < 1e-3\n")
-cat("   ⚠️  Student-t: Account for rescaling factor sqrt((nu-2)/nu)\n\n")
+cat("   Note: Student-t uses rescaling factor sqrt((nu-2)/nu)\n\n")
 
 cat("2. SIGMA SERIES\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_sigma.csv"), "\n")
 cat("   With: Manual sigma_t estimates\n")
 cat("   Expected: Correlation > 0.999\n")
-cat("   ⚠️  Student-t: Manual sigma may be ~1.3x rugarch due to rescaling\n\n")
+cat("   Note: Student-t manual sigma may be ~1.3x rugarch due to rescaling\n\n")
 
 cat("3. LOG-LIKELIHOOD\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_info_criteria.csv"), "\n")
 cat("   With: Manual log-likelihood\n")
 cat("   Expected: Relative difference < 1e-4\n")
-cat("   ⚠️  May differ by constant term (especially Student-t)\n\n")
+cat("   Note: May differ by constant term (especially Student-t)\n\n")
 
 cat("4. STANDARDIZED RESIDUALS\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_std_residuals.csv"), "\n")
@@ -393,9 +393,9 @@ cat("5. FORECASTS\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_forecasts.csv"), "\n")
 cat("   With: Manual multi-step forecasts\n")
 cat("   1-step: Should match closely\n")
-cat("   Multi-step (h>1): ❌ WILL DIFFER if manual uses simulation\n")
-cat("   ⚠️  rugarch uses analytical forecasts (converges to ω/(1-α-β))\n")
-cat("   ⚠️  Manual simulation converges to ω/(1-β) [DIFFERENT!]\n\n")
+cat("   Multi-step (h>1): WILL DIFFER if manual uses simulation\n")
+cat("   rugarch uses analytical forecasts (converges to omega/(1-alpha-beta))\n")
+cat("   Manual simulation converges to omega/(1-beta) [DIFFERENT]\n\n")
 
 cat("6. SIMULATIONS\n")
 cat("   Compare: ", file.path(OUTPUT_DIR, "*_simulation.csv"), "\n")

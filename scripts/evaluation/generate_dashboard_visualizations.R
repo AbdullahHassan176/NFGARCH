@@ -19,16 +19,11 @@ library(stringr)
 
 cat("=== GENERATING DASHBOARD VISUALIZATIONS ===\n\n")
 
-# Create output directory for plots
 plots_dir <- "results/dashboard_plots"
-if (!dir.exists(plots_dir)) {
-  dir.create(plots_dir, recursive = TRUE)
-}
+if (!dir.exists(plots_dir)) dir.create(plots_dir, recursive = TRUE)
 
-# =============================================================================
+tryCatch({
 # 1. Model Performance Comparison
-# =============================================================================
-
 cat("1. Creating model performance plots...\n")
 
 # Load NF-GARCH results
@@ -350,7 +345,186 @@ if (file.exists(comparison_file)) {
     cat("[WARNING] Comparison file not fully available:", e$message, "\n")
   })
 }
+}, error = function(e) {
+  cat("[WARNING] Some visualizations failed:", e$message, "\n")
+})
 
-cat("\n[OK] All visualizations generated and saved to:", plots_dir, "\n")
+cat("\n[OK] Visualizations done. Building dashboard HTML.\n")
+
+# Build professional HTML dashboard with per-asset, per-model tables (no aggregation)
+dir.create("results", showWarnings = FALSE)
+html_file <- "results/dashboard_visualizations.html"
+plots_base <- "dashboard_plots"
+escape <- function(x) gsub("&", "&amp;", gsub("<", "&lt;", gsub(">", "&gt;", gsub('"', "&quot;", as.character(x)))))
+df_to_table <- function(df, cap = NULL) {
+  if (!is.data.frame(df) || nrow(df) == 0) return("")
+  nr <- nrow(df)
+  nc <- ncol(df)
+  hdr <- paste0("<tr>", paste0("<th>", escape(names(df)), "</th>", collapse = ""), "</tr>")
+  rows <- vapply(seq_len(nr), function(i) {
+    paste0("<tr>", paste0("<td>", escape(df[i, ]), "</td>", collapse = ""), "</tr>")
+  }, character(1))
+  paste0(
+    if (!is.null(cap)) paste0("<caption>", escape(cap), "</caption>") else "",
+    "<thead>", hdr, "</thead><tbody>", paste(rows, collapse = ""), "</tbody>"
+  )
+}
+format_num <- function(x) if (is.numeric(x)) round(x, 6) else x
+
+sections <- character(0)
+
+# 1. Forecast accuracy (chronological) — per asset, per model
+if (exists("chrono_results") && is.data.frame(chrono_results) && nrow(chrono_results) > 0) {
+  cols <- intersect(c("Asset", "Model", "MSE", "MAE", "AIC", "LogLikelihood"), names(chrono_results))
+  if (length(cols) >= 3) {
+    tbl_df <- chrono_results[, cols]
+    for (j in which(sapply(tbl_df, is.numeric))) tbl_df[[j]] <- format_num(tbl_df[[j]])
+    sections <- c(sections, paste0(
+      '<section class="card"><h2>1. Forecast accuracy (chronological split)</h2>',
+      '<p>MSE and MAE by asset and model. Lower MSE/MAE is better.</p>',
+      '<div class="table-wrap"><table>',
+      df_to_table(tbl_df),
+      '</table></div></section>'
+    ))
+  }
+}
+
+# 2. Distributional fit — per model (and asset if present)
+if (exists("dist_metrics") && is.data.frame(dist_metrics) && nrow(dist_metrics) > 0) {
+  cols <- intersect(c("Model", "Asset", "KS_distance", "Wasserstein_distance", "Tail_index", "Mean_KS", "Mean_Wasserstein", "Mean_Tail_Index_Std", "Mean_Tail_Index_NF"), names(dist_metrics))
+  if (length(cols) >= 2) {
+    tbl_df <- dist_metrics[, cols]
+    for (j in which(sapply(tbl_df, is.numeric))) tbl_df[[j]] <- format_num(tbl_df[[j]])
+    sections <- c(sections, paste0(
+      '<section class="card"><h2>2. Distributional fit</h2>',
+      '<p>Residual distribution metrics by model (and asset where available). Lower KS/Wasserstein = better fit.</p>',
+      '<div class="table-wrap"><table>',
+      df_to_table(tbl_df),
+      '</table></div></section>'
+    ))
+  }
+}
+
+# 3. VaR backtesting — per model, per asset where available
+if (exists("var_results") && is.data.frame(var_results) && nrow(var_results) > 0) {
+  cols <- intersect(c("Model", "Asset", "Confidence_Level", "Exceedance_Rate", "Expected_Rate", "Kupiec_pvalue"), names(var_results))
+  if (length(cols) >= 2) {
+    tbl_df <- var_results[, cols]
+    for (j in which(sapply(tbl_df, is.numeric))) tbl_df[[j]] <- format_num(tbl_df[[j]])
+    sections <- c(sections, paste0(
+      '<section class="card"><h2>3. VaR backtesting</h2>',
+      '<p>Exceedance rates and Kupiec test p-values by model and asset. Exceedance rate should be close to expected.</p>',
+      '<div class="table-wrap"><table>',
+      df_to_table(tbl_df),
+      '</table></div></section>'
+    ))
+  }
+}
+
+# 4. Stress testing — per scenario, per asset where available
+if (exists("stress_results") && is.data.frame(stress_results) && nrow(stress_results) > 0) {
+  cols <- intersect(c("Scenario_Type", "Scenario_Name", "Asset", "Volatility", "Max_Drawdown", "Volatility_Increase_Pct"), names(stress_results))
+  if (length(cols) >= 2) {
+    tbl_df <- stress_results[, cols]
+    for (j in which(sapply(tbl_df, is.numeric))) tbl_df[[j]] <- format_num(tbl_df[[j]])
+    sections <- c(sections, paste0(
+      '<section class="card"><h2>4. Stress testing</h2>',
+      '<p>Volatility and drawdown under historical and hypothetical stress scenarios.</p>',
+      '<div class="table-wrap"><table>',
+      df_to_table(tbl_df),
+      '</table></div></section>'
+    ))
+  }
+}
+
+# Fallback: load from dissertation_tables CSVs when Excel not available
+dt_dir <- "results/dissertation_tables"
+if (length(sections) == 0 && dir.exists(dt_dir)) {
+  tryCatch({
+    if (file.exists(file.path(dt_dir, "nf_vs_standard_by_model.csv"))) {
+      d <- read.csv(file.path(dt_dir, "nf_vs_standard_by_model.csv"), stringsAsFactors = FALSE)
+      for (j in which(sapply(d, is.numeric))) d[[j]] <- format_num(d[[j]])
+      sections <- c(sections, paste0(
+        '<section class="card"><h2>1. NF vs standard GARCH by model</h2>',
+        '<p>Mean MSE and MAE by model (no aggregation across models).</p>',
+        '<div class="table-wrap"><table>', df_to_table(d), '</table></div></section>'
+      ))
+    }
+    if (file.exists(file.path(dt_dir, "distributional_metrics_by_model.csv"))) {
+      d <- read.csv(file.path(dt_dir, "distributional_metrics_by_model.csv"), stringsAsFactors = FALSE)
+      for (j in which(sapply(d, is.numeric))) d[[j]] <- format_num(d[[j]])
+      sections <- c(sections, paste0(
+        '<section class="card"><h2>2. Distributional fit by model</h2>',
+        '<p>KS, Wasserstein, tail index by model.</p>',
+        '<div class="table-wrap"><table>', df_to_table(d), '</table></div></section>'
+      ))
+    }
+    if (file.exists(file.path(dt_dir, "var_backtesting_by_model.csv"))) {
+      d <- read.csv(file.path(dt_dir, "var_backtesting_by_model.csv"), stringsAsFactors = FALSE)
+      for (j in which(sapply(d, is.numeric))) d[[j]] <- format_num(d[[j]])
+      sections <- c(sections, paste0(
+        '<section class="card"><h2>3. VaR backtesting by model</h2>',
+        '<p>Exceedance rates and test p-values by model and confidence level.</p>',
+        '<div class="table-wrap"><table>', df_to_table(d), '</table></div></section>'
+      ))
+    }
+    if (file.exists(file.path(dt_dir, "stress_testing_summary.csv"))) {
+      d <- read.csv(file.path(dt_dir, "stress_testing_summary.csv"), stringsAsFactors = FALSE)
+      for (j in which(sapply(d, is.numeric))) d[[j]] <- format_num(d[[j]])
+      sections <- c(sections, paste0(
+        '<section class="card"><h2>4. Stress testing</h2>',
+        '<p>Volatility and drawdown by scenario.</p>',
+        '<div class="table-wrap"><table>', df_to_table(d), '</table></div></section>'
+      ))
+    }
+  }, error = function(e) cat("[WARNING] CSV fallback:", e$message, "\n"))
+}
+
+# 5. Visualizations
+pngs <- list.files(plots_dir, pattern = "\\.png$", full.names = FALSE)
+if (length(pngs) > 0) {
+  img_lines <- paste0(
+    '<figure><img src="', plots_base, "/", pngs, '" alt="', gsub("\\.png$", "", pngs), '" /></figure>',
+    collapse = "\n"
+  )
+  sections <- c(sections, paste0(
+    '<section class="card"><h2>Visualizations</h2>',
+    '<div class="fig-grid">', img_lines, '</div></section>'
+  ))
+}
+
+css <- '<style>
+* { box-sizing: border-box; }
+body { font-family: Georgia, "Times New Roman", serif; margin: 0; padding: 0; background: #1e293b; color: #e2e8f0; line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+h1 { font-size: 1.85rem; font-weight: 700; margin-bottom: 0.25rem; color: #f8fafc; letter-spacing: -0.02em; }
+.subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.95rem; }
+.card { background: #334155; border-radius: 10px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border: 1px solid #475569; }
+.card h2 { font-size: 1.1rem; font-weight: 600; margin-top: 0; margin-bottom: 0.75rem; color: #f1f5f9; }
+.card p { margin: 0 0 1rem 0; color: #cbd5e1; font-size: 0.9rem; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th, td { padding: 0.55rem 0.75rem; text-align: left; border-bottom: 1px solid #475569; }
+th { background: #475569; font-weight: 600; color: #f8fafc; }
+tr:hover { background: #3f4a5c; }
+.fig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.fig-grid figure { margin: 0; }
+.fig-grid img { width: 100%; height: auto; border-radius: 6px; border: 1px solid #475569; }
+a { color: #7dd3fc; }
+</style>'
+
+intro <- '<div class="container">
+<h1>NF-GARCH research dashboard</h1>
+<p class="subtitle">Chronological split results: forecast accuracy, distributional fit, VaR backtesting, and stress tests. Tables show per-asset, per-model results (no aggregation).</p>'
+
+body_sections <- if (length(sections) > 0) paste(sections, collapse = "") else '<section class="card"><p>No result data found. Run the pipeline first.</p></section>'
+html_content <- paste0(
+  '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+  '<title>NF-GARCH dashboard</title>', css, '</head><body>',
+  intro, body_sections, '<p class="subtitle" style="margin-top:2rem;">Excel: <a href="consolidated/Final_Dashboard.xlsx">Final_Dashboard.xlsx</a></p></div></body></html>'
+)
+writeLines(html_content, html_file)
+cat("Dashboard HTML written to:", html_file, "\n")
+
 cat("=== VISUALIZATION GENERATION COMPLETE ===\n")
 

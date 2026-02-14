@@ -1,60 +1,17 @@
 @echo off
 setlocal enabledelayedexpansion
-REM =============================================================================
-REM Comprehensive Time-Series Cross-Validation Pipeline
-REM Rolling window TS-CV for robust model validation
-REM Includes full NF-GARCH analysis and dissertation output generation
-REM =============================================================================
+REM TS-CV pipeline (rolling windows, 22 steps).
 
 cd /d "%~dp0"
-
-REM Initialize logging
+set "REPO_ROOT=%CD%"
+if exist "%REPO_ROOT%\environment\R_library" set "R_LIBS=%REPO_ROOT%\environment\R_library"
 for /f "tokens=2-4 delims=/ " %%a in ('date /t') do (set mydate=%%c%%a%%b)
 for /f "tokens=1-3 delims=:. " %%a in ('echo %time%') do (set mytime=%%a%%b%%c)
 set mytime=%mytime: =0%
 set LOG_FILE=logs\tscv_pipeline_%mydate%_%mytime%.log
 if not exist "logs" mkdir "logs"
-
-REM Initialize timing array
 set STEP_COUNT=0
 
-REM Note: Logging will start with first STEP (helper functions defined at end of file)
-
-echo ========================================
-echo COMPREHENSIVE TS-CV PIPELINE
-echo ========================================
-echo.
-echo Data Splitting Strategy: Rolling Time-Series Cross-Validation
-echo.
-echo This will:
-echo  1. Clear previous TS-CV outputs
-echo  2. GARCH fitting with rolling TS-CV windows
-echo  3. NF training on TS-CV residuals
-echo  4. NF-GARCH simulation
-echo  5. NF vs Standard GARCH comparison
-echo  6. Distributional metrics
-echo  7. Stylized facts
-echo  8. VaR backtesting
-echo  9. Stress testing
-echo  10. Residual stationarity tests
-echo  11. Conditional heterogeneity tests
-echo  12. Verify results
-echo  13. Consolidate results
-echo  14. Hyperparameter sensitivity summary
-echo  15. Methodology consolidated documentation
-echo  16. Final dashboard
-echo  17. HTML dashboard visualizations
-echo  18. Dissertation tables
-echo  19. Report figures
-echo  20. GARCH order robustness
-echo  21. Complete analysis
-echo  22. Overleaf export
-echo.
-echo Expected time: 120-240 minutes (FULLY COMPREHENSIVE)
-echo ========================================
-echo.
-
-REM --- Resolve Rscript ---
 call scripts\utils\find_r_executable.bat
 if %errorlevel% neq 0 (
   echo [ERROR] Rscript not found. Install R or set RSCRIPT.
@@ -66,17 +23,9 @@ if not defined RSCRIPT (
   pause
   exit /b 1
 )
-echo Using Rscript: %RSCRIPT%
-echo.
 
-echo [TRACE] Parameter check - param1=[%~1]
-REM Handle special flags - avoid nested blocks
 if "%~1"=="/OverleafOnly" goto :do_overleaf_only
 if "%~1"=="/overleafonly" goto :do_overleaf_only
-
-echo [TRACE] Did NOT match /OverleafOnly - continuing to main pipeline
-echo Starting TS-CV pipeline...
-echo.
 goto :run_main_pipeline
 
 :do_overleaf_only
@@ -128,7 +77,7 @@ echo.
 echo Running TS-CV GARCH fitting with rolling windows...
 echo.
 
-"%RSCRIPT%" scripts\manual\manual_garch_fitting.R
+"%RSCRIPT%" additional_analysis\scripts\tscv\fit_garch_tscv.R
 if %errorlevel% neq 0 (
     echo [ERROR] TS-CV GARCH fitting failed
     pause
@@ -144,12 +93,13 @@ echo ========================================
 echo STEP 3: NF TRAINING (TS-CV)
 echo ========================================
 echo.
-echo Training NF models on TS-CV residuals...
+echo Training NF models on TS-CV residuals (per window)...
 echo.
 
-python scripts\manual\manual_nf_training.py
+python additional_analysis\scripts\tscv\train_nf_tscv.py 2>nul
+if %errorlevel% neq 0 py additional_analysis\scripts\tscv\train_nf_tscv.py
 if %errorlevel% neq 0 (
-    echo [ERROR] NF training failed
+    echo [ERROR] NF training failed. Ensure python or py is on PATH.
     pause
     exit /b 1
 )

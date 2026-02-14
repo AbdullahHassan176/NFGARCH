@@ -1,3 +1,0 @@
-"Model","n_assets","mean_entropy_loss_pct","median_entropy_loss_pct","pct_high_loss","mean_kl_div","mean_js_div","mean_wasserstein","pct_similar","mean_moment_preservation"
-"sGARCH_norm",6,-71.0470249755654,-43.2098545746834,0,3.70940201763518,0.271753558481015,0.345766069930816,0,0.126696201592467
-"sGARCH_sstd",6,-82.9535668347832,-81.1974734926329,0,2.59764291748031,0.388049441112843,0.426977857932608,0,0.114533878554132

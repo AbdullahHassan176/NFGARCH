@@ -1,7 +1,7 @@
 {
-  "execution_time": 84.99143981933594,
-  "models_trained": 18,
-  "total_files": 18,
+  "execution_time": 238.23294186592102,
+  "models_trained": 36,
+  "total_files": 36,
   "success_rate": 1.0,
   "config": {
     "epochs": 75,

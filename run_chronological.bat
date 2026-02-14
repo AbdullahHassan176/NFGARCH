@@ -1,60 +1,18 @@
 @echo off
 setlocal enabledelayedexpansion
-REM =============================================================================
-REM Comprehensive Chronological Split Pipeline (65/35)
-REM Pure chronological split without CV for model selection
-REM Includes full NF-GARCH analysis and dissertation output generation
-REM =============================================================================
+REM Chronological 65/35 pipeline (22 steps).
 
 cd /d "%~dp0"
-
-REM Initialize logging
+set "REPO_ROOT=%CD%"
+if exist "%REPO_ROOT%\environment\R_library" set "R_LIBS=%REPO_ROOT%\environment\R_library"
 for /f "tokens=2-4 delims=/ " %%a in ('date /t') do (set mydate=%%c%%a%%b)
 for /f "tokens=1-3 delims=:. " %%a in ('echo %time%') do (set mytime=%%a%%b%%c)
 set mytime=%mytime: =0%
 set LOG_FILE=logs\chronological_pipeline_%mydate%_%mytime%.log
 if not exist "logs" mkdir "logs"
-
-REM Initialize timing array
 set STEP_COUNT=0
 
-REM Note: Logging will start with first STEP (helper functions defined at end of file)
-
-echo ========================================
-echo COMPREHENSIVE CHRONOLOGICAL PIPELINE
-echo ========================================
-echo.
-echo Data Splitting Strategy: Pure 65/35 chronological (NO CV)
-echo.
-echo This will:
-echo  1. Clear previous chronological outputs
-echo  2. GARCH fitting with chronological split (65/35)
-echo  3. NF training on chronological residuals
-echo  4. NF-GARCH simulation
-echo  5. NF vs Standard GARCH comparison
-echo  6. Distributional metrics
-echo  7. Stylized facts
-echo  8. VaR backtesting
-echo  9. Stress testing
-echo  10. Residual stationarity tests
-echo  11. Conditional heterogeneity tests
-echo  12. Verify results
-echo  13. Consolidate results
-echo  14. Hyperparameter sensitivity summary
-echo  15. Methodology consolidated documentation
-echo  16. Final dashboard
-echo  17. HTML dashboard visualizations
-echo  18. Dissertation tables
-echo  19. Report figures
-echo  20. GARCH order robustness
-echo  21. Complete analysis
-echo  22. Overleaf export
-echo.
-echo Expected time: 90-180 minutes (FULLY COMPREHENSIVE)
-echo ========================================
-echo.
-
-REM --- Resolve Rscript ---
+REM Resolve Rscript
 call scripts\utils\find_r_executable.bat
 if %errorlevel% neq 0 (
   echo [ERROR] Rscript not found. Install R or set RSCRIPT.
@@ -66,37 +24,17 @@ if not defined RSCRIPT (
   pause
   exit /b 1
 )
-echo Using Rscript: %RSCRIPT%
-echo.
-
-echo [TRACE] Parameter check - param1=[%~1]
-REM Handle special flags - avoid nested blocks
 if "%~1"=="/OverleafOnly" goto :do_overleaf_only
 if "%~1"=="/overleafonly" goto :do_overleaf_only
-
-echo [TRACE] Did NOT match /OverleafOnly - continuing to main pipeline
-echo Starting chronological pipeline...
-echo.
 goto :run_main_pipeline
 
 :do_overleaf_only
-echo [TRACE] Matched /OverleafOnly condition - jumping to overleaf_export
 set OLEAF=1
-echo ========================================
-echo OVERLEAF EXPORT ONLY (CHRONOLOGICAL)
-echo ========================================
-echo Refreshing overleaf_export from existing chronological results...
-echo.
 goto :overleaf_export
 
 :run_main_pipeline
 
-REM =============================================================================
-REM STEP 1: CLEAR PREVIOUS OUTPUTS
-REM =============================================================================
-echo ========================================
 echo STEP 1: CLEARING CHRONOLOGICAL OUTPUTS
-echo ========================================
 
 if exist "outputs\chronological" (
     echo Clearing outputs\chronological...
@@ -546,25 +484,15 @@ if defined LOG_FILE (
 goto :EOF
 
 :START_STEP
-REM Start timing a step
-echo [TRACE] Inside START_STEP function, parameter=%~1
 set /a STEP_COUNT+=1
-echo [TRACE] STEP_COUNT incremented to %STEP_COUNT%
 set STEP_NAME[%STEP_COUNT%]=%~1
-echo ========================================
 echo %~1
-echo ========================================
 set STEP_START[%STEP_COUNT%]=%time%
-echo [TRACE] Exiting START_STEP function
 goto :EOF
 
 :END_STEP
-REM End timing a step
-echo [TRACE] Inside END_STEP function, STEP_COUNT=%STEP_COUNT%
 set STEP_END[%STEP_COUNT%]=%time%
-REM Calculate duration (simplified to avoid operand errors)
 set "STEP_DURATION[%STEP_COUNT%]=completed"
-echo [TRACE] Exiting END_STEP function
 goto :EOF
 
 :CALCULATE_DURATION

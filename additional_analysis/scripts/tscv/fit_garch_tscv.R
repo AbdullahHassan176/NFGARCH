@@ -2,6 +2,9 @@
 # Rolling window TS CV for all assets and models
 # Designed to ensure consistent TS CV across the entire pipeline
 
+# Suppress xts/dplyr lag conflict warning (known; base/stats lag used in packages)
+options(xts.warn_dplyr_breaks_lag = FALSE)
+
 # Check for required packages before loading
 required_packages <- c("xts", "PerformanceAnalytics", "dplyr", "tidyr", "stringr", 
                        "lubridate", "parallel", "doParallel")

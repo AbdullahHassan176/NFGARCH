@@ -1,3 +1,0 @@
-"Model","n_assets","mean_acf_ratio","pct_acf_worse","pct_orig_random_runs","pct_nf_random_runs","pct_orig_random_turning","pct_nf_random_turning","mean_freq_ratio","pct_worse_structure"
-"sGARCH_norm",6,1.14914925989433,50,0,0,50,100,1.34165952633983,50
-"sGARCH_sstd",6,1.1191244483436,50,0,0,66.6666666666667,83.3333333333333,1.45826909690892,50
