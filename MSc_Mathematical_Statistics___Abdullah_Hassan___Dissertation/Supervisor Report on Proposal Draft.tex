@@ -1,0 +1,96 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{Evaluation of MSc Proposal: Probabilistic Generative Adversarial Networks for Exchange Rate Modelling}
+\author{Dr. Farai Mlambo}
+\date{September 25, 2024}
+
+\begin{document}
+
+\maketitle
+
+\section*{Candidate:}
+Abdullah Hassan
+
+\section*{Supervisors:}
+Dr. Farai Mlambo, Dr. Wilson Tsakane Mongwe
+
+\section*{1. Introduction and Problem Statement}
+
+\textbf{Strengths:}  
+The introduction provides a solid foundation by outlining the challenges of modelling financial time series, particularly exchange rates, using classical models such as GARCH and ARCH. The introduction of Generative Adversarial Networks (GANs) into financial time series modelling is well-motivated, making the research relevant and timely. The problem statement is concise, directly addressing the limitations of traditional models in contrast to modern machine learning techniques like GANs. The research question concerning whether Bayesian frameworks within GANs can outperform traditional models is well-phrased and sets a clear comparative agenda for the study.
+
+\textbf{Areas for Improvement:}  
+The introduction could be strengthened by expanding the discussion on why the current literature has not fully solved the problem, highlighting the gap between traditional methods and GANs more explicitly. This would provide a stronger rationale for combining probabilistic models within GAN frameworks. The problem statement could benefit from including preliminary insights or hypotheses about how normalising flows may enhance GAN performance rather than simply framing it as a comparison with traditional models.
+
+\section*{2. Aims and Objectives}
+
+\textbf{Strengths:}  
+The aims are clearly outlined, focusing on a comparative analysis of GAN architectures and traditional models (such as GARCH) while examining stylised facts in financial time series data. The study’s goal of exploring probabilistic approaches to GAN modelling, particularly normalising flows, aligns well with the gaps identified in the literature. The explicit focus on performance comparison is well-aligned with the research question.
+
+\textbf{Areas for Improvement:}  
+The objectives could be more specific about the performance measures to be used for comparison. Although performance metrics like MSE and Earth Mover’s Distance are mentioned later, they should be emphasised in the aims and objectives. Additionally, the objective of proposing novel extensions for normalising flows could be better justified by elaborating on the expected impact of such extensions on model performance.
+
+\section*{3. Literature Review}
+
+\textbf{Strengths:}  
+The literature review is comprehensive, covering both classical models (ARCH/GARCH) and modern machine learning models (GANs) in great depth. The inclusion of up-to-date studies on probabilistic GANs and normalising flows shows the candidate's strong grasp of the current state of the field. The discussion on the limitations of GANs (e.g., mode collapse and non-convergence) is well-executed and demonstrates clear alignment with the proposed research.
+
+\textbf{Areas for Improvement:}  
+The discussion on GAN challenges could be expanded to critically assess more recent solutions, such as Wasserstein GANs, which might serve as alternatives or enhancements. The section on normalising flows, while relevant, could benefit from additional discussion on their applications in other fields, which may provide transferable insights for financial modelling.
+
+\section*{4. Methodology}
+
+\textbf{Strengths:}  
+The methodology is well-structured and provides a clear plan for data preparation, model training, and evaluation. The balance between traditional econometric models and machine learning models (ProbGAN, BayesGAN, FlowGAN) ensures a robust comparative framework. The incorporation of both qualitative and quantitative evaluation methods, particularly the use of stylised facts in qualitative assessment, is commendable. Time series cross-validation is appropriately included to improve the robustness of model evaluation.
+
+\textbf{Areas for Improvement:}  
+There should be more detail on how the hyperparameters for both GAN and GARCH models will be optimised (e.g., grid search, random search). Additionally, the proposed extension using normalising flows needs further explanation. Specifically, the methodology should detail the specific transformations and operations to be applied in the normalising flow framework within the GANs, and how these will improve performance.
+
+\section*{5. Data and Exploratory Data Analysis (EDA)}
+
+\textbf{Strengths:}  
+The data description is clear, and the use of five major currency pairs for the exchange rate analysis is appropriate for the study's scope. The proposed exploratory data analysis (EDA) methods, including time series plots, correlation analysis, and stylised facts, are well-suited to understanding the data structure before fitting the models.
+
+\textbf{Areas for Improvement:}  
+A more detailed plan for addressing potential data issues, such as missing values or outliers, would enhance the section. While data cleaning and imputation are mentioned, the specific methods for imputation should be clarified. Furthermore, the EDA should ideally be completed before model fitting to inform the model development process.
+
+\section*{6. Model Evaluation}
+
+\textbf{Strengths:}  
+The model evaluation plan is thorough, with appropriate metrics such as MSE, RMSE, and Kolmogorov-Smirnov distance for quantitative assessment. The inclusion of qualitative performance metrics based on stylised facts ensures a holistic assessment of the models’ performance. The use of Earth Mover’s Distance (EMD) to assess the closeness of the generated and real data distributions is particularly insightful.
+
+\textbf{Areas for Improvement:}  
+The evaluation of out-of-sample performance and the issue of overfitting should be emphasised further, especially given the complexity of GAN architectures. Additionally, there could be more discussion on model interpretability, particularly for GAN models, which are often criticised for being "black-box" models. Addressing how the study will deal with interpretability issues would be beneficial.
+
+\section*{7. Timeline}
+
+\textbf{Strengths:}  
+The timeline is well-organised and realistic, allocating sufficient time for each phase of the project. The clear breakdown from data preparation to model implementation and final write-up is logical.
+
+\textbf{Areas for Improvement:}  
+Given the complexity of GAN models, the timeline could allocate more buffer time for challenges in training, such as dealing with mode collapse or convergence issues, which are common in GAN training. This would ensure that any unexpected delays can be managed effectively.
+
+\section*{8. Overall Strengths and Contributions}
+
+The proposal is ambitious and addresses a significant gap in financial time series modelling by combining classical econometric models with cutting-edge machine learning techniques. The combination of probabilistic approaches within GANs, particularly with normalising flows, offers a novel contribution to the literature. The methodology is rigorous and the inclusion of both qualitative and quantitative assessments ensures that the research will provide a comprehensive evaluation of the proposed models.
+
+\section*{9. Areas for Further Consideration}
+
+- The proposal could include a discussion on the computational resources required for GAN training, as it is computationally intensive, particularly when incorporating normalising flows. Mentioning the availability of GPU computing resources and its impact on the timeline would enhance the proposal.
+- Additionally, it would be useful to outline potential dissemination plans for the results, such as academic publications or conference presentations, to emphasise the contribution this research could make to the broader academic community.
+
+\section*{Final Evaluation}
+
+\textbf{Strengths:}
+- Well-researched and clearly focused on a novel application of machine learning in financial time series analysis.
+- The methodological approach is comprehensive and appropriately balances traditional and modern techniques.
+
+\textbf{Improvements:}
+- Requires more clarity on the operationalisation of normalising flows.
+- More emphasis on interpretability and out-of-sample performance would strengthen the evaluation of GAN models.
+
+\textbf{Overall Rating:} A strong MSc proposal with great potential for impactful contributions to the field of financial time series modelling.
+
+\end{document}

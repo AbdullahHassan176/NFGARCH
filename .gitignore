@@ -37,7 +37,9 @@ _push_tmp/
 *.tex
 # Keep main article and dissertation source (reviewers need these)
 !MDPI_Article_Template__1_/**/*.tex
+!MDPI_Risks___NF_GARCH_PAPER/**/*.tex
 !MSc_Mathematical_Statistics___Abdullah_Hassan___Dissertation/**/*.tex
+!MSc_Mathematical_Statistics___Abdullah_Hassan___Dissertation (1)/**/*.tex
 
 
 data/raw/*

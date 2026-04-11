@@ -1,0 +1,61 @@
+% --- Figure/Table helpers for repo-linked artefacts ---
+% Assumes you already loaded: graphicx, xcolor, hyperref, csvsimple, booktabs
+
+% ==== Config ====
+\newcommand{\RepoLocalRoot}{results} % everything relative to ./results
+\newcommand{\RepoBranch}{main}
+\newcommand{\RepoBaseURL}{https://github.com/AbdullahHassan176/NFGARCH/blob/\RepoBranch}
+
+% Small monospace style for file paths
+\newcommand{\pathstyle}[1]{\texttt{\footnotesize #1}}
+
+% Clickable link to file path in the repo (same relative path you pass locally)
+\newcommand{\repolink}[1]{%
+  \href{\RepoBaseURL/#1}{\pathstyle{#1}}%
+}
+
+% Red warning box if a local artefact is missing
+\newcommand{\missingfilebox}[1]{%
+  \begingroup
+  \setlength{\fboxsep}{8pt}%
+  \noindent\color{red}\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{%
+  \textbf{Missing file:} \pathstyle{#1}\\
+  Please regenerate this artefact or update the path.}}%
+  \endgroup
+}
+
+% ==== Figure macro ====
+% Usage:
+%   \repoFigure[0.8\linewidth]{Fig-R8}{figures/Fig-R8_nf_winrate_bars.png}{NF–GARCH win rate by model.}
+%   \repoFigure{\labelname}{model_eval/figures/Fig-M1_...png}{...}
+% NOTE: #3 is now a path RELATIVE to ./results (not hard-coded to figures/)
+\newcommand{\repoFigure}[4][]{%
+  \begin{figure}[htbp]
+    \centering
+    \IfFileExists{\RepoLocalRoot/#3}{%
+      \includegraphics[width=\ifx\relax#1\relax\linewidth\else#1\fi]{\RepoLocalRoot/#3}%
+      \caption{#4\\ \emph{Source:} \repolink{\RepoLocalRoot/#3}}%
+    }{%
+      \missingfilebox{\RepoLocalRoot/#3}%
+      \caption{#4\\ \emph{Source (intended):} \repolink{\RepoLocalRoot/#3}}%
+    }%
+    \label{#2}%
+  \end{figure}%
+}
+
+% ==== CSV Table macro ====
+% Usage:
+%   \repoCSVTable{Tab-R5}{dissertation_tables/Tab-R5_tail_index_skew_kurt.csv}{Tail index...}
+\newcommand{\repoCSVTable}[3]{%
+  \begin{table}[htbp]
+    \centering
+    \IfFileExists{\RepoLocalRoot/#2}{%
+      \csvautobooktabular{\RepoLocalRoot/#2}%
+      \caption{#3\\ \emph{Source:} \repolink{\RepoLocalRoot/#2}}%
+    }{%
+      \missingfilebox{\RepoLocalRoot/#2}%
+      \caption{#3\\ \emph{Source (intended):} \repolink{\RepoLocalRoot/#2}}%
+    }%
+    \label{#1}%
+  \end{table}%
+}
