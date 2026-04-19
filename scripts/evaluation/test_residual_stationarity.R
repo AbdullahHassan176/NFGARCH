@@ -161,8 +161,8 @@ calculate_residual_stats <- function(residuals) {
     sd = sd(residuals_clean),
     min = min(residuals_clean),
     max = max(residuals_clean),
-    skewness = moments::skewness(residuals_clean),
-    kurtosis = moments::kurtosis(residuals_clean),
+    skewness = if (requireNamespace("moments", quietly = TRUE)) moments::skewness(residuals_clean) else NA_real_,
+    kurtosis = if (requireNamespace("moments", quietly = TRUE)) moments::kurtosis(residuals_clean) else NA_real_,
     acf_lag1 = tryCatch(acf(residuals_clean, lag.max = 1, plot = FALSE)$acf[2], 
                         error = function(e) NA)
   ))

@@ -13,6 +13,7 @@ from scipy.stats import ks_2samp, wasserstein_distance, skew, kurtosis
 from nflows.distributions import StandardNormal
 from nflows.transforms import CompositeTransform, MaskedAffineAutoregressiveTransform
 from nflows.flows import Flow
+from nflows.flows.realnvp import SimpleRealNVP
 import time
 import gc
 from pathlib import Path
@@ -48,6 +49,8 @@ def load_nf_config(config_path="scripts/core/nf_config.json"):
                 "validation_frequency": 5,
                 "num_layers": 4,
                 "hidden_features": 64,
+                "flow_family": "maf",
+                "realnvp_blocks_per_layer": 2,
                 "gradient_checkpointing": True,
                 "mixed_precision": True,
                 "clear_cache": True
@@ -115,7 +118,11 @@ def monitor_memory():
             pass  # psutil optional; install for CPU memory logging
 
 def print_optimization_summary():
-    print(f"NF training mode: {PIPELINE_MODE}, layers: {MANUAL_NF_CONFIG['num_layers']}, epochs: {MANUAL_NF_CONFIG['epochs']}")
+    fam = MANUAL_NF_CONFIG.get("flow_family", "maf")
+    print(
+        f"NF training mode: {PIPELINE_MODE}, flow: {fam}, "
+        f"layers: {MANUAL_NF_CONFIG['num_layers']}, epochs: {MANUAL_NF_CONFIG['epochs']}"
+    )
 
 class OptimizedFlow(nn.Module):
     """
@@ -154,6 +161,45 @@ class OptimizedFlow(nn.Module):
     def parameters(self):
         return self.flow.parameters()
 
+
+class RealNVPTrainable(nn.Module):
+    """1D Real NVP via nflows SimpleRealNVP; same training interface as OptimizedFlow (forward = log_prob)."""
+
+    def __init__(self, num_layers, hidden_features, num_blocks_per_layer=2):
+        super().__init__()
+        self.inner = SimpleRealNVP(
+            features=1,
+            hidden_features=hidden_features,
+            num_layers=num_layers,
+            num_blocks_per_layer=num_blocks_per_layer,
+        )
+
+    def forward(self, x):
+        return self.inner.log_prob(x)
+
+    def sample(self, n_samples):
+        return self.inner.sample(n_samples)
+
+    def parameters(self):
+        return self.inner.parameters()
+
+
+def build_flow_model(config):
+    family = (config.get("flow_family") or "maf").lower()
+    if family == "realnvp":
+        blocks = int(config.get("realnvp_blocks_per_layer", 2))
+        print(f"  Flow family: RealNVP (SimpleRealNVP), blocks_per_layer={blocks}")
+        return RealNVPTrainable(
+            num_layers=config["num_layers"],
+            hidden_features=config["hidden_features"],
+            num_blocks_per_layer=blocks,
+        )
+    print("  Flow family: MAF (MaskedAffineAutoregressiveTransform)")
+    return OptimizedFlow(
+        num_layers=config["num_layers"],
+        hidden_features=config["hidden_features"],
+    )
+
 # =============================================================================
 # OPTIMIZED TRAINING FUNCTION
 # =============================================================================
@@ -182,11 +228,7 @@ def train_optimized_nf(file_path, model_key, output_dir="outputs/manual/nf_model
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False)
     
-    # Create optimized model
-    flow = OptimizedFlow(
-        num_layers=config["num_layers"],
-        hidden_features=config["hidden_features"]
-    )
+    flow = build_flow_model(config)
     
     # Setup optimizer
     optimizer = torch.optim.Adam(flow.parameters(), lr=config["learning_rate"])
@@ -344,19 +386,40 @@ def main():
     # Print optimization summary
     print_optimization_summary()
     
-    # Create output directory
-    output_dir = Path(MANUAL_NF_CONFIG["output_dir"])
+    # Checkpoints per flow family; optional NF_OUTPUT_ROOT isolates Reviewer-3 / multi-seed runs
+    fam = (MANUAL_NF_CONFIG.get("flow_family") or "maf").lower()
+    out_root_env = os.environ.get("NF_OUTPUT_ROOT", "").strip()
+    if out_root_env:
+        nf_models_base = Path(out_root_env)
+        output_dir = nf_models_base
+        MANUAL_NF_CONFIG["output_dir"] = str(output_dir)
+    else:
+        nf_models_base = Path(MANUAL_NF_CONFIG["output_dir"])
+        output_dir = nf_models_base / fam
+        MANUAL_NF_CONFIG["output_dir"] = str(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Discover residual files (using manual optimized residuals)
-    residuals_dir = "outputs/manual/residuals_by_model"
+
+    # Discover residual files (override with NF_RESIDUALS_DIR for split-specific inputs)
+    residuals_dir = os.environ.get("NF_RESIDUALS_DIR", "outputs/manual/residuals_by_model").strip()
     residual_files = glob(os.path.join(residuals_dir, "*", "*.csv"))
-    
+
+    allow_assets = CONFIG.get("assets", {}).get("all_assets")
+    if allow_assets:
+        allowed = set(allow_assets)
+        before_n = len(residual_files)
+        filtered = []
+        for fp in residual_files:
+            base = os.path.basename(fp).replace("_Manual_Optimized_residuals.csv", "")
+            if base in allowed:
+                filtered.append(fp)
+        residual_files = filtered
+        print(f"Filtered to article/optimized assets ({len(allowed)} tickers): {before_n} -> {len(residual_files)} files")
+
     if not residual_files:
         print("[ERROR] No residual files found in", residuals_dir)
-        print("Please run manual_garch_fitting.R first to generate residuals")
+        print("Run manual_garch_fitting.R (PIPELINE_MODE optimized recommended) or adjust NF_RESIDUALS_DIR / assets.")
         return
-    
+
     print(f"Found {len(residual_files)} residual files")
     
     # Training results storage
@@ -408,20 +471,25 @@ def main():
     print(f"Total execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
     print(f"Models trained successfully: {len(training_results)}")
     print(f"Total residual files processed: {len(residual_files)}")
-    print(f"Success rate: {len(training_results)/len(residual_files)*100:.1f}%")
+    denom = len(residual_files) if residual_files else 1
+    print(f"Success rate: {len(training_results)/denom*100:.1f}%")
     
     # Save results
     results_summary = {
         'execution_time': execution_time,
         'models_trained': len(training_results),
         'total_files': len(residual_files),
-        'success_rate': len(training_results)/len(residual_files),
+        'success_rate': len(training_results) / (len(residual_files) if residual_files else 1),
+        'reproducibility_seed': CONFIG.get('reproducibility_seed'),
+        'pipeline_mode': CONFIG.get('pipeline_mode'),
         'config': MANUAL_NF_CONFIG
     }
     
     import json
-    with open(output_dir / "training_summary.json", 'w') as f:
-        json.dump(results_summary, f, indent=2)
+    results_summary["flow_family"] = fam
+    summary_dir = Path(out_root_env) if out_root_env else nf_models_base
+    with open(summary_dir / "training_summary.json", "w") as f:
+        json.dump(results_summary, f, indent=2, default=str)
     
     print(f"\n[OK] Manual optimized NF training completed.")
     print(f"Results saved to: {output_dir}")

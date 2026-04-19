@@ -225,7 +225,7 @@ cat("\n3. Generating Fig-R4/R5: NF vs GARCH QQ comparison...\n")
 
 # Load NF residuals
 nf_resid_dir <- "outputs/manual/nf_models"
-nf_files <- list.files(nf_resid_dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
+nf_files <- list.files(nf_resid_dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE, recursive = TRUE)
 
 nf_residuals_map <- list()
 for (f in nf_files) {

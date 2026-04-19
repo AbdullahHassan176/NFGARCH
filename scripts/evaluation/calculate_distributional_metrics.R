@@ -217,7 +217,7 @@ discover_standard_residuals <- function() {
 discover_nf_residuals <- function() {
   out <- list()
   if (!dir.exists(nf_residuals_dir)) return(out)
-  files <- list.files(nf_residuals_dir, pattern = "_synthetic_residuals\\.csv$", full.names = TRUE)
+  files <- list.files(nf_residuals_dir, pattern = "_synthetic_residuals\\.csv$", full.names = TRUE, recursive = TRUE)
   for (f in files) {
     fname_clean <- stringr::str_replace(basename(f), "_synthetic_residuals\\.csv$", "")
     parts <- strsplit(fname_clean, "_")[[1]]

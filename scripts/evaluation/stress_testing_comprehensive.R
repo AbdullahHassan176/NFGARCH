@@ -209,7 +209,7 @@ source("scripts/utils/safety_functions.R")
 
 # Load NF residuals for NF-GARCH evaluation
 nf_residuals_map <- list()
-nf_files <- list.files(EVAL_PATHS$nf_models, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
+nf_files <- list.files(EVAL_PATHS$nf_models, pattern = "*_synthetic_residuals.csv", full.names = TRUE, recursive = TRUE)
 
 # Filenames are Model_dist_Asset (e.g. sGARCH_std_AMZN) or Model_Asset; use first part as model, last as asset
 if (length(nf_files) > 0) {

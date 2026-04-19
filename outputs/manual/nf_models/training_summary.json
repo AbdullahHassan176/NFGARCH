@@ -1,8 +1,10 @@
 {
-  "execution_time": 238.23294186592102,
-  "models_trained": 36,
-  "total_files": 36,
+  "execution_time": 93.97216773033142,
+  "models_trained": 24,
+  "total_files": 24,
   "success_rate": 1.0,
+  "reproducibility_seed": 789,
+  "pipeline_mode": "optimized",
   "config": {
     "epochs": 75,
     "batch_size": 512,
@@ -14,18 +16,14 @@
     "validation_frequency": 5,
     "num_layers": 4,
     "hidden_features": 64,
-    "dropout": null,
-    "batch_norm": null,
-    "residual_connections": null,
+    "flow_family": "realnvp",
+    "realnvp_blocks_per_layer": 2,
     "gradient_checkpointing": true,
     "mixed_precision": true,
-    "gradient_clipping": null,
-    "weight_decay": null,
     "clear_cache": true,
-    "lr_scheduler": null,
-    "warmup_epochs": null,
     "save_models": true,
     "save_plots": true,
-    "output_dir": "outputs/manual/nf_models"
-  }
+    "output_dir": "outputs\\manual\\nf_models\\realnvp"
+  },
+  "flow_family": "realnvp"
 }

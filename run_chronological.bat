@@ -1,9 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 REM Chronological 65/35 pipeline (22 steps).
+REM Optional flags (first argument):
+REM   /InstallRPackages     — install R packages into environment\R_library, then exit
+REM   /Reviewer3            — only run MDPI Risks Reviewer 3 supplement (multi-seed MAF + RealNVP NF + R chain); needs outputs\manual from manual_garch_fitting.R
+REM   /WithReviewer3        — run full chronological pipeline, then the Reviewer 3 supplement
+REM   /OverleafOnly         — unchanged (Overleaf export only)
 
 cd /d "%~dp0"
 set "REPO_ROOT=%CD%"
+set "WITH_REVIEWER3=0"
 if exist "%REPO_ROOT%\environment\R_library" set "R_LIBS=%REPO_ROOT%\environment\R_library"
 for /f "tokens=2-4 delims=/ " %%a in ('date /t') do (set mydate=%%c%%a%%b)
 for /f "tokens=1-3 delims=:. " %%a in ('echo %time%') do (set mytime=%%a%%b%%c)
@@ -26,6 +32,12 @@ if not defined RSCRIPT (
 )
 if "%~1"=="/OverleafOnly" goto :do_overleaf_only
 if "%~1"=="/overleafonly" goto :do_overleaf_only
+if /I "%~1"=="/Reviewer3" goto :reviewer3_only
+if /I "%~1"=="/InstallRPackages" goto :install_r_packages
+if /I "%~1"=="/WithReviewer3" (
+    set "WITH_REVIEWER3=1"
+    shift
+)
 goto :run_main_pipeline
 
 :do_overleaf_only
@@ -75,6 +87,15 @@ if %errorlevel% neq 0 (
 )
 echo.
 
+REM Export nf_config.json from R (cwd-safe). REQUIRED: main Step 3 must match config.R (MAF + REPRODUCIBILITY_SEED).
+echo Exporting NF config from R...
+"%RSCRIPT%" scripts\utils\export_nf_config_from_r.R "%REPO_ROOT%"
+if %errorlevel% neq 0 (
+    echo [ERROR] NF config export failed. Fix jsonlite / paths, then re-run. Stopping before NF training.
+    pause
+    exit /b 1
+)
+
 REM =============================================================================
 REM STEP 3: NF TRAINING (ON CHRONOLOGICAL RESIDUALS)
 REM =============================================================================
@@ -82,7 +103,7 @@ echo ========================================
 echo STEP 3: NF TRAINING (CHRONOLOGICAL)
 echo ========================================
 echo.
-echo Training NF models on chronological residuals...
+echo Training NF models on chronological residuals (flow_family from nf_config.json; default MAF)...
 echo.
 
 python scripts\manual\manual_nf_training.py
@@ -469,7 +490,47 @@ echo ========================================
 REM Generate timing summary
 call :GENERATE_SUMMARY
 
+if "!WITH_REVIEWER3!"=="1" (
+    echo.
+    call :run_reviewer3_supplement
+    if errorlevel 1 exit /b 1
+)
+
 REM Exit successfully - skip pause when called from wrapper
+exit /b 0
+
+REM =============================================================================
+REM REVIEWER 3 SUPPLEMENT (MDPI Risks) — multi-seed MAF + RealNVP, then full R eval chain
+REM =============================================================================
+:install_r_packages
+call scripts\utils\find_r_executable.bat
+if %errorlevel% neq 0 exit /b 1
+"%RSCRIPT%" environment\install_r_packages.R
+exit /b %errorlevel%
+
+:reviewer3_only
+call scripts\utils\find_r_executable.bat
+if %errorlevel% neq 0 exit /b 1
+call :run_reviewer3_supplement
+exit /b %errorlevel%
+
+:run_reviewer3_supplement
+echo.
+echo =============================================================================
+echo REVIEWER 3 SUPPLEMENT: MAF and RealNVP, seeds 123/456/789 — NF training + evaluation chain
+echo Outputs: outputs\reviewer3\^<run_id^>\  and consolidated Excel under each run's results\
+echo =============================================================================
+python scripts\manual\run_reviewer3_robustness.py
+if %errorlevel% neq 0 (
+    echo [ERROR] Reviewer 3 NF robustness training failed
+    exit /b 1
+)
+python scripts\manual\run_reviewer3_full_chain.py
+if %errorlevel% neq 0 (
+    echo [ERROR] Reviewer 3 full evaluation chain failed
+    exit /b 1
+)
+echo [OK] Reviewer 3 supplement completed.
 exit /b 0
 
 REM =============================================================================

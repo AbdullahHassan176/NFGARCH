@@ -51,8 +51,16 @@ cat("Starting NF-GARCH simulation with engine:", engine, "...\n")
 # Load centralized seed configuration
 if (file.exists("scripts/core/config.R")) {
   source("scripts/core/config.R")
-  set.seed(REPRODUCIBILITY_SEED)
-  cat("Using reproducibility seed:", REPRODUCIBILITY_SEED, "\n")
+  r3_seed <- Sys.getenv("REVIEWER3_REPRODUCIBILITY_SEED", unset = "")
+  if (nzchar(r3_seed)) {
+    REPRODUCIBILITY_SEED <- suppressWarnings(as.integer(r3_seed))
+    if (is.na(REPRODUCIBILITY_SEED)) REPRODUCIBILITY_SEED <- 123L
+    set.seed(REPRODUCIBILITY_SEED)
+    cat("Using REVIEWER3_REPRODUCIBILITY_SEED:", REPRODUCIBILITY_SEED, "\n")
+  } else {
+    set.seed(REPRODUCIBILITY_SEED)
+    cat("Using reproducibility seed:", REPRODUCIBILITY_SEED, "\n")
+  }
 } else {
   set.seed(123)  # Fallback if config not available
   cat("Using fallback seed: 123\n")
@@ -92,6 +100,12 @@ if (SPLIT_MODE == "chronological") {
 # Override output paths based on split mode
 NF_RESIDUALS_DIR <- paste(OUTPUT_BASE, "nf_models", sep="/")
 RESULTS_OUTPUT_DIR <- paste(RESULTS_BASE, "consolidated", sep="/")
+
+r3_run_root <- Sys.getenv("REVIEWER3_RUN_ROOT", unset = "")
+if (nzchar(r3_run_root)) {
+  RESULTS_OUTPUT_DIR <- file.path(r3_run_root, "results", "consolidated")
+  cat("REVIEWER3_RUN_ROOT set; writing results to:", RESULTS_OUTPUT_DIR, "\n")
+}
 
 # Create output directories if they don't exist
 if (!dir.exists(RESULTS_OUTPUT_DIR)) {
@@ -400,13 +414,18 @@ for (config_name in names(model_configs)) {
 cat("Loading NF residuals...\n")
 
 tryCatch({
-  # Check split-aware NF models directory and fallback directories
-  nf_dirs <- c(NF_RESIDUALS_DIR, "outputs/manual/nf_models", "nf_generated_residuals")
-  cat("Checking for NF residuals in:", paste(nf_dirs, collapse=", "), "\n")
+  nf_only <- Sys.getenv("NF_RESIDUALS_ONLY_DIR", unset = "")
+  if (nzchar(nf_only) && dir.exists(nf_only)) {
+    dirs_to_scan <- c(nf_only)
+    cat("NF_RESIDUALS_ONLY_DIR set; loading synthetic residuals only from:", nf_only, "\n")
+  } else {
+    dirs_to_scan <- c(NF_RESIDUALS_DIR, "outputs/manual/nf_models", "nf_generated_residuals")
+  }
+  cat("Checking for NF residuals in:", paste(dirs_to_scan, collapse=", "), "\n")
   nf_files <- c()
-  for (dir in nf_dirs) {
+  for (dir in dirs_to_scan) {
     if (dir.exists(dir)) {
-      found_files <- list.files(dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE)
+      found_files <- list.files(dir, pattern = "*_synthetic_residuals.csv", full.names = TRUE, recursive = TRUE)
       if (length(found_files) > 0) {
         cat("  Found", length(found_files), "files in:", dir, "\n")
         nf_files <- c(nf_files, found_files)
@@ -668,7 +687,7 @@ for (config_name in names(model_configs)) {
     }
     
     if (is.null(key)) {
-      cat("ERROR: Skipped:", asset, config_name, "- No synthetic residuals found.\n")
+      cat("WARNING: Skipped:", asset, config_name, "- No synthetic residuals found (train NF after full residual export).\n")
       next
     }
     
@@ -705,7 +724,7 @@ for (config_name in names(model_configs)) {
     }
     
     if (is.null(key)) {
-      cat("ERROR: Skipped:", asset, config_name, "- No synthetic residuals found.\n")
+      cat("WARNING: Skipped:", asset, config_name, "- No synthetic residuals found (train NF after full residual export).\n")
       next
     }
     

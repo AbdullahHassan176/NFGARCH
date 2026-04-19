@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # Pipeline configuration. Set PIPELINE_MODE to "optimized" or "full".
 
-PIPELINE_MODE <- "full"
+PIPELINE_MODE <- "optimized"
 
 # GARCH: norm, std (Student-t). sstd not implemented.
 
@@ -205,6 +205,8 @@ NF_OPTIMIZED <- list(
   # Model architecture (SHALLOW for speed)
   num_layers = 4,                  # Shallow network
   hidden_features = 64,            # Small hidden dimension
+  flow_family = "maf",             # "maf" (default) or "realnvp" for SimpleRealNVP (1D) in Python training
+  realnvp_blocks_per_layer = 2L,   # Residual blocks per coupling layer (RealNVP only)
   
   # Optimization
   gradient_checkpointing = TRUE,
@@ -229,6 +231,8 @@ NF_FULL <- list(
   # Model architecture (DEEP for better capacity)
   num_layers = 8,                  # Deep network (doubled!)
   hidden_features = 256,           # Large hidden dimension (4x increase!)
+  flow_family = "maf",             # "maf" or "realnvp" (see manual_nf_training.py)
+  realnvp_blocks_per_layer = 2L,
   
   # Advanced features
   dropout = 0.1,                   # Regularization
@@ -372,6 +376,8 @@ export_config_to_json <- function(output_file = "scripts/core/nf_config.json") {
       validation_frequency = as.integer(NF_CONFIG$validation_frequency),
       num_layers = as.integer(NF_CONFIG$num_layers),
       hidden_features = as.integer(NF_CONFIG$hidden_features),
+      flow_family = NF_CONFIG$flow_family,
+      realnvp_blocks_per_layer = as.integer(NF_CONFIG$realnvp_blocks_per_layer),
       gradient_checkpointing = NF_CONFIG$gradient_checkpointing,
       mixed_precision = NF_CONFIG$mixed_precision,
       clear_cache = NF_CONFIG$clear_cache,

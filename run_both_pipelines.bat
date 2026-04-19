@@ -1,8 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
 REM Runs chronological then TS-CV pipeline.
+REM Pass /WithReviewer3 as first argument to run chronological main pipeline plus MDPI Risks Reviewer 3 supplement (multi-seed MAF+RealNVP).
 
-call "%~dp0run_chronological.bat"
+if /I "%~1"=="/WithReviewer3" (
+    call "%~dp0run_chronological.bat" /WithReviewer3
+) else (
+    call "%~dp0run_chronological.bat"
+)
 
 if %errorlevel% neq 0 (
     echo.

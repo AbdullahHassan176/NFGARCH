@@ -1,0 +1,7 @@
+run_id,seed,simulate,compare,distributional,stylized_facts,var,stress,resid_stationarity,cond_hetero
+maf_seed123,123,0,0,0,0,0,0,0,0
+maf_seed456,456,0,0,0,0,0,0,0,0
+maf_seed789,789,0,0,0,0,0,0,0,0
+realnvp_seed123,123,0,0,0,0,0,0,0,0
+realnvp_seed456,456,0,0,0,0,0,0,0,0
+realnvp_seed789,789,1073807364,-1073741205,-1073741205,-1073741205,-1073741205,-1073741205,-1073741205,-1073741205

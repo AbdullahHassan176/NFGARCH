@@ -1,0 +1,7 @@
+run_id,flow_family,seed,models_trained,total_files,success_rate,execution_time_s
+maf_seed123,maf,123,24,24,1.0,98.19744563102722
+maf_seed456,maf,456,24,24,1.0,97.22872972488403
+maf_seed789,maf,789,24,24,1.0,97.9657416343689
+realnvp_seed123,realnvp,123,24,24,1.0,97.07027411460876
+realnvp_seed456,realnvp,456,24,24,1.0,96.81711316108704
+realnvp_seed789,realnvp,789,24,24,1.0,97.67368602752686
